@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "879501096162",
+    "project_id": "datphong-c362e",
+    "storage_bucket": "datphong-c362e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:879501096162:android:e43f778bc45137e550dabb",
+        "android_client_info": {
+          "package_name": "com.example.doan_datphong"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC2ijy5bP-D4xMgryv2BnyIdRjjrIDyfvY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

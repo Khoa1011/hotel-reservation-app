@@ -1,8 +1,8 @@
 const express = require("express");
 const multer = require("multer");
-const Room = require("../Model/Room");
-const RoomType = require("../Model/RoomType");
-const Hotels = require("../Model/Hotel");
+const Room = require("../Model/Room/Room");
+const RoomType = require("../Model/RoomType/RoomType");
+const Hotels = require("../Model/Hotel/Hotel");
 
 const router = express.Router();
 

@@ -1,11 +1,11 @@
 const express = require("express");
-const Room = require('../Model/Room');
-const RoomType = require('../Model/RoomType');
+const Room = require('../Model/Room/Room');
+const RoomType = require('../Model/RoomType/RoomType');
 const upload = require("../config/upload"); 
-const Hotel = require("../Model/Hotel"); 
-const { route } = require("./userRouter");
+const Hotel = require("../Model/Hotel/Hotel"); 
+const { route } = require("./userController");
 const router = express.Router();
-const Booking = require("../Model/Booking");
+const Booking = require("../Model/Booking/Booking");
 
 
 router.post("/upload", upload.single("image"), async (req, res) => {

@@ -1,13 +1,131 @@
 const express = require("express");
 const userRouter = express.Router();
-const User = require("../Model/User");
+const User = require("../Model/User/User");
 const bcrypt = require("bcryptjs");
 const JWT =require("jsonwebtoken");
 const passport = require("passport");
 const passportConfig = require("../config/passport");
 const JWT_SECRET = process.env.JWT_SECRET || "ThuKhoa";
+const authorizeRoles = require("../middleware/roleAuth");
 
-//Đăng ký tài khoản
+
+
+// const signToken = (userID) =>{
+//     return JWT.sign({
+//         iss:"ThuKhoa",
+//         sub:userID,
+        
+//     },
+//     JWT_SECRET,
+//     {expiresIn:"1d"}
+// );
+// };
+
+const signToken = (user) => {
+    return JWT.sign({
+        iss: "ThuKhoa",
+        sub: user._id,
+        role: user.role,  
+        email: user.email
+    }, JWT_SECRET, { expiresIn: "1d" });
+};
+
+// Route chỉ admin mới được truy cập
+userRouter.get("/admin-only", authorizeRoles("admin"), (req, res) => {
+    res.json({ message: "Xin chào Admin!" });
+});
+
+// Route cho cả admin và user
+userRouter.get("/admin-or-user", authorizeRoles("admin", "user"), (req, res) => {
+    res.json({ message: "Bạn có quyền truy cập!" });
+});
+
+//Đăng ký tài khoản admin
+userRouter.post("/hotelowner/register", async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        // Kiểm tra xem email đã tồn tại chưa
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({
+                message: { msgBody: "Tên đăng nhập đã tồn tại!", msgError: true },
+            });
+        }
+
+        // Tạo người dùng mới
+        const newUser = new User({ email, password, role:"hotelowner" });
+        await newUser.save(); // Lưu user vào database
+
+        return res.status(200).json({
+            message: { msgBody: "Tạo tài khoản cho chủ khách sạn thành công!", msgError: false },
+            user: { id: newUser._id, email: newUser.email, role:newUser.role }, // Gửi dữ liệu user về client  
+        });
+    } catch (err) {
+        console.error("Lỗi này:", err);
+        return res.status(500).json({
+            message: { msgBody: "Lỗi server!", msgError: true },
+        });
+    }
+});
+
+
+userRouter.post("/hotelowner/login", async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        // Kiểm tra user tồn tại
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({
+                msgBody: "Email chưa được đăng ký!",
+                msgError: true
+            });
+        }
+
+        // Kiểm tra role
+        if (user.role !== "hotelowner") {
+            return res.status(403).json({
+                msgBody: "Tài khoản này không có quyền đăng nhập trang của khách sạn!",
+                msgError: true
+            });
+        }
+
+        // Kiểm tra mật khẩu
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(401).json({
+                msgBody: "Mật khẩu không chính xác!",
+                msgError: true
+            });
+        }
+
+        // Tạo token
+        const token = signToken(user);
+
+        // Gửi token cookie
+        res.cookie("access_token", token, { httpOnly: true, sameSite: "strict" });
+
+        return res.status(200).json({
+            msgBody: "Đăng nhập cho chủ khách sạn thành công!",
+            msgError: false,
+            isAuthenticated: true,
+            user: { id: user._id, email: user.email, role: user.role },
+            token
+        });
+
+    } catch (err) {
+        return res.status(500).json({
+            msgBody: "Lỗi server!",
+            msgError: true,
+            error: err.message
+        });
+    }
+});
+
+
+
+//Đăng ký tài khoản user
 userRouter.post("/register", async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -24,14 +142,10 @@ userRouter.post("/register", async (req, res) => {
         const newUser = new User({ email, password });
         await newUser.save(); // Lưu user vào database
 
-        // // **Tạo token JWT**
-        // const token = JWT.sign({ id: newUser._id, email: newUser.email }, "TruongThuKhoaNe", { expiresIn: "1d" });
-
+    
         return res.status(200).json({
             message: { msgBody: "Tạo tài khoản thành công!", msgError: false },
-            user: { id: newUser._id, email: newUser.email }, // Gửi dữ liệu user về client
-            
-            
+            user: { id: newUser._id, email: newUser.email }, // Gửi dữ liệu user về client  
         });
     } catch (err) {
         console.error("Lỗi này:", err);
@@ -41,18 +155,6 @@ userRouter.post("/register", async (req, res) => {
     }
 });
 
-
-
-const signToken = (userID) =>{
-    return JWT.sign({
-        iss:"ThuKhoa",
-        sub:userID,
-        
-    },
-    JWT_SECRET,
-    {expiresIn:"1d"}
-);
-};
 
 //Đăng nhập tài khoản
 userRouter.post("/login", async (req, res) => {
@@ -78,7 +180,7 @@ userRouter.post("/login", async (req, res) => {
         }
 
         // Tạo JWT Token
-        const token = signToken(user._id);
+        const token = signToken(user);
 
         // Gửi token vào Cookie
         res.cookie("access_token", token, { httpOnly: true, sameSite: "strict" });
@@ -144,6 +246,9 @@ userRouter.post("/updateUser", async (req, res)=> {
         return res.status(500).json({ message: 'Lỗi khi cập nhật user', error: err.message });
     }
 });
+
+
+
 userRouter.post("/updateProfile", async (req, res) => {
     try {
         const { userId, Dob, userName, gender, phoneNumber, avatar, password } = req.body;

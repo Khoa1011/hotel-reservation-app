@@ -1,5 +1,5 @@
 const express = require('express');
-const RoomType = require('../Model/RoomType');
+const RoomType = require('../Model/RoomType/RoomType');
 const router = express.Router();
 
 // API to add a new room type

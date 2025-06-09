@@ -1,7 +1,7 @@
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 const JwtStrategy = require("passport-jwt").Strategy;
-const User = require("../Model/User");
+const User = require("../Model/User/User");
 
 //authentication with username, password
 passport.use(

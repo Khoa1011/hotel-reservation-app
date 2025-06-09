@@ -1,8 +1,8 @@
 const express = require("express");
-const Booking = require("../Model/Booking");
+const Booking = require("../Model/Booking/Booking");
 const router = express.Router();
-const Room = require("../Model/Room");
-const Hotel = require("../Model/Hotel");
+const Room = require("../Model/Room/Room");
+const Hotel = require("../Model/Hotel/Hotel");
 const mongoose = require("mongoose");
 
 // Tạo mới một đơn đặt phòng

@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const path = require("path"); 
 const cookieParser = require("cookie-parser");
 const upload = require("./config/upload");
+const pathUrl = require("./Router/pathUrl");
 const app = express();
 
 app.use(express.json());
@@ -23,16 +24,22 @@ mongoose
         console.log("Cookies: ", req.cookies); // Xem cookie có chứa access_token không
         next();
     });
-const userRouter = require("./Router/userRouter"); 
-app.use("/api/users", userRouter); 
-const hotelRouter = require("./Router/hotelRouter");
-app.use("/api/hotels",hotelRouter);
-const bookingRouter = require("./Router/bookingRouter");
-app.use("/api/bookings",bookingRouter);
-const roomTypeRouter = require("./Router/roomTypeRouter");
-app.use("/api/roomtypes",roomTypeRouter);
-const roomRouter = require("./Router/roomRouter");
-app.use("/api/rooms",roomRouter);
+
+    
+// const userRouter = require("./Controller/userController"); 
+// app.use("/api/users", userRouter); 
+// const hotelRouter = require("./Controller/hotelController");
+// app.use("/api/hotels",hotelRouter);
+// const bookingRouter = require("./Controller/bookingController");
+// app.use("/api/bookings",bookingRouter);
+// const roomTypeRouter = require("./Controller/roomTypeController");
+// app.use("/api/roomtypes",roomTypeRouter);
+// const roomRouter = require("./Controller/roomController");
+// app.use("/api/rooms",roomRouter);
+
+pathUrl(app);
+
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT,console.log(`Server Run With Port ${PORT}`));
 

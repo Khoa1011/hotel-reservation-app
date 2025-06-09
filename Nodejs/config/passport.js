@@ -45,7 +45,7 @@ passport.use(
     new JwtStrategy(
         {
             jwtFromRequest: cookiesExtractor,
-            secretOrKey: "ThuKhoa",
+            secretOrKey: process.env.JWT_SECRET,
         },
         async (payload, done) => { // ✅ Thêm async
             try {

@@ -1,12 +1,15 @@
 const express = require("express");
 const Booking = require("../Model/Booking/Booking");
-const router = express.Router();
+const bookingRouter = express.Router();
 const Room = require("../Model/Room/Room");
 const Hotel = require("../Model/Hotel/Hotel");
 const mongoose = require("mongoose");
+const  authorizeRoles   = require('../middleware/roleAuth');
+const User = require("../Model/User/User");
+
 
 // Tạo mới một đơn đặt phòng
-router.post("/addbooking", async (req, res) => {
+bookingRouter.post("/addbooking", async (req, res) => {
     try {
       const newBooking = new Booking(req.body);
       await newBooking.save();
@@ -18,7 +21,7 @@ router.post("/addbooking", async (req, res) => {
   
   // Lấy danh sách đặt phòng
  // GET danh sách booking kèm tên khách sạn
- router.get("/getBookingList/:userId", async (req, res) => {
+ bookingRouter.get("/getBookingList/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
 
@@ -65,7 +68,7 @@ router.post("/addbooking", async (req, res) => {
 
   
   // Cập nhật trạng thái đặt phòng
-  router.put("/update/:id", async (req, res) => {
+  bookingRouter.put("/update/:id", async (req, res) => {
     try {
       const updatedBooking = await Booking.findByIdAndUpdate(req.params.id, req.body, { new: true });
       res.status(200).json(updatedBooking);
@@ -75,7 +78,7 @@ router.post("/addbooking", async (req, res) => {
   });
   
   // Xóa đơn đặt phòng
-  router.delete("/delete/:id", async (req, res) => {
+  bookingRouter.delete("/delete/:id", async (req, res) => {
     try {
       await Booking.findByIdAndDelete(req.params.id);
       res.status(200).json({ message: "Đã xóa đặt phòng!" });
@@ -86,7 +89,7 @@ router.post("/addbooking", async (req, res) => {
 
 
   // API để giảm số lượng phòng sau khi đặt
-router.put('/:hotelId/rooms/:roomId/book', async (req, res) => {
+bookingRouter.put('/:hotelId/rooms/:roomId/book', async (req, res) => {
   const { hotelId, roomId } = req.params;
 
   try {
@@ -117,4 +120,72 @@ router.put('/:hotelId/rooms/:roomId/book', async (req, res) => {
 });
 
 
-  module.exports = router;
+
+bookingRouter.get("/hotelowner/getBookingList", authorizeRoles("hotelowner"),async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    // Kiểm tra quyền
+    if (!user || user.role !== "hotelowner") {
+      return res.status(403).json({
+        msgBody: "Tài khoản không có quyền sử dụng chức năng này!",
+        msgError: true
+      });
+    }
+
+    // Lấy danh sách khách sạn thuộc user này
+    const hotels = await Hotel.find({ ownerId: user._id });
+    if (hotels.length === 0) {
+      return res.status(404).json({
+        msgBody: "Bạn chưa sở hữu khách sạn nào.",
+        msgError: true
+      });
+    }
+    const hotelIds = hotels.map(hotel => hotel._id);
+
+    // Lấy booking của các khách sạn trên
+    const bookings = await Booking.find({ hotelsId: { $in: hotelIds } })
+      .populate({
+        path: "userId",
+        select: "userName email phoneNumber"
+      })
+      .populate({
+        path: "roomId",
+        populate: {
+          path: "roomTypeId",
+          model: "RoomType",
+          select: "roomType"
+        }
+      })
+      .populate("hotelsId", "hotelName")
+      .sort({ createdAt: -1 });
+
+    // Chuyển dữ liệu về định dạng cần thiết
+    const result = bookings.map(booking => ({
+      bookingId: booking._id,
+      customerName: booking.userId?.userName || "N/A",
+      roomType: booking.roomId?.roomTypeId?.roomType || "N/A",
+      checkInDate: booking.checkInDate,
+      checkOutDate: booking.checkOutDate,
+      email: booking.userId?.email || "N/A",
+      phoneNumber: booking.userId?.phoneNumber || "N/A",
+      paymentMethod: booking.paymentMethod,
+      status: booking.status,
+      createdAt: booking.createdAt,
+      hotelName: booking.hotelsId?.hotelName || "N/A"
+    }));
+
+    return res.status(200).json(result);
+
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách booking:", error);
+    return res.status(500).json({
+      msgBody: "Lỗi máy chủ khi lấy danh sách đặt phòng.",
+      msgError: true
+    });
+  }
+});
+
+
+
+  module.exports = bookingRouter;

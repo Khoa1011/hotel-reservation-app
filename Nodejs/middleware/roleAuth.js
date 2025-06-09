@@ -14,7 +14,11 @@ const authorizeRoles = (...allowedRoles) => {
 
         try {
             const decoded = JWT.verify(token, JWT_SECRET);
-            req.user = decoded; // lưu thông tin user vào req để sử dụng sau
+            req.user = {
+                id: decoded.sub,
+                role: decoded.role,
+                email: decoded.email,
+            }; // lưu thông tin user vào req để sử dụng sau
 
             if (!allowedRoles.includes(decoded.role)) {
                 return res.status(403).json({ message: "Không có quyền truy cập!" });

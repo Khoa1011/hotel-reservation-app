@@ -124,7 +124,7 @@ userRouter.post("/hotelowner/login", async (req, res) => {
 });
 
 
-
+// ---------------------------------------------------------------------------------
 //Đăng ký tài khoản user
 userRouter.post("/register", async (req, res) => {
     try {

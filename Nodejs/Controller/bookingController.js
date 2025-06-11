@@ -4,24 +4,24 @@ const bookingRouter = express.Router();
 const Room = require("../Model/Room/Room");
 const Hotel = require("../Model/Hotel/Hotel");
 const mongoose = require("mongoose");
-const  authorizeRoles   = require('../middleware/roleAuth');
+const authorizeRoles = require('../middleware/roleAuth');
 const User = require("../Model/User/User");
-
+const moment = require('moment-timezone');
 
 // Tạo mới một đơn đặt phòng
 bookingRouter.post("/addbooking", async (req, res) => {
-    try {
-      const newBooking = new Booking(req.body);
-      await newBooking.save();
-      res.status(201).json({ message: "Đặt phòng thành công!", booking: newBooking });
-    } catch (error) {
-      res.status(400).json({ error: error.message });
-    }
-  });
-  
-  // Lấy danh sách đặt phòng
- // GET danh sách booking kèm tên khách sạn
- bookingRouter.get("/getBookingList/:userId", async (req, res) => {
+  try {
+    const newBooking = new Booking(req.body);
+    await newBooking.save();
+    res.status(201).json({ message: "Đặt phòng thành công!", booking: newBooking });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Lấy danh sách đặt phòng
+// GET danh sách booking kèm tên khách sạn
+bookingRouter.get("/getBookingList/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
 
@@ -53,7 +53,7 @@ bookingRouter.post("/addbooking", async (req, res) => {
       checkOutTime: b.checkOutTime,
       totalAmount: b.totalAmount,
       paymentMethod: b.paymentMethod,
-      status : b.status,
+      status: b.status,
     }));
 
     return res.status(200).json({
@@ -66,29 +66,29 @@ bookingRouter.post("/addbooking", async (req, res) => {
 });
 
 
-  
-  // Cập nhật trạng thái đặt phòng
-  bookingRouter.put("/update/:id", async (req, res) => {
-    try {
-      const updatedBooking = await Booking.findByIdAndUpdate(req.params.id, req.body, { new: true });
-      res.status(200).json(updatedBooking);
-    } catch (error) {
-      res.status(400).json({ error: error.message });
-    }
-  });
-  
-  // Xóa đơn đặt phòng
-  bookingRouter.delete("/delete/:id", async (req, res) => {
-    try {
-      await Booking.findByIdAndDelete(req.params.id);
-      res.status(200).json({ message: "Đã xóa đặt phòng!" });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  });
+
+// Cập nhật trạng thái đặt phòng
+bookingRouter.put("/update/:id", async (req, res) => {
+  try {
+    const updatedBooking = await Booking.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.status(200).json(updatedBooking);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Xóa đơn đặt phòng
+bookingRouter.delete("/delete/:id", async (req, res) => {
+  try {
+    await Booking.findByIdAndDelete(req.params.id);
+    res.status(200).json({ message: "Đã xóa đặt phòng!" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 
-  // API để giảm số lượng phòng sau khi đặt
+// API để giảm số lượng phòng sau khi đặt
 bookingRouter.put('/:hotelId/rooms/:roomId/book', async (req, res) => {
   const { hotelId, roomId } = req.params;
 
@@ -120,12 +120,13 @@ bookingRouter.put('/:hotelId/rooms/:roomId/book', async (req, res) => {
 });
 
 
+// --------------------------------------------------------------------------------------------------
 
-bookingRouter.get("/hotelowner/getBookingList", authorizeRoles("hotelowner"),async (req, res) => {
+bookingRouter.get("/hotelowner/bookings", authorizeRoles("hotelowner", "employee"), async (req, res) => {
   try {
+    const { filter, fromDate, toDate, status } = req.query;
     const user = await User.findById(req.user.id);
 
-    // Kiểm tra quyền
     if (!user || user.role !== "hotelowner") {
       return res.status(403).json({
         msgBody: "Tài khoản không có quyền sử dụng chức năng này!",
@@ -133,7 +134,6 @@ bookingRouter.get("/hotelowner/getBookingList", authorizeRoles("hotelowner"),asy
       });
     }
 
-    // Lấy danh sách khách sạn thuộc user này
     const hotels = await Hotel.find({ ownerId: user._id });
     if (hotels.length === 0) {
       return res.status(404).json({
@@ -141,38 +141,78 @@ bookingRouter.get("/hotelowner/getBookingList", authorizeRoles("hotelowner"),asy
         msgError: true
       });
     }
-    const hotelIds = hotels.map(hotel => hotel._id);
 
-    // Lấy booking của các khách sạn trên
-    const bookings = await Booking.find({ hotelsId: { $in: hotelIds } })
-      .populate({
-        path: "userId",
-        select: "userName email phoneNumber"
-      })
+    const hotelIds = hotels.map(h => h._id);
+    let query = {
+      hotelsId: { $in: hotelIds }
+    };
+
+    // Lọc theo trạng thái booking nếu có
+    if (status && ["pending", "confirmed", "cancelled"].includes(status)) {
+      query.status = status;
+    }
+
+    // Lọc theo ngày check-in nếu có
+    if (fromDate || toDate) {
+      if (fromDate && !moment(fromDate, "YYYY-MM-DD", true).isValid()) {
+        return res.status(400).json({
+          msgBody: "Định dạng ngày 'fromDate' không hợp lệ (YYYY-MM-DD)",
+          msgError: true
+        });
+      }
+      if (toDate && !moment(toDate, "YYYY-MM-DD", true).isValid()) {
+        return res.status(400).json({
+          msgBody: "Định dạng ngày 'toDate' không hợp lệ (YYYY-MM-DD)",
+          msgError: true
+        });
+      }
+      query.checkInDate = {};
+      if (fromDate) {
+        query.checkInDate.$gte = moment(fromDate, "YYYY-MM-DD").format("DD-MM-YYYY");
+      }
+      if (toDate) {
+        query.checkInDate.$lte = moment(toDate, "YYYY-MM-DD").format("DD-MM-YYYY");
+      }
+    }
+
+    let bookings = await Booking.find(query)
+      .populate("userId", "userName email phoneNumber")
       .populate({
         path: "roomId",
-        populate: {
-          path: "roomTypeId",
-          model: "RoomType",
-          select: "roomType"
-        }
+        populate: { path: "roomTypeId", model: "RoomType", select: "roomType" }
       })
       .populate("hotelsId", "hotelName")
       .sort({ createdAt: -1 });
 
-    // Chuyển dữ liệu về định dạng cần thiết
+    // Lọc theo thời gian check-in/check-out (nếu filter được truyền)
+    const today = moment().startOf("day");
+
+    if (filter) {
+      bookings = bookings.filter(booking => {
+        const checkIn = moment(booking.checkInDate, "DD-MM-YYYY", true);
+        const checkOut = moment(booking.checkOutDate, "DD-MM-YYYY", true);
+        if (!checkIn.isValid() || !checkOut.isValid()) return false;
+
+        if (filter === "past") return checkOut.isBefore(today, "day");
+        if (filter === "upcoming") return checkIn.isAfter(today, "day");
+        if (filter === "current") return checkIn.isSameOrBefore(today, "day") && checkOut.isSameOrAfter(today, "day");
+        return true;
+      });
+    }
+
     const result = bookings.map(booking => ({
       bookingId: booking._id,
       customerName: booking.userId?.userName || "N/A",
       roomType: booking.roomId?.roomTypeId?.roomType || "N/A",
-      checkInDate: booking.checkInDate,
-      checkOutDate: booking.checkOutDate,
+      checkInDate: moment(booking.checkInDate, ["YYYY-MM-DD", "DD-MM-YYYY", moment.ISO_8601]).format("DD-MM-YYYY"),
+      checkOutDate: moment(booking.checkOutDate, ["YYYY-MM-DD", "DD-MM-YYYY", moment.ISO_8601]).format("DD-MM-YYYY"),
       email: booking.userId?.email || "N/A",
       phoneNumber: booking.userId?.phoneNumber || "N/A",
       paymentMethod: booking.paymentMethod,
       status: booking.status,
-      createdAt: booking.createdAt,
-      hotelName: booking.hotelsId?.hotelName || "N/A"
+      createdAt: (booking.createdAt),
+      hotelName: booking.hotelsId?.hotelName || "N/A",
+      totalAmount: booking.totalAmount || "N/A",
     }));
 
     return res.status(200).json(result);
@@ -187,5 +227,28 @@ bookingRouter.get("/hotelowner/getBookingList", authorizeRoles("hotelowner"),asy
 });
 
 
+// Cập nhật trạng thái đặt phòng
+bookingRouter.put("/hotelowner/update/:id", authorizeRoles("hotelowner", "employee"), async (req, res) => {
+  try {
+    const updatedBooking = await Booking.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.status(200).json({
+      message: {
+        msgBody: "✅ Cập nhật trạng thái đơn đặt thành công!",
+        msgError: false
+      },
+      updatedBooking
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: {
+        msgBody: "❌ Cập nhật trạng thái đơn đặt thất bại!",
+        msgError: true
+      },
+      error: error.message
+    });
+  }
+});
 
-  module.exports = bookingRouter;
+
+
+module.exports = bookingRouter;

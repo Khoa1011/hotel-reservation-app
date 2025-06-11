@@ -104,7 +104,7 @@ userRouter.post("/hotelowner/login", async (req, res) => {
         const token = signToken(user);
 
         // Gửi token cookie
-        res.cookie("access_token", token, { httpOnly: true, sameSite: "strict" });
+        res.cookie("token", token, { httpOnly: true, sameSite: "strict" });
 
         return res.status(200).json({
             msgBody: "Đăng nhập cho chủ khách sạn thành công!",

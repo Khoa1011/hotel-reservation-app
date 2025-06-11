@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 
 const Room = ({rooms,getRoomStatusColor, getRoomStatusText, formatCurrency, formatDate}) => {
+    
      return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">

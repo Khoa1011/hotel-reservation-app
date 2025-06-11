@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, User, Phone, Calendar, MapPin } from 'lucide-react';
 import '../index.css';
-import logo from '../assets/icons/logoStaytion.png';
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 import { toast } from 'react-toastify';
 
@@ -18,7 +17,6 @@ const AuthPage = () => {
         dateOfBirth: '',
         address: ''
     });
-    
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -28,12 +26,12 @@ const AuthPage = () => {
         }));
     };
 
-   
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (isLogin) {
             try {
-                const response = await fetch(`${baseUrl}/api/users/hotelowner/login`, {
+                const response = await fetch(`${baseUrl}/users/hotelowner/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -41,17 +39,19 @@ const AuthPage = () => {
                     body: JSON.stringify({
                         email: formData.email,
                         password: formData.password
-                    })
+                    }),
+                    credentials: 'include'
                 });
 
                 const data = await response.json();
-
+                console.log(data);
                 if (!data.msgError && data.token) {
-                    localStorage.setItem('token', data.token); // lưu token
+                    localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user)); // lưu thông tin user
+                    
                     toast.success('Đăng nhập thành công!');
                     toast.dismiss();
-                    window.location.href = '/homepage';
+                    window.location.href ='/homepage';
                 } else {
                     toast.dismiss();
                     toast.error(data.msgBody);

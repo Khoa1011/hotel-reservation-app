@@ -26,7 +26,7 @@ import Cookies from 'js-cookie';
 import axios from '../../utils/axiosConfig';
 import { toast } from 'react-toastify';
 import moment from "moment";
-import AddBooking  from './addBooking';
+import AddBooking from './addBooking';
 
 
 const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, formatCurrency, formatDate, getStatusColor, getStatusText }) => {
@@ -35,13 +35,17 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
     status: '',
     dateFrom: '',
     dateTo: '',
-    timeRange: ''
+    timeRange: '',
+    hotelId: '',
   });
   const [localBookings, setLocalBookings] = useState(bookings);
   const token = localStorage.getItem("token");
   const [loading, setLoading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
+  const hotelList = Array.from(
+    new Map(bookings.map(b => [b.hotelId._id, b.hotelId.hotelName])).entries()
+  ).map(([id, name]) => ({ id, name }));
 
   //Hàm cập nhật trạng thái đơn đặt phòng/hotel owner
   const updateBookingStatus = async (bookingId, newStatus) => {
@@ -115,6 +119,9 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
       if (filterParams.dateTo) {
         queryParams.append('toDate', filterParams.dateTo);
       }
+      if (filterParams.hotelId) {
+        queryParams.append('hotelId', filterParams.hotelId);
+      }
 
       // URL API
       const url = queryParams.toString()
@@ -162,7 +169,8 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
       status: '',
       dateFrom: '',
       dateTo: '',
-      timeRange: ''
+      timeRange: '',
+      hotelId: '',
     });
   };
 
@@ -202,6 +210,7 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
 
       {/* Filter Panel */}
       {showFilter && (
+
         <div className="bg-white rounded-lg shadow-lg border p-6 space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold text-gray-800">Bộ lọc đơn đặt phòng</h3>
@@ -211,6 +220,25 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
             >
               <X className="h-5 w-5" />
             </button>
+          </div>
+
+          {/* Hotel Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Khách sạn
+            </label>
+            <select
+              value={filters.hotelId}
+              onChange={(e) => handleFilterChange('hotelId', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Tất cả khách sạn</option>
+              {hotelList.map((hotel, index) => (
+                <option key={index} value={hotel.id}>
+                  {hotel.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -360,7 +388,7 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
                     </div>
                     <div>
                       <p className="text-sm font-medium">{booking.roomType}</p>
-                      <p className="text-sm text-gray-600">{booking.hotelName}</p>
+                      <p className="text-sm text-gray-600">{booking.hotelId.hotelName}</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium">{booking.checkInDate} - {booking.checkOutDate}</p>
@@ -471,7 +499,7 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
             >
               ✕
             </button>
-            <AddBooking  onClose={() => setShowAddModal(false)} />
+            <AddBooking onClose={() => setShowAddModal(false)} />
           </div>
         </div>
       )}

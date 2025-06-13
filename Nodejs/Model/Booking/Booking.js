@@ -6,6 +6,11 @@ const BookingSchema = new mongoose.Schema({
   hotelsId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "Hotel", required: true },
   roomId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "Room", required: true },
 
+  cccd: {
+    type: String,
+    unique: true,
+    sparse: true,
+  },
   // Sử dụng String để lưu ngày theo định dạng dd-MM-yyyy
   checkInDate: {
     type: String,
@@ -29,6 +34,10 @@ const BookingSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  note:{
+    type:String,
+    default: ""
   }
 });
 

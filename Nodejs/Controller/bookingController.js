@@ -124,7 +124,7 @@ bookingRouter.put('/:hotelId/rooms/:roomId/book', async (req, res) => {
 
 bookingRouter.get("/hotelowner/bookings", authorizeRoles("hotelowner", "employee"), async (req, res) => {
   try {
-    const { filter, fromDate, toDate, status } = req.query;
+    const { hotelId, filter, fromDate, toDate, status } = req.query;
     const user = await User.findById(req.user.id);
 
     if (!user || user.role !== "hotelowner") {
@@ -143,9 +143,21 @@ bookingRouter.get("/hotelowner/bookings", authorizeRoles("hotelowner", "employee
     }
 
     const hotelIds = hotels.map(h => h._id);
-    let query = {
-      hotelsId: { $in: hotelIds }
-    };
+    let query = {};
+
+    if (req.query.hotelId) {
+      const requestedHotelId = req.query.hotelId;
+      if (!hotelIds.map(id => id.toString()).includes(requestedHotelId)) {
+        return res.status(403).json({
+          msgBody: "Bạn không có quyền truy cập dữ liệu của khách sạn này.",
+          msgError: true
+        });
+      }
+      query.hotelsId = requestedHotelId;
+    } else {
+      query.hotelsId = { $in: hotelIds };
+    }
+
 
     // Lọc theo trạng thái booking nếu có
     if (status && ["pending", "confirmed", "cancelled"].includes(status)) {
@@ -201,6 +213,7 @@ bookingRouter.get("/hotelowner/bookings", authorizeRoles("hotelowner", "employee
     }
 
     const result = bookings.map(booking => ({
+      hotelId : booking.hotelsId,
       bookingId: booking._id,
       customerName: booking.userId?.userName || "N/A",
       roomType: booking.roomId?.roomTypeId?.roomType || "N/A",
@@ -211,7 +224,6 @@ bookingRouter.get("/hotelowner/bookings", authorizeRoles("hotelowner", "employee
       paymentMethod: booking.paymentMethod,
       status: booking.status,
       createdAt: (booking.createdAt),
-      hotelName: booking.hotelsId?.hotelName || "N/A",
       totalAmount: booking.totalAmount || "N/A",
     }));
 
@@ -249,6 +261,45 @@ bookingRouter.put("/hotelowner/update/:id", authorizeRoles("hotelowner", "employ
   }
 });
 
+
+
+bookingRouter.post("/hotelowner/create-booking", authorizeRoles("hotelowner", "employee"), async (req, res) => {
+  try {
+    const guestUserId = '684c6304de66d4781c70129e';
+    const { hotelsId, roomId } = req.body;
+
+    // Kiểm tra phòng có tồn tại và thuộc khách sạn đó không
+    const room = await Room.findOne({ _id: roomId, hotelsId: hotelsId });
+    if (!room) {
+      return res.status(400).json({
+        msgBody: "Phòng không thuộc khách sạn này hoặc không tồn tại!",
+        msgError: true,
+      });
+    }
+
+    const newBooking = new Booking({
+      ...req.body,
+      userId: req.body.userId || guestUserId
+    });
+
+    await newBooking.save();
+
+    res.status(200).json({
+      message: {
+        msgBody: "Tạo đơn đặt phòng thành công!",
+        msgError: false
+      },
+      booking: newBooking
+    });
+
+  } catch (error) {
+    console.error("Lỗi tạo booking:", error);
+    res.status(400).json({
+      msgBody: "Tạo đơn đặt phòng thất bại!",
+      msgError: true
+    });
+  }
+});
 
 
 module.exports = bookingRouter;

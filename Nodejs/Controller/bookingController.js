@@ -215,7 +215,7 @@ bookingRouter.get("/hotelowner/bookings", authorizeRoles("hotelowner", "employee
     const result = bookings.map(booking => ({
       hotelId : booking.hotelsId,
       bookingId: booking._id,
-      customerName: booking.userId?.userName || "N/A",
+      customerName: booking.userId?.userName || "Khách lẻ",
       roomType: booking.roomId?.roomTypeId?.roomType || "N/A",
       checkInDate: moment(booking.checkInDate, ["YYYY-MM-DD", "DD-MM-YYYY", moment.ISO_8601]).format("DD-MM-YYYY"),
       checkOutDate: moment(booking.checkOutDate, ["YYYY-MM-DD", "DD-MM-YYYY", moment.ISO_8601]).format("DD-MM-YYYY"),
@@ -225,6 +225,7 @@ bookingRouter.get("/hotelowner/bookings", authorizeRoles("hotelowner", "employee
       status: booking.status,
       createdAt: (booking.createdAt),
       totalAmount: booking.totalAmount || "N/A",
+      paymentStatus: booking.paymentStatus || "N/A",
     }));
 
     return res.status(200).json(result);

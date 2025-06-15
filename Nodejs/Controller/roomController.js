@@ -3,8 +3,9 @@ const multer = require("multer");
 const Room = require("../Model/Room/Room");
 const RoomType = require("../Model/RoomType/RoomType");
 const Hotels = require("../Model/Hotel/Hotel");
+const authorizeRoles = require('../middleware/roleAuth');
 
-const router = express.Router();
+const roomRouter = express.Router();
 
 // Cấu hình multer để lưu ảnh vào thư mục uploads/rooms
 const storage = multer.diskStorage({
@@ -16,7 +17,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // API thêm phòng mới
-router.post("/add", upload.single("image"), async (req, res) => {
+roomRouter.post("/add", upload.single("image"), async (req, res) => {
     try {
         const { roomTypeId, hotelsId, roomState, description, bedCount, capacity, amenities, totalRooms } = req.body;
 
@@ -63,4 +64,34 @@ router.post("/add", upload.single("image"), async (req, res) => {
     }
 });
 
-module.exports = router;
+// /--------------------------------------------------------------------------
+roomRouter.get("/hotelowner/getRoomInHotel/:hotelId",authorizeRoles("hotelowner", "employee"),async (req,res) => {
+    const {hotelId} = req.params;
+    try {
+        
+        const rooms = await Room.find({hotelsId: hotelId}).populate('roomTypeId');
+
+        if(!rooms){
+            return res.status(400).json({
+                msgBody: "Không có phòng nào trong khách sạn này!",
+                msgError: true
+            });
+        }
+        const result = rooms.map(room => ({
+            roomId: room._id,
+            roomTypeId: room.roomTypeId._id,
+            roomTypeName: room.roomTypeId.roomType,
+            roomTypePrice : room.roomTypeId.price
+        }));
+        return res.status(200).json(result);
+    } catch (error) {
+        return res.status(400).json({
+            msgBody: "Lỗi truy xuất phòng trong khách sạn!",
+            msgError: true,
+            messageError: error
+        });
+    }
+});
+
+
+module.exports = roomRouter;

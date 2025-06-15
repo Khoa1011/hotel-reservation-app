@@ -30,13 +30,18 @@ const BookingSchema = new mongoose.Schema({
   // qrCodeData: { type: String },
   // transactionId: { type: String },
   status: { type: String, enum: ["pending", "confirmed", "cancelled"], default: "pending" },
-  paymentMethod: { type: String, enum: ["CreditCard", "VNPay", "Momo", ""], required: true },
+  paymentMethod: { type: String, enum: ["CreditCard", "VNPay", "Momo", "cash"], default: "cash" },
   createdAt: {
     type: Date,
     default: Date.now
   },
-  note:{
-    type:String,
+  paymentStatus: {
+    type: String,
+    enum: ['unpaid', 'paid'],
+    default: 'paid' 
+  },
+  note: {
+    type: String,
     default: ""
   }
 });

@@ -20,14 +20,18 @@ import {
   XCircle,
   AlertCircle,
   Filter,
-  X
+  X,
+  Edit,
+  Plus,
+  Trash2,
+  Save
 } from 'lucide-react';
 import Cookies from 'js-cookie';
 import axios from '../../utils/axiosConfig';
 import { toast } from 'react-toastify';
 import moment from "moment";
 import AddBooking from './addBooking';
-
+import EditBooking from './editBooking';
 
 const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, formatCurrency, formatDate, getStatusColor, getStatusText }) => {
   const [showFilter, setShowFilter] = useState(false);
@@ -42,10 +46,38 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
   const token = localStorage.getItem("token");
   const [loading, setLoading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+
+  // States cho chỉnh sửa booking
+  const [editingBooking, setEditingBooking] = useState(null);
+  const [editServices, setEditServices] = useState([]);
+  const [newService, setNewService] = useState({ name: '', price: '', quantity: 1 });
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [showEditModal, setShowEditModal] = useState(false);
+
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
   const hotelList = Array.from(
     new Map(bookings.map(b => [b.hotelId._id, b.hotelId.hotelName])).entries()
   ).map(([id, name]) => ({ id, name }));
+
+  // Danh sách dịch vụ có sẵn
+  const availableServices = [
+    { name: 'Nước suối', price: 15000 },
+    { name: 'Coca Cola', price: 20000 },
+    { name: 'Bánh kẹo', price: 25000 },
+    { name: 'Dịch vụ giặt ủi', price: 50000 },
+    { name: 'Massage', price: 300000 },
+    { name: 'Ăn sáng', price: 100000 },
+    { name: 'Thuê xe', price: 500000 },
+    { name: 'Tour du lịch', price: 800000 }
+  ];
+
+  const paymentMethods = [
+    { value: 'cash', label: 'Tiền mặt' },
+    { value: 'card', label: 'Thẻ tín dụng' },
+    { value: 'bank_transfer', label: 'Chuyển khoản' },
+    { value: 'momo', label: 'MoMo' },
+    { value: 'vnpay', label: 'VNPay' }
+  ];
 
   //Hàm cập nhật trạng thái đơn đặt phòng/hotel owner
   const updateBookingStatus = async (bookingId, newStatus) => {
@@ -54,7 +86,6 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
         `${baseUrl}/bookings/hotelowner/update/${bookingId}`,
         { status: newStatus },
         {
-
           withCredentials: true,
         }
       );
@@ -92,15 +123,62 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
     }
   };
 
+  // Hàm cập nhật dịch vụ và thanh toán
+  const updateBookingServices = async (bookingId, services, paymentMethod) => {
+    try {
+      const response = await axios.put(
+        `${baseUrl}/bookings/hotelowner/update-services/${bookingId}`,
+        {
+          additionalServices: services,
+          paymentMethod: paymentMethod
+        },
+        {
+          withCredentials: true,
+        }
+      );
 
+      if (response.data?.message?.msgError === false) {
+        const updatedBooking = response.data.booking;
+        setLocalBookings((prev) =>
+          prev.map((b) =>
+            b.bookingId === bookingId ? { ...b, ...updatedBooking } : b
+          )
+        );
+        setBookings((prev) =>
+          prev.map((b) =>
+            b.bookingId === bookingId ? { ...b, ...updatedBooking } : b
+          )
+        );
+        toast.success("Cập nhật dịch vụ thành công!");
+        return { success: true };
+      } else {
+        toast.error(response.data?.message?.msgBody || "Cập nhật thất bại!");
+        return { success: false };
+      }
+    } catch (error) {
+      console.error("Lỗi khi cập nhật dịch vụ:", error.message);
+      toast.error("Lỗi khi cập nhật dịch vụ!");
+      return { success: false };
+    }
+  };
+
+  // Hàm mở modal chỉnh sửa
+  const openEditModal = (booking) => {
+  setEditingBooking(booking);
+  setShowEditModal(true);
+};
+
+
+
+  // Tính tổng tiền dịch vụ
+  const calculateServicesTotal = (services) => {
+    return services.reduce((total, service) => total + (service.price * service.quantity), 0);
+  };
 
   // Hàm fetch danh sách đặt phòng
   const fetchBookingByHotelOwner = async (filterParams = {}) => {
     setLoading(true);
     try {
-
-
-      console.log("Trong hàm fetch", token);
       if (!token) {
         toast.error('Không tìm thấy token. Vui lòng đăng nhập lại.');
       }
@@ -134,11 +212,9 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
         toast.error('Chưa có khách sạn nào');
         window.location.href = '/';
       }
-      console.log(response);
       // Cập nhật danh sách bookings
       setBookings(response.data);
       setLocalBookings(response.data);
-      console.log('Bookings fetched:', response.data);
     } catch (error) {
       console.error('Lỗi khi lấy danh sách đặt phòng:', error.response?.data || error.message);
       toast.error('Không thể lấy danh sách đặt phòng. Vui lòng thử lại.');
@@ -158,6 +234,9 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
   }, [filters]);
 
   const handleFilterChange = (key, value) => {
+    if (key == "hotelId") {
+      localStorage.setItem("selectedHotelId", value);
+    }
     setFilters(prev => ({
       ...prev,
       [key]: value
@@ -183,7 +262,6 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
   };
 
   const applyFilters = () => {
-    // Logic to apply filters will be implemented here
     console.log('Applying filters:', filters);
     setShowFilter(false);
   };
@@ -210,7 +288,6 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
 
       {/* Filter Panel */}
       {showFilter && (
-
         <div className="bg-white rounded-lg shadow-lg border p-6 space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold text-gray-800">Bộ lọc đơn đặt phòng</h3>
@@ -431,6 +508,28 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
                         Yêu cầu đặc biệt
                       </h4>
                       <p className="text-sm text-gray-600">{booking.specialRequests || "Không có yêu cầu đặc biệt"}</p>
+
+                      {/* Dịch vụ bổ sung */}
+                      {booking.additionalServices && booking.additionalServices.length > 0 && (
+                        <>
+                          <h4 className="font-semibold text-gray-800 flex items-center mt-4">
+                            <DollarSign className="h-4 w-4 mr-2" />
+                            Dịch vụ bổ sung
+                          </h4>
+                          <div className="space-y-2">
+                            {booking.additionalServices.map((service, index) => (
+                              <div key={index} className="flex justify-between items-center text-sm bg-white p-2 rounded">
+                                <span>{service.name} x{service.quantity}</span>
+                                <span className="font-medium">{formatCurrency(service.price * service.quantity)}</span>
+                              </div>
+                            ))}
+                            <div className="flex justify-between items-center text-sm font-semibold border-t pt-2">
+                              <span>Tổng dịch vụ:</span>
+                              <span>{formatCurrency(calculateServicesTotal(booking.additionalServices))}</span>
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     <div className="space-y-4">
@@ -441,17 +540,34 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
                           <span>Phương thức:</span>
-                          <span className="font-medium">{booking.paymentMethod || "Chưa thanh toán"}</span>
+                          <span className="font-medium">
+                            {booking.paymentMethod ?
+                              paymentMethods.find(pm => pm.value === booking.paymentMethod)?.label || booking.paymentMethod
+                              : "Chưa chọn"}
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span>Trạng thái:</span>
-                          {/* <span className={`font-medium ${booking.paymentStatus === 'Đã thanh toán' ? 'text-green-600' : 'text-yellow-600'}`}>
-                          {booking.paymentStatus}
-                        </span> */}
-
-                          <span className={"font-medium text-green-600"}>
-                            Đã thanh toán
+                          <span
+                            className={`font-medium ${booking.paymentStatus === 'paid' ? 'text-green-600' : 'text-yellow-600'
+                              }`}
+                          >
+                            {booking.paymentStatus === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}
                           </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Tiền phòng:</span>
+                          <span>{formatCurrency(booking.roomAmount || booking.totalAmount)}</span>
+                        </div>
+                        {booking.additionalServices && booking.additionalServices.length > 0 && (
+                          <div className="flex justify-between">
+                            <span>Dịch vụ:</span>
+                            <span>{formatCurrency(calculateServicesTotal(booking.additionalServices))}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between font-semibold border-t pt-2">
+                          <span>Tổng cộng:</span>
+                          <span>{formatCurrency((booking.roomAmount || booking.totalAmount) + calculateServicesTotal(booking.additionalServices || []))}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Thời gian đặt:</span>
@@ -459,21 +575,29 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
                         </div>
                       </div>
 
-                      <div className="flex space-x-2 mt-4">
+                      <div className="grid grid-cols-2 gap-2 mt-4">
                         <button
                           onClick={() => updateBookingStatus(booking.bookingId, 'confirmed')}
-                          className="flex-1 px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+                          className="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700"
                         >
                           Xác nhận
                         </button>
                         <button
                           onClick={() => updateBookingStatus(booking.bookingId, 'cancelled')}
-                          className="flex-1 px-3 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+                          className="px-3 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700"
                         >
                           Hủy đơn
                         </button>
-                        <button className="px-3 py-2 border border-gray-300 text-sm rounded hover:bg-gray-50">
-                          <Eye className="h-4 w-4" />
+                        <button
+                          onClick={() => openEditModal(booking)}
+                          className="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 flex items-center justify-center"
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          Chỉnh sửa
+                        </button>
+                        <button className="px-3 py-2 border border-gray-300 text-sm rounded hover:bg-gray-50 flex items-center justify-center">
+                          <Eye className="h-4 w-4 mr-1" />
+                          Xem
                         </button>
                       </div>
                     </div>
@@ -490,6 +614,8 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
           <p className="text-gray-500 mt-2">Chưa có đơn đặt nào</p>
         </div>
       )}
+
+      {/* Modal thêm booking mới */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl relative">
@@ -503,8 +629,24 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
           </div>
         </div>
       )}
-    </div>
-  );
-};
+
+      {/* Modal thêm booking mới */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-4xl relative">
+            
+            <EditBooking
+              onClose={() => setShowEditModal(false)}
+              booking={editingBooking}
+              setBookings={setBookings}
+              setLocalBookings={setLocalBookings}
+            />
+          </div>
+        </div>
+      )}
+
+
+    </div>)
+}
 
 export default Booking;

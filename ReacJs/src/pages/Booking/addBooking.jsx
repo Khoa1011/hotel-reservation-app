@@ -16,9 +16,16 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
+import axios from '../../utils/axiosConfig';
+import { toast } from 'react-toastify';
+import moment from "moment";
 
 const CounterBookingForm = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
+  const hotelId = localStorage.getItem("selectedHotelId");
+
+
   const [formData, setFormData] = useState({
     // Thông tin khách hàng
     customerName: '',
@@ -49,14 +56,15 @@ const CounterBookingForm = () => {
   const [serviceTotal, setServiceTotal] = useState(0);
   const [change, setChange] = useState(0);
   const [errors, setErrors] = useState({});
+  const [roomTypes, setRoomTypes] = useState([]);
 
-  // Dữ liệu mẫu
-  const roomTypes = [
-    { id: 'standard', name: 'Phòng Standard', price: 500000 },
-    { id: 'deluxe', name: 'Phòng Deluxe', price: 800000 },
-    { id: 'suite', name: 'Phòng Suite', price: 1200000 },
-    { id: 'family', name: 'Phòng Family', price: 1500000 }
-  ];
+  // // Dữ liệu mẫu
+  // const roomTypes = [
+  //   { id: 'standard', name: 'Phòng Standard', price: 500000 },
+  //   { id: 'deluxe', name: 'Phòng Deluxe', price: 800000 },
+  //   { id: 'suite', name: 'Phòng Suite', price: 1200000 },
+  //   { id: 'family', name: 'Phòng Family', price: 1500000 }
+  // ];
 
   const paymentMethods = [
     { id: 'cash', name: 'Tiền mặt' },
@@ -76,6 +84,72 @@ const CounterBookingForm = () => {
     { id: 'extra_bed', name: 'Giường phụ', price: 200000 },
     { id: 'minibar', name: 'Minibar', price: 80000 }
   ];
+
+  //Tạo đơn đặt phòng mới tại quầy
+  const handleSubmit = async () => {
+  try {
+    const payload = {
+      hotelsId: hotelIdFromStorageOrProp,  // Lấy từ localStorage hoặc props
+      roomId: formData.roomTypeId,
+      checkInDate: formData.checkInDate,
+      checkOutDate: formData.checkOutDate,
+      paymentMethod: formData.paymentMethod,
+      status: formData.status || 'pending', // mặc định nếu không chọn
+      totalAmount: totalAmount, // đã tính trước
+      additionalServices: formData.additionalServices,
+    };
+
+    const response = await axios.post(`${baseUrl}/bookings/hotelowner/create-booking`, payload);
+
+    if (response.data?.message?.msgError === false) {
+      toast.success(response.data.message.msgBody);
+      // reset form hoặc chuyển trang
+    } else {
+      toast.error(response.data.message.msgBody || 'Tạo đơn không thành công!');
+    }
+
+  } catch (error) {
+    console.error('Lỗi tạo đơn:', error);
+    toast.error('Tạo đơn đặt phòng thất bại!');
+  }
+};
+
+  //Lấy danh sách phòng trong khách sạn
+  const getRoomInHotel = async (hotelsId = '') => {
+    try {
+      const url = `${baseUrl}/rooms/hotelowner/getRoomInHotel/${hotelsId}`;
+      const response = await axios.get(url);
+
+      if (response.status === 200) {
+        const formatted = response.data.map(room => ({
+          id: room.roomTypeId, // ID loại phòng
+          name: room.roomTypeName,
+          price: room.roomTypePrice
+        }));
+
+        // // Loại bỏ trùng lặp (do mỗi phòng có thể thuộc cùng loại phòng)
+        // const uniqueRoomTypes = Array.from(
+        //   new Map(formatted.map(item => [item.id, item])).values()
+        // );
+
+        setRoomTypes(formatted);
+        console.log("Danh sách phòng trong ks: ",formatted);
+      } else if (response.status === 400) {
+        toast.error(response.data.msgBody || 'Không có phòng nào trong khách sạn này');
+      }
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách phòng:", error);
+      toast.error("Lỗi lấy dữ liệu phòng khách sạn");
+    }
+  };
+
+  //Lấy id khi người dùng chọn khách sạn
+  useEffect(() => {
+    console.log(hotelId);
+    if (hotelId) {
+      getRoomInHotel(hotelId);
+    }
+  }, [hotelId]);
 
   // Tính số ngày lưu trú
   useEffect(() => {
@@ -162,14 +236,6 @@ const CounterBookingForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
-    if (validateForm()) {
-      // Xử lý đặt phòng
-      console.log('Booking data:', formData);
-      alert('Đặt phòng thành công!');
-      setIsOpen(false); // Đóng modal sau khi thành công
-    }
-  };
 
   const handleClose = () => {
     setIsOpen(false);
@@ -299,7 +365,10 @@ const CounterBookingForm = () => {
                       </label>
                       <select
                         value={formData.roomType}
-                        onChange={(e) => handleInputChange('roomType', e.target.value)}
+                        onChange={(e) => { handleInputChange('roomType', e.target.value);
+                        
+
+                        }}
                         className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors.roomType ? 'border-red-500' : 'border-gray-300'
                           }`}
                       >

@@ -263,7 +263,7 @@ const HotelManagement = () => {
             <div className="w-64 bg-white shadow-lg">
                 <div className="p-6 border-b">
                     <h1 className="text-xl font-bold text-gray-800">Quản Lý Khách Sạn</h1>
-                    <p className="text-sm text-gray-600">Hotel Paradise</p>
+                    {/* <p className="text-sm text-gray-600">Hotel Paradise</p> */}
                 </div>
 
                 <nav className="mt-6">

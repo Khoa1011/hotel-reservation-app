@@ -25,35 +25,35 @@ bookingRouter.get("/getBookingList/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const bookings = await Booking.find({ userId: new mongoose.Types.ObjectId(userId) })
+    const bookings = await Booking.find({ maNguoiDung: new mongoose.Types.ObjectId(userId) })
       .populate({
-        path: "hotelsId",
-        select: "hotelName address image",
+        path: "maKhachSan",
+        select: "tenKhachSan diaChi hinhAnh",
       })
       .populate({
-        path: "roomId",
+        path: "maPhong",
         populate: {
-          path: "roomTypeId",
-          select: "roomType",
+          path: "maLoaiPhong",
+          select: "tenLoaiPhong",
         },
-        select: "roomTypeId",
+        select: "maLoaiPhong",
       });
 
     // Tạo mảng dữ liệu đơn giản hóa
     const formattedBookings = bookings.map((b) => ({
       id: b._id,
-      hotelName: b.hotelsId?.hotelName ?? "Unknown Hotel",
-      hotelAddress: b.hotelsId?.address ?? "Unknown Address",
-      roomType: b.roomId?.roomTypeId?.roomType ?? "Unknown Room Type",
-      image: b.hotelsId?.image,
+      tenKhachSan: b.maKhachSan?.tenKhachSan ?? "Unknown Hotel",
+      diaChiKhachSan: b.maKhachSan?.diaChi ?? "Unknown Address",
+      tenLoaiPhong: b.maPhong?.maLoaiPhong?.tenLoaiPhong ?? "Unknown Room Type",
+      hinhAnhKhachSan: b.maKhachSan?.hinhAnh,
       // Thêm các field khác như ngày nhận, trả, tổng tiền...
-      checkInDate: b.checkInDate,
-      checkOutDate: b.checkOutDate,
-      checkInTime: b.checkInTime,
-      checkOutTime: b.checkOutTime,
-      totalAmount: b.totalAmount,
-      paymentMethod: b.paymentMethod,
-      status: b.status,
+      ngayNhanPhong: b.ngayNhanPhong,
+      ngayTraPhong: b.ngayTraPhong,
+      gioNhanPhong: b.gioNhanPhong,
+      gioTraPhong: b.gioTraPhong,
+      tongTien: b.tongTien,
+      phuongThucThanhToan: b.phuongThucThanhToan,
+      trangThai: b.trangThai,
     }));
 
     return res.status(200).json({
@@ -122,46 +122,52 @@ bookingRouter.put('/:hotelId/rooms/:roomId/book', async (req, res) => {
 
 // --------------------------------------------------------------------------------------------------
 
-bookingRouter.get("/hotelowner/bookings", authorizeRoles("hotelowner", "employee"), async (req, res) => {
+bookingRouter.get("/hotelowner/bookings", authorizeRoles("chuKhachSan", "nhanVien"), async (req, res) => {
   try {
     const { hotelId, filter, fromDate, toDate, status } = req.query;
     const user = await User.findById(req.user.id);
 
-    if (!user || user.role !== "hotelowner") {
+    if (!user || user.vaiTro !== "chuKhachSan") {
       return res.status(403).json({
         msgBody: "Tài khoản không có quyền sử dụng chức năng này!",
         msgError: true
       });
     }
 
-    const hotels = await Hotel.find({ ownerId: user._id });
+    const hotels = await Hotel.find({ maChuKhachSan: user._id });
     if (hotels.length === 0) {
       return res.status(404).json({
         msgBody: "Bạn chưa sở hữu khách sạn nào.",
         msgError: true
       });
     }
+    console.log("các khách sạn ",hotels);
 
     const hotelIds = hotels.map(h => h._id);
+    console.log("Hotelids ",hotelIds);
     let query = {};
 
     if (req.query.hotelId) {
       const requestedHotelId = req.query.hotelId;
+      console.log("mã chủ khách sạn: ",requestedHotelId);
       if (!hotelIds.map(id => id.toString()).includes(requestedHotelId)) {
+        console.log("❌ Hotel ID not found in user's hotels");
+        console.log("🔍 Available hotel IDs:", hotelIds.map(id => id.toString()));
         return res.status(403).json({
           msgBody: "Bạn không có quyền truy cập dữ liệu của khách sạn này.",
           msgError: true
         });
       }
-      query.hotelsId = requestedHotelId;
+      console.log("hehe",query.maKhachSan);
+      query.maKhachSan = requestedHotelId;
     } else {
-      query.hotelsId = { $in: hotelIds };
+      query.maKhachSan = { $in: hotelIds };
     }
 
 
     // Lọc theo trạng thái booking nếu có
-    if (status && ["pending", "confirmed", "cancelled"].includes(status)) {
-      query.status = status;
+    if (status && ["Đang chờ", "Đã xác nhận", "Đã hủy"].includes(status)) {
+      query.trangThai = status;
     }
 
     // Lọc theo ngày check-in nếu có
@@ -178,22 +184,22 @@ bookingRouter.get("/hotelowner/bookings", authorizeRoles("hotelowner", "employee
           msgError: true
         });
       }
-      query.checkInDate = {};
+      query.ngayNhanPhong = {};
       if (fromDate) {
-        query.checkInDate.$gte = moment(fromDate, "YYYY-MM-DD").format("DD-MM-YYYY");
+        query.ngayNhanPhong.$gte = moment(fromDate, "YYYY-MM-DD").format("DD-MM-YYYY");
       }
       if (toDate) {
-        query.checkInDate.$lte = moment(toDate, "YYYY-MM-DD").format("DD-MM-YYYY");
+        query.ngayNhanPhong.$lte = moment(toDate, "YYYY-MM-DD").format("DD-MM-YYYY");
       }
     }
 
     let bookings = await Booking.find(query)
-      .populate("userId", "userName email phoneNumber")
+      .populate("maNguoiDung", "tenNguoiDung email soDienThoai")
       .populate({
-        path: "roomId",
-        populate: { path: "roomTypeId", model: "RoomType", select: "roomType" }
+        path: "maPhong",
+        populate: { path: "maLoaiPhong", model: "loaiPhong", select: "tenLoaiPhong" }
       })
-      .populate("hotelsId", "hotelName")
+      .populate("maKhachSan", "tenKhachSan")
       .sort({ createdAt: -1 });
 
     // Lọc theo thời gian check-in/check-out (nếu filter được truyền)
@@ -201,8 +207,8 @@ bookingRouter.get("/hotelowner/bookings", authorizeRoles("hotelowner", "employee
 
     if (filter) {
       bookings = bookings.filter(booking => {
-        const checkIn = moment(booking.checkInDate, "DD-MM-YYYY", true);
-        const checkOut = moment(booking.checkOutDate, "DD-MM-YYYY", true);
+        const checkIn = moment(booking.ngayNhanPhong, "DD-MM-YYYY", true);
+        const checkOut = moment(booking.ngayTraPhong, "DD-MM-YYYY", true);
         if (!checkIn.isValid() || !checkOut.isValid()) return false;
 
         if (filter === "past") return checkOut.isBefore(today, "day");
@@ -213,20 +219,21 @@ bookingRouter.get("/hotelowner/bookings", authorizeRoles("hotelowner", "employee
     }
 
     const result = bookings.map(booking => ({
-      hotelId : booking.hotelsId,
+      hotelId : booking.maKhachSan,
       bookingId: booking._id,
-      customerName: booking.userId?.userName || "Khách lẻ",
-      roomType: booking.roomId?.roomTypeId?.roomType || "N/A",
-      checkInDate: moment(booking.checkInDate, ["YYYY-MM-DD", "DD-MM-YYYY", moment.ISO_8601]).format("DD-MM-YYYY"),
-      checkOutDate: moment(booking.checkOutDate, ["YYYY-MM-DD", "DD-MM-YYYY", moment.ISO_8601]).format("DD-MM-YYYY"),
-      email: booking.userId?.email || "N/A",
-      phoneNumber: booking.userId?.phoneNumber || "N/A",
-      paymentMethod: booking.paymentMethod,
-      status: booking.status,
-      createdAt: (booking.createdAt),
-      totalAmount: booking.totalAmount || "N/A",
-      paymentStatus: booking.paymentStatus || "N/A",
+      customerName: booking.maNguoiDung?.tenNguoiDung || "Khách lẻ",
+      roomType: booking.maPhong?.maLoaiPhong?.tenLoaiPhong || "N/A",
+      checkInDate: moment(booking.ngayNhanPhong, ["YYYY-MM-DD", "DD-MM-YYYY", moment.ISO_8601]).format("DD-MM-YYYY"),
+      checkOutDate: moment(booking.ngayTraPhong, ["YYYY-MM-DD", "DD-MM-YYYY", moment.ISO_8601]).format("DD-MM-YYYY"),
+      email: booking.maNguoiDung?.email || "N/A",
+      phoneNumber: booking.maNguoiDung?.soDienThoai || "N/A",
+      paymentMethod: booking.phuongThucThanhToan,
+      status: booking.trangThai,
+      createdAt: (booking.thoiGianTaoDon),
+      totalAmount: booking.tongTien || "N/A",
+      paymentStatus: booking.trangThaiThanhToan || "N/A",
     }));
+    console.log("Kết quả trả về:", result);
 
     return res.status(200).json(result);
 
@@ -241,7 +248,7 @@ bookingRouter.get("/hotelowner/bookings", authorizeRoles("hotelowner", "employee
 
 
 // Cập nhật trạng thái đặt phòng
-bookingRouter.put("/hotelowner/update/:id", authorizeRoles("hotelowner", "employee"), async (req, res) => {
+bookingRouter.put("/hotelowner/update/:id", authorizeRoles("chuKhachSan", "nhanVien"), async (req, res) => {
   try {
     const updatedBooking = await Booking.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.status(200).json({
@@ -264,7 +271,7 @@ bookingRouter.put("/hotelowner/update/:id", authorizeRoles("hotelowner", "employ
 
 
 
-bookingRouter.post("/hotelowner/create-booking", authorizeRoles("hotelowner", "employee"), async (req, res) => {
+bookingRouter.post("/hotelowner/create-booking", authorizeRoles("chuKhachSan", "nhanVien"), async (req, res) => {
   try {
     const guestUserId = '684c6304de66d4781c70129e';
     const { hotelsId, roomId } = req.body;

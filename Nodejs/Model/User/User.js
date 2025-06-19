@@ -4,15 +4,15 @@ const bcrypt = require("bcryptjs");
 
 
 const UserSchema = new mongoose.Schema({
-    userName: {
+    tenNguoiDung: {
         type: String,
         default: "",
     },
-    DoB: {
+    ngaySinh: {
         type: String,
         default: () => new Date().toISOString().split('T')[0]
     },
-    gender: {
+    gioiTinh: {
         type: Boolean,
         default: true,
     },
@@ -22,23 +22,23 @@ const UserSchema = new mongoose.Schema({
         unique: true,
 
     },
-    password: {
+    matKhau: {
         type: String,
         required: true,
     },
-    phoneNumber: {
+    soDienThoai: {
         type: String,
         default: "",
     },
-    role: {
+    vaiTro: {
         type: String,
-        default: "user"
+        default: "nguoiDung"
     },
-    createAt: {
+    ngayTao: {
         type: Date,
         default: Date.now,
     },
-    avatar: {
+    hinhDaiDien: {
         type: String,
         default: ""
     },
@@ -51,16 +51,16 @@ const UserSchema = new mongoose.Schema({
 
 //Mã hóa password
 UserSchema.pre("save", function (next) {
-    if (!this.isModified("password")) return next();
-    bcrypt.hash(this.password, 10, (err, passwordHash) => {
+    if (!this.isModified("matKhau")) return next();
+    bcrypt.hash(this.matKhau, 10, (err, passwordHash) => {
         if (err) return next(err);
-        this.password = passwordHash;
+        this.matKhau = passwordHash;
         next();
     });
 });
 
 UserSchema.method.comparePassword = function (password, cb) {
-    bcrypt.compare(password, this.password, (err, isMatch) => {
+    bcrypt.compare(password, this.matKhau, (err, isMatch) => {
         if (err) return cb(err);
         else {
             if (!isMatch) return cb(null, isMatch);
@@ -70,4 +70,4 @@ UserSchema.method.comparePassword = function (password, cb) {
 };
 
 
-module.exports = mongoose.model("User", UserSchema);
+module.exports = mongoose.model("nguoiDung", UserSchema);

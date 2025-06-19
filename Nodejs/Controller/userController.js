@@ -9,7 +9,6 @@ const JWT_SECRET = process.env.JWT_SECRET || "ThuKhoa";
 const authorizeRoles = require("../middleware/roleAuth");
 
 
-
 // const signToken = (userID) =>{
 //     return JWT.sign({
 //         iss:"ThuKhoa",
@@ -25,7 +24,7 @@ const signToken = (user) => {
     return JWT.sign({
         iss: "ThuKhoa",
         sub: user._id,
-        role: user.role,  
+        role: user.vaiTro,        
         email: user.email
     }, JWT_SECRET, { expiresIn: "1d" });
 };
@@ -36,14 +35,14 @@ userRouter.get("/admin-only", authorizeRoles("admin"), (req, res) => {
 });
 
 // Route cho cả admin và user
-userRouter.get("/admin-or-user", authorizeRoles("admin", "user"), (req, res) => {
+userRouter.get("/admin-or-user", authorizeRoles("admin", "nguoiDung"), (req, res) => {
     res.json({ message: "Bạn có quyền truy cập!" });
 });
 
 //Đăng ký tài khoản admin
 userRouter.post("/hotelowner/register", async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, matKhau } = req.body;
 
         // Kiểm tra xem email đã tồn tại chưa
         const existingUser = await User.findOne({ email });
@@ -54,12 +53,12 @@ userRouter.post("/hotelowner/register", async (req, res) => {
         }
 
         // Tạo người dùng mới
-        const newUser = new User({ email, password, role:"hotelowner" });
+        const newUser = new User({ email, matKhau, vaiTro:"chuKhachSan" });
         await newUser.save(); // Lưu user vào database
 
         return res.status(200).json({
             message: { msgBody: "Tạo tài khoản cho chủ khách sạn thành công!", msgError: false },
-            user: { id: newUser._id, email: newUser.email, role:newUser.role }, // Gửi dữ liệu user về client  
+            user: { id: newUser._id, email: newUser.email, vaiTro:newUser.vaiTro }, // Gửi dữ liệu user về client  
         });
     } catch (err) {
         console.error("Lỗi này:", err);
@@ -72,7 +71,7 @@ userRouter.post("/hotelowner/register", async (req, res) => {
 
 userRouter.post("/hotelowner/login", async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, matKhau } = req.body;
 
         // Kiểm tra user tồn tại
         const user = await User.findOne({ email });
@@ -84,7 +83,7 @@ userRouter.post("/hotelowner/login", async (req, res) => {
         }
 
         // Kiểm tra role
-        if (user.role !== "hotelowner") {
+        if (user.vaiTro !== "chuKhachSan") {
             return res.status(403).json({
                 msgBody: "Tài khoản này không có quyền đăng nhập trang của khách sạn!",
                 msgError: true
@@ -92,7 +91,7 @@ userRouter.post("/hotelowner/login", async (req, res) => {
         }
 
         // Kiểm tra mật khẩu
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = await bcrypt.compare(matKhau, user.matKhau);
         if (!isMatch) {
             return res.status(401).json({
                 msgBody: "Mật khẩu không chính xác!",
@@ -110,10 +109,9 @@ userRouter.post("/hotelowner/login", async (req, res) => {
             msgBody: "Đăng nhập cho chủ khách sạn thành công!",
             msgError: false,
             isAuthenticated: true,
-            user: { id: user._id, email: user.email, role: user.role },
+            user: { id: user._id, email: user.email, role: user.vaiTro },
             token
         });
-
     } catch (err) {
         return res.status(500).json({
             msgBody: "Lỗi server!",
@@ -128,7 +126,7 @@ userRouter.post("/hotelowner/login", async (req, res) => {
 //Đăng ký tài khoản user
 userRouter.post("/register", async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, matKhau } = req.body;
 
         // Kiểm tra xem email đã tồn tại chưa
         const existingUser = await User.findOne({ email });
@@ -139,7 +137,7 @@ userRouter.post("/register", async (req, res) => {
         }
 
         // Tạo người dùng mới
-        const newUser = new User({ email, password });
+        const newUser = new User({ email, matKhau });
         await newUser.save(); // Lưu user vào database
 
     
@@ -147,7 +145,9 @@ userRouter.post("/register", async (req, res) => {
             message: { msgBody: "Tạo tài khoản thành công!", msgError: false },
             user: { id: newUser._id, email: newUser.email }, // Gửi dữ liệu user về client  
         });
-    } catch (err) {
+    } 
+    
+    catch (err) {
         console.error("Lỗi này:", err);
         return res.status(500).json({
             message: { msgBody: "Lỗi server!", msgError: true },
@@ -159,7 +159,7 @@ userRouter.post("/register", async (req, res) => {
 //Đăng nhập tài khoản
 userRouter.post("/login", async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, matKhau } = req.body;
 
         // Kiểm tra user có tồn tại không
         const user = await User.findOne({ email });
@@ -171,7 +171,7 @@ userRouter.post("/login", async (req, res) => {
         }
 
         // Kiểm tra mật khẩu
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = await bcrypt.compare(matKhau, user.matKhau);
         if (!isMatch) {
             return res.status(401).json({ 
                 msgBody: "Mật khẩu không chính xác!",
@@ -217,13 +217,13 @@ userRouter.get(
 
 userRouter.post("/updateUser", async (req, res)=> {
     try {
-        const { userId,Dob ,userName, gender, phoneNumber, avatar } = req.body;
+        const { maNguoiDung,ngaySinh ,tenNguoiDung, gioiTinh, soDienThoai, hinhDaiDien } = req.body;
         console.log("Received Body:", req.body);
-        if (!userId) {
+        if (!maNguoiDung) {
             return res.status(400).json({ message: "User ID is required" });
         }
         // Kiểm tra user có tồn tại không
-        const existingUser = await User.findById(userId);
+        const existingUser = await User.findById(maNguoiDung);
         if (!existingUser) {
             return res.status(404).json({
                 message: { msgBody: "User not found!", msgError: true }
@@ -232,8 +232,8 @@ userRouter.post("/updateUser", async (req, res)=> {
 
         // Cập nhật thông tin user
         const updatedUser = await User.findByIdAndUpdate(
-            userId,
-            { Dob,userName, gender, phoneNumber, avatar },
+            maNguoiDung,
+            { ngaySinh,tenNguoiDung, gioiTinh, soDienThoai, hinhDaiDien },
             { new: true }
         );
 
@@ -251,16 +251,16 @@ userRouter.post("/updateUser", async (req, res)=> {
 
 userRouter.post("/updateProfile", async (req, res) => {
     try {
-        const { userId, Dob, userName, gender, phoneNumber, avatar, password } = req.body;
+        const { maNguoiDung,ngaySinh ,tenNguoiDung, gioiTinh, soDienThoai, hinhDaiDien, matKhau } = req.body;
         console.log("Received Body:", req.body);
 
         // Kiểm tra userId có được gửi không
-        if (!userId) {
+        if (!maNguoiDung) {
             return res.status(400).json({ message: "User ID is required" });
         }
 
         // Kiểm tra user có tồn tại không
-        const existingUser = await User.findById(userId);
+        const existingUser = await User.findById(maNguoiDung);
         if (!existingUser) {
             return res.status(404).json({
                 message: { msgBody: "User not found!", msgError: true }
@@ -268,15 +268,15 @@ userRouter.post("/updateProfile", async (req, res) => {
         }
 
         // Nếu mật khẩu mới được gửi, mã hóa mật khẩu mới
-        let hashedPassword = existingUser.password; // Giữ nguyên mật khẩu cũ nếu không thay đổi
-        if (password) {
-            hashedPassword = await bcrypt.hash(password, 10); // Mã hóa mật khẩu mới
+        let hashedPassword = existingUser.matKhau; // Giữ nguyên mật khẩu cũ nếu không thay đổi
+        if (matKhau) {
+            hashedPassword = await bcrypt.hash(matKhau, 10); // Mã hóa mật khẩu mới
         }
 
         // Cập nhật thông tin user (bao gồm cả mật khẩu nếu có)
         const updatedUser = await User.findByIdAndUpdate(
-            userId,
-            { Dob, userName, gender, phoneNumber, avatar, password: hashedPassword },
+            maNguoiDung,
+            { ngaySinh, tenNguoiDung, gioiTinh, soDienThoai, hinhDaiDien, matKhau: hashedPassword },
             { new: true }
         );
 
@@ -309,11 +309,11 @@ userRouter.get("/getUser", passport.authenticate("jwt", { session: false }), asy
             user: {
                 id: user._id,
                 email: user.email,
-                userName: user.userName,
-                Dob: user.Dob,
-                gender: user.gender,
-                phoneNumber: user.phoneNumber,
-                avatar: user.avatar,
+                tenNguoiDung: user.tenNguoiDung,
+                ngaySinh: user.ngaySinh,
+                gioiTinh: user.gioiTinh,
+                soDienThoai: user.soDienThoai,
+                hinhDaiDien: user.hinhDaiDien,
             },
         });
     } catch (err) {

@@ -2,9 +2,9 @@ const mongoose = require("mongoose");
 const moment = require("moment");
 
 const BookingSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "User", required: true },
-  hotelsId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "Hotel", required: true },
-  roomId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "Room", required: true },
+  maNguoiDung: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "nguoiDung", required: true },
+  maKhachSan: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "khachSan", required: true },
+  maPhong: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "phong", required: true },
 
   cccd: {
     type: String,
@@ -12,40 +12,44 @@ const BookingSchema = new mongoose.Schema({
     sparse: true,
   },
   // Sử dụng String để lưu ngày theo định dạng dd-MM-yyyy
-  checkInDate: {
+  ngayNhanPhong: {
     type: String,
     required: true,
     set: (value) => moment(value, "DD-MM-YYYY").format("DD-MM-YYYY"),
   },
-  checkOutDate: {
+  ngayTraPhong: {
     type: String,
     required: true,
     set: (value) => moment(value, "DD-MM-YYYY").format("DD-MM-YYYY"),
   },
 
-  checkInTime: { type: String, default: "14:00" },
-  checkOutTime: { type: String, default: "12:00" },
-  totalAmount: { type: Number, required: true },
+  gioNhanPhong: { type: String, default: "14:00" },
+  gioTraPhong: { type: String, default: "12:00" },
+  tongTien: { type: Number, required: true },
   // qrCodeUrl: { type: String },
   // qrCodeData: { type: String },
   // transactionId: { type: String },
-  status: { type: String, enum: ["pending", "confirmed", "cancelled"], default: "pending" },
-  paymentMethod: { type: String, enum: ["CreditCard", "VNPay", "Momo", "cash"], default: "cash" },
-  createdAt: {
+  trangThai: { type: String, enum: ["Đang chờ", "Đã xác nhận", "Đã hủy"], default: "Đang chờ" },
+  phuongThucThanhToan: { type: String, enum: ["Thẻ tín dụng", "VNPay", "Momo", "Tiền mặt"], default: "Tiền mặt" },
+  thoiGianTaoDon: {
     type: Date,
     default: Date.now
   },
-  paymentStatus: {
+  trangThaiThanhToan: {
     type: String,
-    enum: ['unpaid', 'paid'],
-    default: 'paid' 
+    enum: ['Chưa thanh toán', 'Đã thanh toán','Thanh toán 1 phần'],
+    default: 'Đã thanh toán' 
   },
-  note: {
+  ghiChu: {
     type: String,
     default: ""
+  },
+  soDienThoai:{
+    type:String,
+    default:""
   }
 });
 
 
 
-module.exports = mongoose.model("Booking", BookingSchema);
+module.exports = mongoose.model("donDatPhong", BookingSchema);

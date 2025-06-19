@@ -1,40 +1,39 @@
 const mongoose = require("mongoose");
 
 const HotelSchema = new mongoose.Schema({
-   ownerId: {
+   maChuKhachSan: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true
+    ref: "nguoiDung",
   },
-    hotelName :{
+    tenKhachSan :{
         type: String,
         default:"",
         required:true,
         trim: true
     },
-     address:{
+     diaChi:{
         type: String,
         default:"",
      },
-     image:{
+     hinhAnh:{
         type: String,
         default: "",
      },
-     city:{
+     thanhPho:{
         type: String,
         default:"",
      },
-     description:{
+     moTa:{
         type: String,
         default:"",
      },
-     star:{
+     soSao:{
         type:Number,
-        default:5,
+        default: () => 0.0,
         min:1,
         max:5
      },
-     phoneNumber:{
+     soDienThoai:{
         type:String,
         default: "",
      },
@@ -43,13 +42,13 @@ const HotelSchema = new mongoose.Schema({
         lowercase: true,
         default: ""
      },
-     price:{
+     giaCa:{
       type: Number,
       default:0,
      },
-     rooms: [{ 
-      type: mongoose.Schema.Types.ObjectId, ref: "Room" 
+     danhSachPhong: [{ 
+      type: mongoose.Schema.Types.ObjectId, ref: "phong" 
    }]
 });
 
-module.exports = mongoose.model("Hotel",HotelSchema);
+module.exports = mongoose.model("khachSan",HotelSchema);

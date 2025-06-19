@@ -4,67 +4,67 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class User {
   String id;
-  String userName;
-  bool gender;
+  String tenNguoiDung;
+  bool gioiTinh;
   String email;
-  String password;
-  String phoneNumber;
-  String role;
-  String avatar;
-  String Dob;
+  String matKhau;
+  String soDienThoai;
+  String vaiTro;
+  String hinhDaiDien;
+  String ngaySinh;
   DateTime createAt;
 
   User({
     required this.id,
-    required this.userName,
-    required this.gender,
+    required this.tenNguoiDung,
+    required this.gioiTinh,
     required this.email,
-    required this.password,
-    required this.phoneNumber,
-    required this.role,
-    required this.avatar,
-    required this.Dob,
+    required this.matKhau,
+    required this.soDienThoai,
+    required this.vaiTro,
+    required this.hinhDaiDien,
+    required this.ngaySinh,
     required this.createAt,
   });
 
 
   User.short({
     required this.id,
-    required this.userName,
-    required this.gender,
-    required this.phoneNumber,
-    required this.Dob,
-    required this.avatar,
+    required this.tenNguoiDung,
+    required this.gioiTinh,
+    required this.soDienThoai,
+    required this.ngaySinh,
+    required this.hinhDaiDien,
   })  : email = '',
-        password = '',
-        role = 'user',
+        matKhau = '',
+        vaiTro = 'user',
         createAt = DateTime.now();
 
   User.shortUpdateProfile({
     required this.id,
-    required this.userName,
-    required this.phoneNumber,
-    required this.Dob,
-    required this.avatar,
-    required this.password,
+    required this.tenNguoiDung,
+    required this.soDienThoai,
+    required this.ngaySinh,
+    required this.hinhDaiDien,
+    required this.matKhau,
 }): email = '',
-        role = 'user',
+        vaiTro = 'user',
         createAt = DateTime.now(),
-  gender= true;
+  gioiTinh= true;
 
   // Chuyển từ JSON sang Object
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json["_id"],
-      userName: json["userName"],
-      gender: json["gender"],
+      tenNguoiDung: json["tenNguoiDung"],
+      gioiTinh: json["gioiTinh"],
       email: json["email"],
-      password: json["password"],
-      phoneNumber: json["phoneNumber"],
-      role: json["role"],
-      avatar: json["avatar"],
-      Dob: json["DoB"],
-      createAt: DateTime.parse(json["createAt"]),
+      matKhau: json["matKhau"],
+      soDienThoai: json["soDienThoai"],
+      vaiTro: json["vaiTro"],
+      hinhDaiDien: json["hinhDaiDien"],
+      ngaySinh: json["ngaySinh"],
+      createAt: DateTime.parse(json["ngayTao"]),
     );
   }
 
@@ -72,15 +72,15 @@ class User {
   Map<String, dynamic> toMap() {
     return {
       "_id": id,
-      "userName": userName,
-      "gender": gender,
+      "tenNguoiDung": tenNguoiDung,
+      "gioiTinh": gioiTinh,
       "email": email,
-      "password": password,
-      "phoneNumber": phoneNumber,
-      "role": role,
-      "avatar": avatar,
-      "DoB": Dob,
-      "createAt": createAt.toIso8601String(),
+      "matKhau": matKhau,
+      "soDienThoai": soDienThoai,
+      "vaiTro": vaiTro,
+      "hinhDaiDien": hinhDaiDien,
+      "ngaySinh": ngaySinh,
+      "ngayTao": createAt.toIso8601String(),
     };
   }
 

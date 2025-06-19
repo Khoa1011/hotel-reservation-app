@@ -1,25 +1,25 @@
 const express = require("express");
 const Room = require('../Model/Room/Room');
 const RoomType = require('../Model/RoomType/RoomType');
-const upload = require("../config/upload"); 
+const { uploadHotel } = require("../config/upload"); 
 const Hotel = require("../Model/Hotel/Hotel"); 
 const { route } = require("./userController");
 const router = express.Router();
 const Booking = require("../Model/Booking/Booking");
 
 
-router.post("/upload", upload.single("image"), async (req, res) => {
+router.post("/upload", uploadHotel.single("hinhAnh"), async (req, res) => {
     try {
         const newHotel = new Hotel({
-            hotelName: req.body.hotelName,
-            address: req.body.address,
-            city: req.body.city,
-            description: req.body.description,
-            star: req.body.star,
-            phoneNumber: req.body.phoneNumber,
+            tenKhachSan: req.body.tenKhachSan,
+            diaChi: req.body.diaChi,
+            thanhPho: req.body.thanhPho,
+            moTa: req.body.moTa,
+            soSao: req.body.soSao,
+            soDienThoai: req.body.soDienThoai,
             email: req.body.email,
-            price: req.body.price,
-            image: req.file ? `/uploads/hotels/${req.file.filename}` : "",
+            giaCa: req.body.giaCa,
+            hinhAnh: req.file ? `/uploads/hotels/${req.file.filename}` : "",
         });
 
         await newHotel.save();
@@ -56,7 +56,7 @@ router.get('/:hotelId/rooms', async (req, res) => {
   }
 
   try {
-    const rooms = await Room.find({ hotelsId: hotelId }).populate('roomTypeId');
+    const rooms = await Room.find({ maKhachsan: hotelId }).populate('maLoaiPhong');
 
     const parsedCheckIn = new Date(checkInDate);
     const parsedCheckOut = new Date(checkOutDate);
@@ -77,16 +77,16 @@ router.get('/:hotelId/rooms', async (req, res) => {
       const availableRooms = Math.max(room.totalRooms - bookedCount, 0);
 
       return {
-        roomId: room._id,
-        roomType: room.roomTypeId.roomType,
-        price: room.roomTypeId.price,
-        image: room.image,
-        roomState: room.roomState,
-        description: room.description,
-        bedCount: room.bedCount,
-        capacity: room.capacity,
-        amenities: room.amenities,
-        totalRooms: room.totalRooms,
+        maPhong: room._id,
+        maLoaiPhong: room.maLoaiPhong.tenLoaiPhong,
+        giaCa: room.roomTypeId.giaCa,
+        hinhAnh: room.hinhAnh,
+        trangThaiPhong: room.trangThaiPhong,
+        moTa: room.moTa,
+        soLuongGiuong: room.soLuongGiuong,
+        soLuongNguoiToiDa: room.soLuongNguoiToiDa,
+        danhSachTienNghi: room.danhSachTienNghi,
+        tongSoPhong: room.tongSoPhong,
         availableRooms: availableRooms
 
       };
@@ -107,15 +107,15 @@ router.post('/:hotelId/rooms/update-availability', async (req, res) => {
   const { hotelId } = req.params;
 
   try {
-    const rooms = await Room.find({ hotelsId: hotelId });
+    const rooms = await Room.find({ maKhachsan: hotelId });
     
     await Promise.all(rooms.map(async (room) => {
       // Tính toán số phòng đã được đặt
-      const bookings = await Booking.find({ roomId: room._id });
+      const bookings = await Booking.find({ maPhong: room._id });
       const bookedCount = bookings.reduce((sum, booking) => sum + (booking.quantity || 1), 0);
       
       // Cập nhật TRỰC TIẾP vào totalRooms (giả sử totalRooms ban đầu là tổng phòng)
-      room.totalRooms = room.totalRooms - bookedCount;
+      room.tongSoPhong = room.tongSoPhong - bookedCount;
       await room.save();
     }));
 

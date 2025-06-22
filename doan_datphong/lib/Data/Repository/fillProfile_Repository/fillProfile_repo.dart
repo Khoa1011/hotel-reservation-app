@@ -4,29 +4,29 @@ import 'package:doan_datphong/Data/Provider/ApiResponse.dart';
 import 'package:doan_datphong/Data/Provider/IP_v4_Address.dart';
 import 'package:http/http.dart' as http;
 
-import '../../../Models/User.dart';
+import '../../../Models/NguoiDung.dart';
 
 class FillProfileRepository{
   static final String ip = IPv4.IP_CURRENT;
   final String baseURL = "$ip/api/users";
-  
-  Future<ApiResponse> fillProfile(User user)async{
+  Future<ApiResponse> fillProfile(NguoiDung user)async{
     final url = Uri.parse("$baseURL/updateUser");
     try{
       final response = await http.post(
           url,
         body: jsonEncode({
-          "userId": user.id,
-          "userName": user.userName,
-          "gender":user.gender,
-          "phoneNumber": user.phoneNumber,
-          "avatar":user.avatar}),
+          "maNguoiDung": user.id,
+          "tenNguoiDung": user.tenNguoiDung,
+          "ngaySinh":user.ngaySinh,
+          "gioiTinh":user.gioiTinh,
+          "soDienThoai": user.soDienThoai,
+          "hinhDaiDien":user.hinhDaiDien}),
         headers: {"Content-Type":"application/json"},
       );
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
-        return ApiResponse(success: true, message: "Cập nhật tài khoản thành công!", data: User.fromJson(jsonData['user']));
+        return ApiResponse(success: true, message: "Cập nhật tài khoản thành công!", data: NguoiDung.fromJson(jsonData['user']));
       }else if(response.statusCode == 400){
         return ApiResponse(success: false, message: "Bắt buộc phải có id");
       }else{

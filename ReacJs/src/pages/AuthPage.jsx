@@ -38,7 +38,7 @@ const AuthPage = () => {
                     },
                     body: JSON.stringify({
                         email: formData.email,
-                        password: formData.password
+                        matKhau: formData.password
                     }),
                     credentials: 'include'
                 });

@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:doan_datphong/Data/Provider/ApiResponse.dart';
-import 'package:doan_datphong/Models/User.dart';
+import 'package:doan_datphong/Models/NguoiDung.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../Provider/ErrorCode.dart';
 import '../../Provider/IP_v4_Address.dart';
 
 
@@ -18,20 +21,25 @@ class LoginRepository{
     try{
       final respone = await http.post(
         url,
-        body: jsonEncode({"email": email, "password": password}),
+        body: jsonEncode({"email": email, "matKhau": password}),
         headers: {"Content-Type":"application/json"},
-      ) ;
+      ).timeout(
+          Duration(seconds: 10),
+          onTimeout:() {
+            throw TimeoutException(
+                ErrorCodes.connectionTimeout, Duration(seconds: 10));
+          });
 
       if(respone.statusCode == 200){
         final data = jsonDecode(respone.body);
         String token = data["token"]; //Lấy token từ sever
-        User user = User.fromJson(data["user"]);
+        NguoiDung user = NguoiDung.fromJson(data["user"]);
         //Lưu token
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString("token", token);
 
         await prefs.setString("email", user.email);
-        await prefs.setString("user", user.toJsonString()); // Lưu User dạng JSON
+        await prefs.setString("user", user.toJsonString());
 
         //Trả về user nếu đăng nhập thành công
         return ApiResponse(success: true, message: "Đăng nhập thành công",data: user);
@@ -40,6 +48,12 @@ class LoginRepository{
       }else{
         return ApiResponse(success: false, message: "Lỗi server!");
       }
+    }on TimeoutException catch(e){
+      return ApiResponse(success: false, message:ErrorCodes.connectionTimeout);
+    }on SocketException catch(e) {
+      print("SocketException: $e");
+      return ApiResponse(
+          success: false, message: ErrorCodes.networkUnreachable);
     }catch (e) {
       print(e);
       return ApiResponse(success: false, message: "Lỗi kết nối!. Lỗi chi tiết $e");
@@ -54,8 +68,8 @@ class LoginRepository{
       return ApiResponse(success: false, message: "User chưa được lưu trong bộ nhớ.");
     }
 
-    User user = User.fromJsonString(userJson);
-    if (user.userName.isEmpty) {
+    NguoiDung user = NguoiDung.fromJsonString(userJson);
+    if (user.tenNguoiDung.isEmpty) {
       return ApiResponse(success: false, message: "");
     }
     return ApiResponse(success: true, message: "");

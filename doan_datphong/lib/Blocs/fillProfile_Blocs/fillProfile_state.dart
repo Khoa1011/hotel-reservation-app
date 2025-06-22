@@ -1,11 +1,11 @@
-import 'package:doan_datphong/Models/User.dart';
+import 'package:doan_datphong/Models/NguoiDung.dart';
 
 abstract class FillProfileState {}
 
 class FillProfileInitial extends FillProfileState{}
 class FillProfileLoading extends FillProfileState{}
 class FillProfileSuccess extends FillProfileState{
-  late final User user;
+  late final NguoiDung user;
 
   FillProfileSuccess(this.user);
 }

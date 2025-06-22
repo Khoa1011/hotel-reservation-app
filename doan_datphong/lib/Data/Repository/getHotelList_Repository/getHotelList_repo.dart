@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
-import '../../../Models/Hotels.dart';
+import '../../../Models/KhachSan.dart';
 import 'package:http/http.dart' as http;
 
+import '../../Provider/ErrorCode.dart';
 import '../../Provider/IP_v4_Address.dart';
 
 class GetHotelListRepository{
@@ -12,16 +15,32 @@ class GetHotelListRepository{
   Future<List<Hotels>> fetchHotels() async {
     final url = Uri.parse("$baseURL/getHotelList");
     try {
-      final response = await http.get(url);
+      final response = await http.get(url).timeout(
+          Duration(seconds: 10),
+          onTimeout: () {
+             throw Exception(ErrorCodes.connectionTimeout);
+          }
+      );
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        if (data['hotels'] == null) {
+          throw Exception(ErrorCodes.invalidResponse);
+        }
         List<dynamic> hotelsJson = data['hotels'];
+        print(hotelsJson);
         return hotelsJson.map((json) => Hotels.fromJson(json)).toList();
+      } else if (response.statusCode >= 500) {
+        throw Exception(ErrorCodes.serverRefused);
       } else {
-        throw Exception("Lỗi khi lấy danh sách khách sạn: ${response.statusCode}");
+        throw Exception(ErrorCodes.invalidResponse);
       }
+    } on SocketException {
+      throw Exception(ErrorCodes.networkUnreachable);
+    } on TimeoutException {
+      throw Exception(ErrorCodes.connectionTimeout);
     } catch (error) {
-      throw Exception("Lỗi kết nối server: $error");
+      throw Exception("${ErrorCodes.unknownError}|Lỗi không xác định: ${error.toString()}");
     }
   }
 }

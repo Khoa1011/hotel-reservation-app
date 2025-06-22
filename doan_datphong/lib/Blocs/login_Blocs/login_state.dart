@@ -1,4 +1,4 @@
-import 'package:doan_datphong/Models/User.dart';
+import 'package:doan_datphong/Models/NguoiDung.dart';
 
 abstract class LoginState{}
 
@@ -19,6 +19,6 @@ class LoginFailure extends LoginState{
 }
 
 class LoginIncomplete extends LoginState {
-  final User user;
+  final NguoiDung user;
   LoginIncomplete({required this.user});
 }

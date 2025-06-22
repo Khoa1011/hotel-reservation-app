@@ -21,8 +21,12 @@ class SearchBarWidget extends StatelessWidget {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFFE8F5F3),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.grey[300]!,
+                  width: 1,
+                ),
               ),
               child: TextField(
                 controller: controller,
@@ -58,12 +62,12 @@ class SearchBarWidget extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: const Color(0xFFE8F5F3),
+                color: const Color(0xFF1565C0),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
                 Icons.tune,
-                color: Color(0xFF00C896),
+                color: Colors.white,
                 size: 24,
               ),
             ),

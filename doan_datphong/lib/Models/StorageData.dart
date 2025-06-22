@@ -1,8 +1,8 @@
 // Tạo file hotel_provider.dart
-import 'package:doan_datphong/Models/User.dart';
+import 'package:doan_datphong/Models/NguoiDung.dart';
 import 'package:flutter/cupertino.dart';
 
-import 'Hotels.dart';
+import 'KhachSan.dart';
 
 class HotelProvider extends ChangeNotifier {
   Hotels? _currentHotel;
@@ -20,11 +20,11 @@ class HotelProvider extends ChangeNotifier {
 }
 
 class UserProvider extends ChangeNotifier{
-  User? _currentUser;
+  NguoiDung? _currentUser;
 
-  User? get currentUser => _currentUser;
+  NguoiDung? get currentUser => _currentUser;
 
-  void setcurrentUser(User user){
+  void setcurrentUser(NguoiDung user){
     _currentUser = user;
     notifyListeners();
   }

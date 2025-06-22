@@ -1,8 +1,6 @@
-Màu chứ tiêu đề: 0xFF14D9E1
-Màu nền ứng dụng: 0xFFFFFFFF
-Màu nền trang chủ: 0xFF14D9E1
-Màu Icon: 0xff9A9EAB
-Màu button: 0xFF16F1FA
-Màu hộp thoại thông báo lỗi: 
-Font chữ: Lato Semibold
-Màu khác: 0xFFF1F1F2
+Màu chính: 0xFF1565C0
+Màu icon: 0xFF525150
+Màu dịch vụ:
+Màu tên khách sạn: 0xFFFF8F00
+Màu giá khách sạn: 0xFFFFD700
+Màu thành phố/đêm: Trắng

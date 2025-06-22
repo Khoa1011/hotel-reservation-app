@@ -34,7 +34,7 @@ class LogoutRepository {
         await prefs.remove("token");
         return ApiResponse(success: true, message: "Đăng xuất thành công!");
       } else {
-        return ApiResponse(success: false, message: "Đăng không thành công! Status: ${response.statusCode}, Body: ${response.body}");
+        return ApiResponse(success: false, message: "Đăng xuất không thành công! Status: ${response.statusCode}, Body: ${response.body}");
       }
     } catch (e) {
       return ApiResponse(success: false, message: "Lỗi kết nối đến server: $e");

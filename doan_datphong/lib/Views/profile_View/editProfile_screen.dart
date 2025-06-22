@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import '../../Models/User.dart';
+import '../../Models/NguoiDung.dart';
 
 class EditProfileScreen extends StatefulWidget {
-  final User? user;
+  final NguoiDung? user;
 
   const EditProfileScreen({super.key, required this.user});
 
@@ -36,10 +36,10 @@ class _EditProfileState extends State<EditProfileScreen> {
   String? errorDob;
 
   void initControllers() {
-    _nameController = TextEditingController(text: widget.user?.userName ?? '');
+    _nameController = TextEditingController(text: widget.user?.tenNguoiDung ?? '');
     _emailController = TextEditingController(text: widget.user?.email ?? '');
-    _phoneController = TextEditingController(text: widget.user?.phoneNumber ?? '');
-    _dobController = TextEditingController(text: widget.user?.Dob ?? '');
+    _phoneController = TextEditingController(text: widget.user?.soDienThoai ?? '');
+    _dobController = TextEditingController(text: widget.user?.ngaySinh ?? '');
     _newPasswordController = TextEditingController();
     _confirmPasswordController = TextEditingController();
   }
@@ -175,13 +175,13 @@ class _EditProfileState extends State<EditProfileScreen> {
         && _errorMessage == null
         && errorPassword == null) {
 
-      User user = User.shortUpdateProfile(
+      NguoiDung user = NguoiDung.shortUpdateProfile(
           id: widget.user!.id,
-          userName: _nameController.text,
-          phoneNumber: _phoneController.text,
-          Dob: _dobController.text,
-          avatar: _image!.path,
-          password: _newPasswordController.text
+          tenNguoiDung: _nameController.text,
+          soDienThoai: _phoneController.text,
+          ngaySinh: _dobController.text,
+          hinhDaiDien: _image!.path,
+          matKhau: _newPasswordController.text
       );
       context.read<UpdateProfileBloc>().add(
         UpdateProfileSubmiited(user),
@@ -225,8 +225,8 @@ class _EditProfileState extends State<EditProfileScreen> {
               backgroundColor: Colors.transparent,
               backgroundImage: _image != null
                   ? FileImage(File(_image!.path)) // Nếu có ảnh mới, hiển thị ảnh từ file
-                  : (widget.user?.avatar != null && widget.user!.avatar.isNotEmpty
-                  ? NetworkImage(widget.user!.avatar) // Nếu có ảnh cũ, hiển thị ảnh từ URL
+                  : (widget.user?.hinhDaiDien != null && widget.user!.hinhDaiDien.isNotEmpty
+                  ? NetworkImage(widget.user!.hinhDaiDien) // Nếu có ảnh cũ, hiển thị ảnh từ URL
                   : const AssetImage('assets/default_profile.png')) as ImageProvider, // Ảnh mặc định
             ),
             Positioned(

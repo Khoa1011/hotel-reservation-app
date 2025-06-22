@@ -1,8 +1,13 @@
+import 'package:doan_datphong/Views/components/NotificationDialog.dart';
 import 'package:doan_datphong/Views/listRoom_View/listRoom_screen.dart';
+import 'package:doan_datphong/Views/selectDate_View/datePickerField_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:doan_datphong/generated/l10n.dart';
+
+import 'guest_counter_widget.dart';
 
 class SelectDateScreen extends StatefulWidget {
   @override
@@ -15,6 +20,9 @@ class _SelectDateState extends State<SelectDateScreen> {
   DateTime _currentMonth = DateTime.now();
   final double _dayCellSize = 47.0;
   TimeOfDay? _selectedCheckInTime;
+  int _adults = 2;
+  int _children = 0;
+  int _rooms = 1;
 
 
   void _changeMonth(int delta) {
@@ -24,6 +32,15 @@ class _SelectDateState extends State<SelectDateScreen> {
   }
 
   void eventClickButtonAplly (){
+
+    if(_selectedCheckInTime == null ){
+      setState(() {
+        NotificationDialog.showInfo(
+            context,
+            message: "Chưa chọn thời gian nhận phòng!");
+      });
+    }
+
     final formattedDateCheckIn = DateFormat('dd/MM').format(_checkInDate!);
     final formattedDateCheckOut =DateFormat('dd/MM').format(_checkOutDate!);
     final timeCheckInPicked = _formatTime(_selectedCheckInTime!);
@@ -34,6 +51,11 @@ class _SelectDateState extends State<SelectDateScreen> {
       "dateCheckOut":"12:00, $formattedDateCheckOut",
       "checkInDateRouter":formattedCheckInDateRouter,
       "checkOutDateRouter":formattedCheckoutDateRouter,
+      "adults": _adults.toString(),
+      "children": _children.toString(),
+      "rooms": _rooms.toString(),
+      "totalGuests": (_adults + _children).toString(),
+
     };
     _saveDateTime();
     Navigator.pop(context,resultPickedDateTime);
@@ -44,6 +66,9 @@ class _SelectDateState extends State<SelectDateScreen> {
     await prefs.setString("checkInDate", _checkInDate.toString());
     await prefs.setString("checkOutDate", _checkOutDate.toString());
     await prefs.setString("checkInTime", '${_selectedCheckInTime?.hour.toString().padLeft(2, '0')}:${_selectedCheckInTime?.minute.toString().padLeft(2, '0')}');
+    await prefs.setInt("adults", _adults);
+    await prefs.setInt("children", _children);
+    await prefs.setInt("rooms", _rooms);
   }
 
 
@@ -53,7 +78,7 @@ class _SelectDateState extends State<SelectDateScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(
-            'Select Date',
+            S.of(context).selectDatesAndTimeCheckIn,
             style: TextStyle(
               fontFamily: 'Lato',
               fontSize: 25,
@@ -63,149 +88,174 @@ class _SelectDateState extends State<SelectDateScreen> {
           centerTitle: true,
           elevation: 0,
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Month Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                      onPressed: () => _changeMonth(-1),
-                      icon: Icon(Icons.chevron_left)
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: Text(
-                      DateFormat('MMMM yyyy').format(_currentMonth),
-                      style: TextStyle(
-                        fontFamily: 'Lato Semibold',
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                      onPressed: () => _changeMonth(1),
-                      icon: Icon(Icons.chevron_right)
-                  ),
-                ],
+        body: Stack(
+          children: [
+            // Nội dung chính với padding bottom để tránh che nút
+            SingleChildScrollView(
+              padding: const EdgeInsets.only(
+                left: 8.0,
+                right: 8.0,
+                top: 8.0,
+                bottom: 80.0, // Thêm khoảng trống cho nút Apply
               ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Month Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                          onPressed: () => _changeMonth(-1),
+                          icon: Icon(Icons.chevron_left)
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Text(
+                          DateFormat('MM / yyyy').format(_currentMonth),
+                          style: TextStyle(
 
-              // Weekday Headers
-              Row(
-                children: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
-                    .map((day) => Expanded(
-                  child: Container(
-                    margin: EdgeInsets.symmetric(horizontal: 1.0),
-                    child: Center(
-                      child: Text(
-                        day,
-                        style: TextStyle(
-                          fontFamily: 'Lato Semibold',
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
+                      IconButton(
+                          onPressed: () => _changeMonth(1),
+                          icon: Icon(Icons.chevron_right)
+                      ),
+                    ],
                   ),
-                ))
-                    .toList(),
-              ),
 
-              // Calendar Grid
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.blue),
-                  borderRadius: BorderRadius.circular(8.0),
-                  gradient: LinearGradient(
-                    colors: [Color(0xFFA1D6E2), Color(0xFFF1F1F2)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                  // Weekday Headers
+                  Row(
+                    children: [
+                      S.of(context).thu2_Monday,
+                      S.of(context).thu3_Tuesday,
+                      S.of(context).thu4_Wednesday,
+                      S.of(context).thu5_Thursday,
+                      S.of(context).thu6_Friday,
+                      S.of(context).thu7_Saturday,
+                      S.of(context).cn_Sunday]
+                        .map((day) => Expanded(
+                      child: Container(
+                        margin: EdgeInsets.symmetric(horizontal: 1.0),
+                        child: Center(
+                          child: Text(
+                            day,
+                            style: TextStyle(
+
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ))
+                        .toList(),
                   ),
-                ),
-                child: _buildCalendarGrid(),
-              ),
-
-              SizedBox(height: 15),
-
-              // Check-in/Check-out Section
-              Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildDateInfo('Check-in date', _checkInDate),
-                    _buildDateInfo('Check-out date', _checkOutDate),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 10),
-
-              // Time Selection Section
-              Container(
-                padding: const EdgeInsets.all(16.0),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Check-in time',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        fontFamily: 'Lato Semibold'
+                  // Calendar Grid
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.blue),
+                      borderRadius: BorderRadius.circular(8.0),
+                      gradient: LinearGradient(
+                        colors: [Color(0xFFA1D6E2), Color(0xFFF1F1F2)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
                     ),
-                    SizedBox(height: 10,),
-                    _buildTimePickerHorizontal(
+                    child: _buildCalendarGrid(),
+                  ),
+
+                  SizedBox(height: 15),
+
+                  // Check-in/Check-out Section
+                  Container(
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildDateInfo(S.of(context).checkInDate, _checkInDate),
+                        _buildDateInfo(S.of(context).checkOutDate, _checkOutDate),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 10),
+
+                  // Time Selection Section
+                  Container(
+                    padding: const EdgeInsets.all(16.0),
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: PillTimePickerWidget(
+                      title: S.of(context).checkInTime,
                         selectedTime: _selectedCheckInTime,
-                        onTimeSelected: (time) {
+                        onTimeSelected: (time){
                           setState(() {
                             _selectedCheckInTime = time;
                           });
-                        },)
+                        }),
+                  ),
+                  SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.all(16.0),
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: GuestCounterWidget(
+                      adults: _adults,
+                      children: _children,
+                      rooms: _rooms,
+                      onGuestChanged: (adults, children, rooms) {
+                        setState(() {
+                          _adults = adults;
+                          _children = children;
+                          _rooms = rooms;
+                        });
+                      },
+                      title: S.of(context).guestsRooms,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Nút Apply được ghim ở dưới
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              child: Container(
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                      offset: Offset(0, -2),
+                    ),
                   ],
                 ),
-              ),
-
-              SizedBox(height: 15),
-
-              // Continue Button
-              SizedBox(
-                width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // if (_checkInDate == null || _checkOutDate == null) {
-                    //   ScaffoldMessenger.of(context).showSnackBar(
-                    //     SnackBar(content: Text('Please select check-in and check-out dates')),
-                    //   );
-                    // } else {
-                    //   // Handle booking with all information
-                    //   print('Booking confirmed!');
-                    // }
-
-                    // Navigator.push(context, MaterialPageRoute(builder: (builder)=> ListRoomScreen()));
-
                     eventClickButtonAplly();
                   },
                   style: ElevatedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: Color(0xFF16F1FA),
-                    elevation: 1,
+                    backgroundColor: Color(0xFF1565C0),
+                    elevation: 4,
                     overlayColor: Colors.black.withOpacity(0.05),
                     splashFactory: InkRipple.splashFactory,
                     shape: RoundedRectangleBorder(
@@ -213,22 +263,23 @@ class _SelectDateState extends State<SelectDateScreen> {
                     ),
                   ),
                   child: Text(
-                    'Apply',
+                    S.of(context).apply,
                     style: TextStyle(
                       fontFamily: 'Lato',
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
+
 // Hàm xây dựng danh sách giờ
   Widget _buildTimePickerHorizontal({
     required TimeOfDay? selectedTime,
@@ -262,16 +313,16 @@ class _SelectDateState extends State<SelectDateScreen> {
                 curve: Curves.easeInOut,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF16F1FA) : const Color(0xFFE6FBFA),
+                  color: isSelected ? const Color(0xFF1565C0) : const Color(0xFFE6FBFA),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isSelected ? const Color(0xFF16F1FA) : const Color(0xFF0180CC),
+                    color: isSelected ? const Color(0xFF1565C0) : const Color(0xFF0180CC),
                     width: isSelected ? 2 : 1,
                   ),
                   boxShadow: isSelected
                       ? [
                     BoxShadow(
-                      color: const Color(0xFF16F1FA).withOpacity(0.4),
+                      color: const Color(0xFF1565C0).withOpacity(0.4),
                       spreadRadius: 2,
                       blurRadius: 6,
                       offset: const Offset(0, 2),
@@ -333,7 +384,7 @@ class _SelectDateState extends State<SelectDateScreen> {
             margin: EdgeInsets.all(3.1),
             decoration: BoxDecoration(
               color: isCheckIn || isCheckOut
-                  ? Color(0xFF16F1FA)
+                  ? Color(0xFF1565C0)
                   : isInRange
                   ? Color(0xFFBCBABE)
                   : null,
@@ -388,10 +439,9 @@ class _SelectDateState extends State<SelectDateScreen> {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'Lato',
               fontWeight: FontWeight.bold,
               fontSize: 16,
-              color: Colors.grey[600],
+              color: Color(0xFF525150),
             ),
           ),
           SizedBox(height: 8),
@@ -399,20 +449,19 @@ class _SelectDateState extends State<SelectDateScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                onPressed: () => _showDatePicker(context, label == 'Check-in date'),
+                onPressed: () => _showDatePicker(context, label == S.of(context)),
                 icon: Icon(Icons.calendar_month),
               ),
-              SizedBox(width: 8),
+
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: EdgeInsets.symmetric(horizontal: 5, vertical: 6),
                 decoration: BoxDecoration(
                   color: date != null ? Colors.blue[50] : null,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  date != null ? DateFormat('MMM d').format(date) : '--/--',
+                  date != null ? DateFormat('d / MM').format(date) : '--/--',
                   style: TextStyle(
-                    fontFamily: 'Lato Semibold',
                     fontSize: 16,
                     color: date != null ? Colors.blue[800] : Colors.grey[500],
                     fontWeight: FontWeight.w600,

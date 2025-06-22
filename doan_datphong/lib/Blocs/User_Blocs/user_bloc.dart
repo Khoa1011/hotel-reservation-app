@@ -1,10 +1,10 @@
-import 'package:doan_datphong/Models/User.dart';
+import 'package:doan_datphong/Models/NguoiDung.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class UserBloc extends Cubit<User?>{
+class UserBloc extends Cubit<NguoiDung?>{
   UserBloc():super(null);
 
-  void setCurrentUser (User user){
+  void setCurrentUser (NguoiDung user){
     emit(user);
   }
   void clearUser(){

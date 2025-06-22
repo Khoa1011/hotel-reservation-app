@@ -6,12 +6,12 @@ import 'package:intl/intl.dart';
 import '../../Blocs/getListBooking_Blocs/getBookingList_bloc.dart';
 import '../../Blocs/getListBooking_Blocs/getBookingList_event.dart';
 import '../../Blocs/getListBooking_Blocs/getBookingList_state.dart';
-import '../../Models/User.dart';
+import '../../Models/NguoiDung.dart';
 import '../profile_View/profile_screen.dart';
 import '../seach_View/search_screen.dart';
 
 class ListBookingScreen extends StatefulWidget {
-  final User? user;
+  final NguoiDung? user;
 
   const ListBookingScreen({super.key, required this.user});
 

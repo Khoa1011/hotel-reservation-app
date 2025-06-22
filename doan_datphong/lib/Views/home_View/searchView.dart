@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
+import 'package:doan_datphong/generated/l10n.dart';
 class SearchBarWithAnimation extends StatefulWidget {
   @override
   _SearchBarWithAnimationState createState() => _SearchBarWithAnimationState();
@@ -53,7 +53,7 @@ class _SearchBarWithAnimationState extends State<SearchBarWithAnimation> {
           child: TextField(
             focusNode: _focusNode,
             decoration: InputDecoration(
-              hintText: "Search...",
+              hintText: S.of(context).searchPlaceholder,
               hintStyle: TextStyle(
                 color: Colors.grey.shade500,
                 fontSize: 16,

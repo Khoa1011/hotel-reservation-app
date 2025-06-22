@@ -1,5 +1,5 @@
-import 'package:doan_datphong/Models/Hotels.dart';
-import 'package:doan_datphong/Models/User.dart';
+import 'package:doan_datphong/Models/KhachSan.dart';
+import 'package:doan_datphong/Models/NguoiDung.dart';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';

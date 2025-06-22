@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-class User {
+class NguoiDung {
   String id;
   String tenNguoiDung;
   bool gioiTinh;
@@ -12,9 +12,9 @@ class User {
   String vaiTro;
   String hinhDaiDien;
   String ngaySinh;
-  DateTime createAt;
+  DateTime ngayTao;
 
-  User({
+  NguoiDung({
     required this.id,
     required this.tenNguoiDung,
     required this.gioiTinh,
@@ -24,11 +24,11 @@ class User {
     required this.vaiTro,
     required this.hinhDaiDien,
     required this.ngaySinh,
-    required this.createAt,
+    required this.ngayTao,
   });
 
 
-  User.short({
+  NguoiDung.short({
     required this.id,
     required this.tenNguoiDung,
     required this.gioiTinh,
@@ -38,9 +38,9 @@ class User {
   })  : email = '',
         matKhau = '',
         vaiTro = 'user',
-        createAt = DateTime.now();
+        ngayTao = DateTime.now();
 
-  User.shortUpdateProfile({
+  NguoiDung.shortUpdateProfile({
     required this.id,
     required this.tenNguoiDung,
     required this.soDienThoai,
@@ -49,12 +49,12 @@ class User {
     required this.matKhau,
 }): email = '',
         vaiTro = 'user',
-        createAt = DateTime.now(),
+        ngayTao = DateTime.now(),
   gioiTinh= true;
 
   // Chuyển từ JSON sang Object
-  factory User.fromJson(Map<String, dynamic> json) {
-    return User(
+  factory NguoiDung.fromJson(Map<String, dynamic> json) {
+    return NguoiDung(
       id: json["_id"],
       tenNguoiDung: json["tenNguoiDung"],
       gioiTinh: json["gioiTinh"],
@@ -64,7 +64,7 @@ class User {
       vaiTro: json["vaiTro"],
       hinhDaiDien: json["hinhDaiDien"],
       ngaySinh: json["ngaySinh"],
-      createAt: DateTime.parse(json["ngayTao"]),
+      ngayTao: DateTime.parse(json["ngayTao"]),
     );
   }
 
@@ -80,7 +80,7 @@ class User {
       "vaiTro": vaiTro,
       "hinhDaiDien": hinhDaiDien,
       "ngaySinh": ngaySinh,
-      "ngayTao": createAt.toIso8601String(),
+      "ngayTao": ngayTao.toIso8601String(),
     };
   }
 
@@ -88,19 +88,19 @@ class User {
   String toJsonString() => jsonEncode(toMap());
 
   // Chuyển từ chuỗi JSON thành đối tượng User
-  factory User.fromJsonString(String? source) {
+  factory NguoiDung.fromJsonString(String? source) {
     if (source == null || source.isEmpty) {
       throw Exception("Dữ liệu người dùng không hợp lệ!"); // Hoặc return null nếu muốn
     }
-    return User.fromJson(jsonDecode(source));
+    return NguoiDung.fromJson(jsonDecode(source));
   }
 
-  Future<void> saveUserToPrefs(User user) async {
+  Future<void> saveUserToPrefs(NguoiDung user) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String userJson = user.toJsonString(); // Chuyển user thành JSON
     await prefs.setString("user", userJson);
   }
-  Future<User?> getUserFromPrefs() async {
+  Future<NguoiDung?> getUserFromPrefs() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? userJson = prefs.getString("user");
 
@@ -109,7 +109,7 @@ class User {
     }
 
     try {
-      return User.fromJsonString(userJson);
+      return NguoiDung.fromJsonString(userJson);
     } catch (e) {
       print("Lỗi khi chuyển đổi User: $e");
       return null; // Tránh crash nếu dữ liệu bị lỗi

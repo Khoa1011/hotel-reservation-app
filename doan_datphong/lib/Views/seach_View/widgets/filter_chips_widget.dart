@@ -35,7 +35,7 @@ class FilterChipsWidget extends StatelessWidget {
               label: Text(
                 filter,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : const Color(0xFF00C896),
+                  color: isSelected ? Colors.white : const Color(0xFF1565C0),
                   fontWeight: FontWeight.w500,
                   fontSize: 14,
                 ),
@@ -43,10 +43,10 @@ class FilterChipsWidget extends StatelessWidget {
               selected: isSelected,
               onSelected: (_) => onFilterTap(filter),
               backgroundColor: Colors.white,
-              selectedColor: const Color(0xFF00C896),
+              selectedColor: const Color(0xFF1565C0),
               checkmarkColor: Colors.white,
               side: BorderSide(
-                color: isSelected ? const Color(0xFF00C896) : const Color(0xFF00C896),
+                color: isSelected ? const Color(0xFF1565C0) : const Color(0xFF1565C0),
                 width: 1,
               ),
               shape: RoundedRectangleBorder(

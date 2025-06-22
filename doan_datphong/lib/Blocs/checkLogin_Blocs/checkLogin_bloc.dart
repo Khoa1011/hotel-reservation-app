@@ -1,4 +1,4 @@
-import 'package:doan_datphong/Models/User.dart';
+import 'package:doan_datphong/Models/NguoiDung.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -11,7 +11,7 @@ abstract class CheckLoginState {}
 class CheckLoginInitial extends CheckLoginState {}
 class CheckLoginLoading extends CheckLoginState {}
 class CheckLoginSuccess extends CheckLoginState {
-  final User user;
+  final NguoiDung user;
   CheckLoginSuccess({required this.user});
 }
 class CheckLoginFailure extends CheckLoginState {}
@@ -31,7 +31,7 @@ class CheckLoginBloc extends Bloc<CheckLoginEvent, CheckLoginState> {
     String? userJson = prefs.getString("user"); // Lấy thông tin User từ SharedPreferences
 
     if (token != null && token.isNotEmpty && userJson != null) {
-      User user = User.fromJsonString(userJson); // Chuyển đổi JSON thành User
+      NguoiDung user = NguoiDung.fromJsonString(userJson); // Chuyển đổi JSON thành User
       emit(CheckLoginSuccess(user: user)); // Truyền User vào state
     } else {
       emit(CheckLoginFailure());

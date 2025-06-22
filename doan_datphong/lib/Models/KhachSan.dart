@@ -1,4 +1,8 @@
+import 'dart:ffi';
+
+import 'package:doan_datphong/Data/Provider/FormatCurrency.dart';
 import 'package:doan_datphong/Data/Provider/IP_v4_Address.dart';
+import 'package:flutter/cupertino.dart';
 
 class Hotels {
   String id;
@@ -7,10 +11,10 @@ class Hotels {
   String hinhAnh;
   String thanhPho;
   String moTa;
-  int soSao;
+  double soSao;
   String soDienThoai;
   String email;
-  int giaCa;
+  double giaCa;
 
   Hotels({
     required this.id,
@@ -32,13 +36,13 @@ class Hotels {
       id: json['_id'] ?? '',
       tenKhachSan: json['tenKhachSan'] ?? '',
       diaChi: json['diaChi'] ?? '',
-      hinhAnh: baseImageUrl + json['hinhAnh']??'',
+      hinhAnh: baseImageUrl + (json['hinhAnh']??''),
       thanhPho: json['thanhPho'] ?? '',
       moTa: json['moTa'] ?? '',
-      soSao: json['soSao'] ?? 0,
+      soSao: (json['soSao'] as num).toDouble(),
       soDienThoai: json['soDienThoai'] ?? '',
       email: json['email'] ?? '',
-      giaCa: json['giaCa'] ?? 0,
+      giaCa: (json['giaCa'] as num).toDouble(),
     );
   }
 

@@ -1,4 +1,5 @@
-import 'package:doan_datphong/Models/Hotels.dart';
+import 'package:doan_datphong/Models/KhachSan.dart';
+import 'package:doan_datphong/Views/components/NotificationDialog.dart';
 
 import 'package:doan_datphong/Views/listRoom_View/listRoom_screen.dart';
 import 'package:doan_datphong/Views/selectDate_View/selectDate_screen.dart';
@@ -7,6 +8,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:doan_datphong/generated/l10n.dart';
+import 'widgets/amenities_section.dart';
+import '../../Data/Provider/FormatCurrency.dart';
+
+
 class DetailScreen extends StatefulWidget {
   final Hotels hotel;
 
@@ -17,7 +23,7 @@ class DetailScreen extends StatefulWidget {
 }
 
 class _DetailState extends State<DetailScreen> {
-  String _selecteDateCheckInShowText = "Select dates & guests";
+  String _selecteDateCheckInShowText = "";
   String _selecteDateCheckOutShowText ="";
   late String checkInDateRouter = "";
   late String checkOutDateRouter = "";
@@ -26,7 +32,7 @@ class _DetailState extends State<DetailScreen> {
   bool get isNightTime {
     final now = DateTime.now();
     final hour = now.hour;
-    return hour < 6 || hour >= 18; // Trước 6h hoặc sau 18h là ban đêm
+    return hour < 6 || hour >= 18;
   }
 
   @override
@@ -35,10 +41,21 @@ class _DetailState extends State<DetailScreen> {
     _saveHotelId();
   }
 
+  // ✅ Sử dụng didChangeDependencies
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // ✅ Chỉ set một lần khi chưa có text
+    if (_selecteDateCheckInShowText.isEmpty) {
+      _selecteDateCheckInShowText = S.of(context).selectDatesAndTimeCheckIn;
+    }
+  }
+
   Future<void> _saveHotelId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString("hotel_id", widget.hotel.id);
-    await prefs.setString("hotel_address", widget.hotel.address);
+    await prefs.setString("hotel_address", widget.hotel.diaChi);
     print("Hotels ID saved: ${widget.hotel.id}");
   }
 
@@ -48,12 +65,13 @@ class _DetailState extends State<DetailScreen> {
       context,
     MaterialPageRoute(builder: (context)=> SelectDateScreen()));
 
-    if(selectedDateTimeToNextScreen != null is Map<String,String>){
+    if(selectedDateTimeToNextScreen != null
+        && selectedDateTimeToNextScreen is Map<String,String>){
       setState(() {
-        _selecteDateCheckInShowText = selectedDateTimeToNextScreen["dateCheckIn"];
-        _selecteDateCheckOutShowText = selectedDateTimeToNextScreen["dateCheckOut"];
-        checkInDateRouter = selectedDateTimeToNextScreen["checkInDateRouter"];
-        checkOutDateRouter = selectedDateTimeToNextScreen["checkOutDateRouter"];
+        _selecteDateCheckInShowText = selectedDateTimeToNextScreen["dateCheckIn"]!;
+        _selecteDateCheckOutShowText = selectedDateTimeToNextScreen["dateCheckOut"]!;
+        checkInDateRouter = selectedDateTimeToNextScreen["checkInDateRouter"]!;
+        checkOutDateRouter = selectedDateTimeToNextScreen["checkOutDateRouter"]!;
       });
     }
   }
@@ -76,6 +94,8 @@ class _DetailState extends State<DetailScreen> {
               ),
             ],
           ),
+
+          //Mô tả chi tiết
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -89,8 +109,9 @@ class _DetailState extends State<DetailScreen> {
                     topRight: Radius.circular(16),
                   ),
                 ),
-                child: const Text(
-                  "FULL DESCRIPTION",
+
+                child: Text(
+                  S.of(context).description,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -129,8 +150,8 @@ class _DetailState extends State<DetailScreen> {
                         ),
                       ),
                       onPressed: () => Navigator.pop(context),
-                      child: const Text(
-                        "CLOSE",
+                      child: Text(
+                        S.of(context).close,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
@@ -160,7 +181,7 @@ class _DetailState extends State<DetailScreen> {
                 flexibleSpace: Hero(
                   tag: 'hotel-image-${widget.hotel.id}',
                   child: Image.network(
-                    widget.hotel.image,
+                    widget.hotel.hinhAnh,
                     height: 300,
                     fit: BoxFit.fill,
                     errorBuilder: (context, error, stackTrace) {
@@ -186,7 +207,7 @@ class _DetailState extends State<DetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.hotel.hotelName,
+                        widget.hotel.tenKhachSan,
                         style: const TextStyle(
                           fontSize: 25,
                           fontWeight: FontWeight.bold,
@@ -197,60 +218,65 @@ class _DetailState extends State<DetailScreen> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                          const Icon(Icons.location_on, size: 20, color: Color(0xFF525150)),
                           const SizedBox(width: 4),
                           Flexible(
-                            child: Text(widget.hotel.address,
+                            child: Text(widget.hotel.diaChi,
                                 maxLines: 3,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(color: Colors.grey)),
+                                style: const TextStyle(color: Color(0xFF525150))),
                           ),
                         ],
                       ),
                       const SizedBox(height: 16),
                       Row(
                         children: [
-                          _buildRatingStars(widget.hotel.star),
+                          _buildRatingStars(widget.hotel.soSao),
                           const Spacer(),
                           Padding(
                             padding: const EdgeInsets.only(right: 8.0),
                             child: Text(
-                              "\$${widget.hotel.price}",
+                              CurrencyHelper.formatVND(widget.hotel.giaCa),
                               style: const TextStyle(
-                                fontSize: 24,
+                                fontSize: 20,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.blue,
+                                color: Color(0xFF1565C0),
                               ),
                             ),
                           ),
-                          const Text("/ per night", style: TextStyle(color: Colors.grey)),
+                          Text("/ ${S.of(context).perNight}",
+
+                              style: TextStyle(
+                                  color: Color(0xFF525150),
+                                fontSize: 18,
+                              )),
                         ],
                       ),
                       const SizedBox(height: 24),
-                      const Text(
-                        "Amenities",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildAmenitiesRow(),
+
+                      AmenitiesSection(hotelId: widget.hotel.id),
+
                       const SizedBox(height: 24),
-                      const Text(
-                        "Description",
+
+                      Text(
+                        S.of(context).description,
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
                       InkWell(
-                        onTap: () => _showDescriptionDialog(context, widget.hotel.description),
+                        onTap: () => _showDescriptionDialog(context, widget.hotel.moTa),
                         child: Text(
-                          widget.hotel.description,
+                          widget.hotel.moTa,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(height: 1.5),
+                          style: const TextStyle(
+                              height: 1.5,
+                          fontSize: 16),
                         ),
                       ),
                       const SizedBox(height: 24),
-                      const Text(
-                        "Location",
+                      Text(
+                        S.of(context).locationHotel,
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 12),
@@ -293,7 +319,7 @@ class _DetailState extends State<DetailScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Nút "Select dates & guests"
+                  // Nút "Chọn ngày giờ check in"
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -375,20 +401,19 @@ class _DetailState extends State<DetailScreen> {
                         overlayColor: Colors.black.withOpacity(0.05),
                         splashFactory: InkRipple.splashFactory,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: const Color(0xFF16F1FA),
+                        backgroundColor: const Color(0xFF1565C0),
                         elevation: 4,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                       onPressed: () {
-                        if(_selecteDateCheckInShowText == "Select dates & guests" ||
+                        if(_selecteDateCheckInShowText == S.of(context).selectDatesAndTimeCheckIn ||
                             _selecteDateCheckOutShowText.isEmpty){
-                          ScaffoldMessenger.of(context).showSnackBar(
-                           const SnackBar(content: Text('Please select check-in and check-out dates'),
-                           backgroundColor: Colors.red,
-                           duration: Duration(seconds: 2),),
-                          );
+                          NotificationDialog.showInfo(
+                              context, 
+                              message: S.of(context).messageSelectDateTimeCheckIn);
+
                          }else{
                           Navigator.push(context, MaterialPageRoute(
                               builder: (builder)=>
@@ -398,13 +423,12 @@ class _DetailState extends State<DetailScreen> {
                                     checkOutDate: checkOutDateRouter,)));
                         }
                       },
-                      child: const Text(
-                        "Book now!",
+                      child:  Text(
+                        S.of(context).bookNow,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          fontFamily: 'Lato Semibold',
-                          color: Colors.black,
+                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -418,18 +442,32 @@ class _DetailState extends State<DetailScreen> {
     );
   }
 
-  Widget _buildRatingStars(int rating) {
+  Widget _buildRatingStars(double rating) { // Đổi từ int sang double
     return Row(
       children: List.generate(5, (index) {
-        return Icon(
-          index < rating ? Icons.star : Icons.star_border,
-          color: Colors.amber,
-          size: 20,
-        );
+        if (index < rating.floor()) {
+          return Icon(
+            FontAwesomeIcons.solidStar,
+            color: Colors.amber,
+            size: 20,
+          );
+        } else if (index < rating) {
+          return Icon(
+            FontAwesomeIcons.starHalfStroke,
+            color: Colors.amber,
+            size: 20,
+          );
+        } else {
+          // Star rỗng
+          return Icon(
+            FontAwesomeIcons.star,
+            color: Colors.grey[400],
+            size: 20,
+          );
+        }
       }),
     );
   }
-
   Widget _buildAmenitiesRow() {
     return Wrap(
       spacing: 10,

@@ -465,7 +465,7 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
                     </div>
                     <div>
                       <p className="text-sm font-medium">{booking.roomType}</p>
-                      <p className="text-sm text-gray-600">{booking.hotelId.hotelName}</p>
+                      <p className="text-sm text-gray-600">{booking.hotelId.tenKhachSan}</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium">{booking.checkInDate} - {booking.checkOutDate}</p>
@@ -479,6 +479,7 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
                         {getStatusText(booking.status)}
                       </span>
+                      
                     </div>
                   </div>
                 </div>

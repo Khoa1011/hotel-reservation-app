@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../Data/Provider/ApiResponse.dart';
 import '../../Data/Repository/updateProfile_Repository/updateProfile_repo.dart';
-import '../../Models/User.dart';
+import '../../Models/NguoiDung.dart';
 
 class UpdateProfileBloc extends Bloc<UpdateProfileEvent,UpdateProfileState> {
   late final UpdateProfileRepository fpr;
@@ -23,7 +23,7 @@ class UpdateProfileBloc extends Bloc<UpdateProfileEvent,UpdateProfileState> {
         emit(UpdateProfileFailure(res.message));
         return;
       } else {
-        User user = res.data;
+        NguoiDung user = res.data;
         emit(UpdateProfileSuccess(user));
       }
     } catch (err) {

@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'package:doan_datphong/Data/Provider/IP_v4_Address.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CheckLoginRepository {
-  final String baseURL = "http://192.168.100.110:3000/api/users";
+  static final String ip = IPv4.IP_CURRENT;
+  final String baseURL = "${ip}/api/users";
 
   Future<bool> checkLogin() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();

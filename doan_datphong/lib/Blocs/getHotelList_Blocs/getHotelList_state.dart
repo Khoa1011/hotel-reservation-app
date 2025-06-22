@@ -1,4 +1,4 @@
-import 'package:doan_datphong/Models/Hotels.dart';
+import 'package:doan_datphong/Models/KhachSan.dart';
 
 abstract class GetHotelListState{
   @override
@@ -15,9 +15,9 @@ class GetHotelListSuccess extends GetHotelListState{
   List<Object?> get props => [hotels];
 }
 class GetHotelListFailure extends GetHotelListState{
-  final String error;
-  GetHotelListFailure(this.error);
+  final String errorMessage;
+  GetHotelListFailure(this.errorMessage);
 
   @override
-  List<Object?> get props => [error];
+  List<Object?> get props => [errorMessage];
 }

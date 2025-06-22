@@ -1,4 +1,4 @@
-import 'package:doan_datphong/Models/User.dart';
+import 'package:doan_datphong/Models/NguoiDung.dart';
 import 'package:equatable/equatable.dart';
 
 abstract class UpdateProfileEvent extends Equatable{
@@ -8,7 +8,7 @@ abstract class UpdateProfileEvent extends Equatable{
 }
 
 class UpdateProfileSubmiited extends UpdateProfileEvent{
-  final User user;
+  final NguoiDung user;
 
   UpdateProfileSubmiited( this.user);
 }

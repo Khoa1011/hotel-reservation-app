@@ -2,15 +2,15 @@ import 'dart:io';
 import 'package:doan_datphong/Blocs/fillProfile_Blocs/fillProfile_bloc.dart';
 import 'package:doan_datphong/Blocs/fillProfile_Blocs/fillProfile_event.dart';
 import 'package:doan_datphong/Blocs/fillProfile_Blocs/fillProfile_state.dart';
-import 'package:doan_datphong/Models/User.dart';
+import 'package:doan_datphong/Models/NguoiDung.dart';
 import 'package:doan_datphong/Views/home_View/home_screen.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:doan_datphong/generated/l10n.dart'; // ✅ Thêm import
 
 enum Gender { male, female }
 
@@ -21,14 +21,13 @@ class FillProfile extends StatefulWidget {
   State<FillProfile> createState() => _FillProfileState();
 }
 
-
 class _FillProfileState extends State<FillProfile> {
   final _formKey = GlobalKey<FormState>();
   File? _image;
   final picker = ImagePicker();
 
-
-  List<String> genders = ["Male", "Female"];
+  // ✅ Sẽ được dynamic từ S.of(context)
+  List<String> get genders => [S.of(context).male, S.of(context).female];
 
   String? errorPhoneNumber;
   String? errorFullName;
@@ -46,15 +45,16 @@ class _FillProfileState extends State<FillProfile> {
     String? userJson = prefs.getString("user");
 
     if (userJson != null) {
-      User user = User.fromJsonString(userJson);
+      NguoiDung user = NguoiDung.fromJsonString(userJson);
       return user.id;
     }
     return null;
   }
+
   void updateUser() async{
     validFullNameCheck(fullNameController.text);
     validPhoneNumberCheck(phoneNumberController.text);
-    validGenderCheck(_selectedGender!);
+    validGenderCheck(_selectedGender ?? "");
     validDateOfBirthCheck(calendarController.text);
 
     String? user_id= await getUserId();
@@ -63,13 +63,13 @@ class _FillProfileState extends State<FillProfile> {
         errorPhoneNumber == null &&
         errorGender == null &&
         errorDoB == null) {
-      User user = User.short(
+      NguoiDung user = NguoiDung.short(
         id: user_id ?? "",
-        userName: fullNameController.text,
-        phoneNumber: phoneNumberController.text,
-        gender: (_selectedGender == genders[0] ? true : false),
-        Dob: calendarController.text,
-        avatar: _image!.path,
+        tenNguoiDung: fullNameController.text,
+        soDienThoai: phoneNumberController.text,
+        gioiTinh: (_selectedGender == genders[0] ? true : false),
+        ngaySinh: calendarController.text,
+        hinhDaiDien: _image!.path,
       );
       context.read<FillProfileBloc>().add(
         FillProfileSubmiited(user),
@@ -77,11 +77,10 @@ class _FillProfileState extends State<FillProfile> {
     }
   }
 
-
   void validGenderCheck(String value){
     if(value.isEmpty){
       setState(() {
-        errorGender = _selectedGender == null ? "Please select your gender" : null;
+        errorGender = _selectedGender == null ? S.of(context).pleaseSelectGender : null; // ✅
       });
     }else{
       setState(() {
@@ -93,7 +92,7 @@ class _FillProfileState extends State<FillProfile> {
   void validDateOfBirthCheck(String value){
     if(value.isEmpty){
       setState(() {
-        errorDoB = calendarController.text.isEmpty ? "Please select your date of birth." : null;
+        errorDoB = calendarController.text.isEmpty ? S.of(context).pleaseSelectDateOfBirth : null; // ✅
       });
     }else{
       setState(() {
@@ -101,14 +100,15 @@ class _FillProfileState extends State<FillProfile> {
       });
     }
   }
+
   void validFullNameCheck(String value){
     if(value.isEmpty){
       setState(() {
-        errorFullName = "Please enter your full name.";
+        errorFullName = S.of(context).pleaseEnterFullName; // ✅
       });
     }else if (!RegExp(r"^[a-zA-ZÀ-ỹ\s]+$").hasMatch(value)){
       setState(() {
-        errorFullName = "The name cannot contain special characters.";
+        errorFullName = S.of(context).nameCannotContainSpecialCharacters; // ✅
       });
     }else {
       setState(() {
@@ -116,15 +116,16 @@ class _FillProfileState extends State<FillProfile> {
       });
     }
   }
+
   void validPhoneNumberCheck(String value) {
     final phoneRegex = RegExp(r"^0[0-9]{9}$");
     if (value.isEmpty) {
       setState(() {
-        errorPhoneNumber = "Please enter your phone number.";
+        errorPhoneNumber = S.of(context).pleaseEnterPhoneNumber; // ✅
       });
     } else if (!phoneRegex.hasMatch(value)) {
       setState(() {
-        errorPhoneNumber = "Invalid phone number.";
+        errorPhoneNumber = S.of(context).invalidPhoneNumber; // ✅
       });
     } else {
       setState(() {
@@ -132,8 +133,6 @@ class _FillProfileState extends State<FillProfile> {
       });
     }
   }
-
-
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picker = await showDatePicker(
@@ -149,35 +148,32 @@ class _FillProfileState extends State<FillProfile> {
     }
   }
 
-  //Hiển thị hộp thoại chọn ảnh
   Future<void> pickImage() async {
     showModalBottomSheet(
       context: context,
-      builder:
-          (context) => Wrap(
-            children: [
-              ListTile(
-                leading: Icon(Icons.camera),
-                title: Text("Chụp ảnh"),
-                onTap: () async {
-                  Navigator.pop(context);
-                  await getImage(ImageSource.camera);
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.photo_library),
-                title: Text("Chọn từ thư viện"),
-                onTap: () async {
-                  Navigator.pop(context);
-                  await getImage(ImageSource.gallery);
-                },
-              ),
-            ],
+      builder: (context) => Wrap(
+        children: [
+          ListTile(
+            leading: Icon(Icons.camera),
+            title: Text(S.of(context).takePhoto), // ✅
+            onTap: () async {
+              Navigator.pop(context);
+              await getImage(ImageSource.camera);
+            },
           ),
+          ListTile(
+            leading: Icon(Icons.photo_library),
+            title: Text(S.of(context).chooseFromGallery), // ✅
+            onTap: () async {
+              Navigator.pop(context);
+              await getImage(ImageSource.gallery);
+            },
+          ),
+        ],
+      ),
     );
   }
 
-  //Chọn ảnh từ thư viện
   Future<void> getImage(ImageSource source) async {
     final pickedFile = await picker.pickImage(source: source);
     if (pickedFile != null) {
@@ -197,14 +193,13 @@ class _FillProfileState extends State<FillProfile> {
       listener: (context,state){
         if(state is FillProfileSuccess){
           Navigator.pushReplacement(context,
-          MaterialPageRoute(builder: (context) => HomeScreen(user: state.user)));
+              MaterialPageRoute(builder: (context) => HomeScreen(user: state.user)));
         }else if (state is FillProfileFailure){
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.errorMessage??""))
+              SnackBar(content: Text(state.errorMessage??""))
           );
         }
-      }
-      ,
+      },
       child: SafeArea(
         child: Scaffold(
           appBar: AppBar(
@@ -215,7 +210,7 @@ class _FillProfileState extends State<FillProfile> {
               },
             ),
             title: Text(
-              "Fill Your Profile",
+              S.of(context).fillYourProfile, // ✅
               style: TextStyle(
                 fontFamily: 'Lato Semibold',
                 fontSize: 20,
@@ -241,10 +236,9 @@ class _FillProfileState extends State<FillProfile> {
                               radius: 70,
                               backgroundColor: Colors.transparent,
                               backgroundImage:
-                                  _image != null
-                                      ? FileImage(_image!)
-                                      : AssetImage('assets/images/default_user.jpg',),
-
+                              _image != null
+                                  ? FileImage(_image!)
+                                  : AssetImage('assets/images/default_user.jpg'),
                             ),
                             Positioned(
                               bottom: 0,
@@ -271,12 +265,11 @@ class _FillProfileState extends State<FillProfile> {
                       controller: fullNameController,
                       style: TextStyle(fontFamily: 'Lato Semibold'),
                       onChanged: validFullNameCheck,
-
                       decoration: InputDecoration(
                         errorText: errorFullName,
                         filled: true,
                         fillColor: Color(0xFFF1F1F1),
-                        hintText: 'Full Name',
+                        hintText: S.of(context).fullName, // ✅
                         hintStyle: TextStyle(
                           fontWeight: FontWeight.w400,
                           fontStyle: FontStyle.italic,
@@ -299,14 +292,12 @@ class _FillProfileState extends State<FillProfile> {
                     DropdownButtonFormField<String>(
                       value: _selectedGender,
                       decoration: InputDecoration(
-
                         filled: true,
                         fillColor: Color(0xFFF1F1F1),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide.none,
                         ),
-
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide(
@@ -315,19 +306,18 @@ class _FillProfileState extends State<FillProfile> {
                           ),
                         ),
                       ),
-                      hint: Text("Select Gender",
-                      style: TextStyle(
-                        fontStyle: FontStyle.italic,
-                        fontWeight: FontWeight.w500
-                      ),),
-                      items:
-                          genders.map((String gender) {
-                            return DropdownMenuItem<String>(
-                              value: gender,
-                              child: Text(gender,
-                              style: TextStyle(fontWeight: FontWeight.normal),),
-                            );
-                          }).toList(),
+                      hint: Text(S.of(context).selectGender, // ✅
+                          style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              fontWeight: FontWeight.w500
+                          )),
+                      items: genders.map((String gender) {
+                        return DropdownMenuItem<String>(
+                          value: gender,
+                          child: Text(gender,
+                              style: TextStyle(fontWeight: FontWeight.normal)),
+                        );
+                      }).toList(),
                       onChanged: (String? newValue){
                         setState(() {
                           _selectedGender = newValue;
@@ -336,7 +326,6 @@ class _FillProfileState extends State<FillProfile> {
                     ),
 
                     const SizedBox(height: 15),
-
 
                     TextFormField(
                       controller: calendarController,
@@ -347,8 +336,7 @@ class _FillProfileState extends State<FillProfile> {
                         errorText: errorDoB,
                         filled: true,
                         fillColor: Color(0xFFF1F1F1),
-                        hintText: 'Date of Birth',
-
+                        hintText: S.of(context).dateOfBirth, // ✅
                         hintStyle: TextStyle(
                           fontWeight: FontWeight.w400,
                           fontStyle: FontStyle.italic,
@@ -381,7 +369,7 @@ class _FillProfileState extends State<FillProfile> {
                         errorText: errorPhoneNumber,
                         filled: true,
                         fillColor: Color(0xFFF1F1F1),
-                        hintText: 'Phone Number',
+                        hintText: S.of(context).phoneNumber, // ✅
                         hintStyle: TextStyle(
                           fontWeight: FontWeight.w400,
                           fontStyle: FontStyle.italic,
@@ -403,7 +391,6 @@ class _FillProfileState extends State<FillProfile> {
                         LengthLimitingTextInputFormatter(10),
                         FilteringTextInputFormatter.digitsOnly,
                       ],
-
                       keyboardType: TextInputType.number,
                     ),
 
@@ -417,16 +404,15 @@ class _FillProfileState extends State<FillProfile> {
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Color(0xFF16F1FA),
-                            foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(vertical: 10),
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(vertical: 10),
                         ),
-                        child: Text("Coutinue",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 17
-                        ),),
-
-                        ),
+                        child: Text(S.of(context).continueText, // ✅
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 17
+                            )),
+                      ),
                     )
                   ],
                 ),

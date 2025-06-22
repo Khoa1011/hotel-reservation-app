@@ -2,7 +2,7 @@ import 'package:doan_datphong/Blocs/login_Blocs/login_event.dart';
 import 'package:doan_datphong/Blocs/login_Blocs/login_state.dart';
 import 'package:doan_datphong/Data/Provider/ApiResponse.dart';
 import 'package:doan_datphong/Data/Repository/login_Repository/login_repo.dart';
-import 'package:doan_datphong/Models/User.dart';
+import 'package:doan_datphong/Models/NguoiDung.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class LoginBloc extends Bloc<LoginEvent,LoginState>{
@@ -21,7 +21,7 @@ class LoginBloc extends Bloc<LoginEvent,LoginState>{
         emit(LoginFailure(res.message));
         return;
       }
-      User user = res.data;
+      NguoiDung user = res.data;
       if(resIsUser.success){
         emit(LoginSuccess(user));
       }else{

@@ -4,12 +4,14 @@ import 'package:doan_datphong/Views/home_View/searchView.dart';
 import 'package:doan_datphong/Views/listBooking_View/listBooking_screen.dart';
 import 'package:doan_datphong/Views/profile_View/profile_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../Models/User.dart';
+import '../../Models/NguoiDung.dart';
 import '../seach_View/search_screen.dart';
+import 'package:doan_datphong/generated/l10n.dart';
 
 class HomeScreen extends StatefulWidget {
-  final User? user;
+  final NguoiDung? user;
   const HomeScreen({super.key, required this.user});
   @override
   _HomePageState createState() => _HomePageState();
@@ -44,10 +46,10 @@ class _HomePageState extends State<HomeScreen> {
   Widget build(BuildContext context) {
 
     return Scaffold(
-      backgroundColor: Color(0xffF1F1F2),
+      backgroundColor: Color(0xffE3F2FD),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        shadowColor: Colors.transparent,
+        backgroundColor: Colors.white,
+
         leading: Padding(
           padding: const EdgeInsets.only(left: 16.0, top: 10.0, bottom: 8.0),
           child: CircleAvatar(
@@ -61,7 +63,7 @@ class _HomePageState extends State<HomeScreen> {
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF14D9E1),
+            color: Color(0xFF42A5F5),
             fontFamily: 'Lato Semibold',
           ),
         ),
@@ -73,13 +75,13 @@ class _HomePageState extends State<HomeScreen> {
               children: [
                 Icon(
                   Icons.notifications_none_outlined,
-                  color: Color(0xff9A9EAB),
+                  color: Color(0xFF525150),
                   size: 30,
                 ),
                 const SizedBox(width: 15),
                 Icon(
                   Icons.bookmark_border_outlined,
-                  color: Color(0xff9A9EAB),
+                  color: Color(0xFF525150),
                   size: 30,
                 ),
               ],
@@ -96,11 +98,12 @@ class _HomePageState extends State<HomeScreen> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    "Welcome, ${widget.user?.userName ?? "Người dùng"}",
+                    "${S.of(context).welcomeToStaytion}, ${widget.user?.tenNguoiDung ?? "Người dùng"}",
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Lato Semibold',
+                      color: Color(0xFF1565C0)
                     ),
                   ),
                 ),
@@ -118,11 +121,11 @@ class _HomePageState extends State<HomeScreen> {
                         decoration: BoxDecoration(
                           color:
                               recommendedButtonPressed
-                                  ? Color(0xFF16F1FA)
+                                  ? Color(0xFF1565C0)
                                   : Colors.white,
                           borderRadius: BorderRadius.circular(15),
                           border: Border.all(
-                            color: Color(0xFF16F1FA),
+                            color: Color(0xFF1565C0),
                             width:
                                 recommendedButtonPressed
                                     ? 2
@@ -147,12 +150,12 @@ class _HomePageState extends State<HomeScreen> {
                               ),
                             ),
                             child: Text(
-                              "Recommended",
+                              S.of(context).recommended,
                               style: TextStyle(
                                 color:
                                     recommendedButtonPressed
                                         ? Colors.white
-                                        : Color(0xFF16F1FA),
+                                        : Color(0xFF1565C0),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -166,11 +169,11 @@ class _HomePageState extends State<HomeScreen> {
                         decoration: BoxDecoration(
                           color:
                               popularButtonPressed
-                                  ? Color(0xFF16F1FA)
+                                  ? Color(0xFF1565C0)
                                   : Colors.white,
                           borderRadius: BorderRadius.circular(15),
                           border: Border.all(
-                            color: Color(0xFF16F1FA),
+                            color: Color(0xFF1565C0),
                             width:
                                 popularButtonPressed
                                     ? 2
@@ -194,12 +197,12 @@ class _HomePageState extends State<HomeScreen> {
                               ),
                             ),
                             child: Text(
-                              "Popular",
+                              S.of(context).popular,
                               style: TextStyle(
                                 color:
                                     popularButtonPressed
                                         ? Colors.white
-                                        : Color(0xFF16F1FA),
+                                        : Color(0xFF1565C0),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -213,11 +216,11 @@ class _HomePageState extends State<HomeScreen> {
                         decoration: BoxDecoration(
                           color:
                               trendingButtonPressed
-                                  ? Color(0xFF16F1FA)
+                                  ? Color(0xFF1565C0)
                                   : Colors.white,
                           borderRadius: BorderRadius.circular(15),
                           border: Border.all(
-                            color: Color(0xFF16F1FA),
+                            color: Color(0xFF1565C0),
                             width:
                                 trendingButtonPressed
                                     ? 2
@@ -238,16 +241,16 @@ class _HomePageState extends State<HomeScreen> {
                                 EdgeInsets.symmetric(
                                   horizontal: 20,
                                   vertical: 10,
-                                ), // ✅ Khoảng cách trong nút
+                                ),
                               ),
                             ),
                             child: Text(
-                              "Trending",
+                              S.of(context).trending,
                               style: TextStyle(
                                 color:
                                     trendingButtonPressed
                                         ? Colors.white
-                                        : Color(0xFF16F1FA),
+                                        : Color(0xFF1565C0),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -261,25 +264,24 @@ class _HomePageState extends State<HomeScreen> {
 
 
                 HotelCardView(),
-                const SizedBox(height: 15),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      "Recently Booked",
+                      S.of(context).recentlyBooked,
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'Lato Semibold',
+
                       ),
                     ),
                     TextButton(
                       onPressed: () {},
                       child: Text(
-                        "See all",
+                        S.of(context).seeAll,
                         style: TextStyle(
                           fontSize: 18,
-                          color: Color(0xFF14D9E1),
+                          color: Color(0xFF1565C0),
                           fontWeight: FontWeight.bold,
                           fontFamily: 'Lato Semibold',
                         ),
@@ -345,30 +347,31 @@ class _HomePageState extends State<HomeScreen> {
                                         Text(
                                           "7 Distric, Ho Chi Minh city",
                                           style: TextStyle(
-                                            fontSize: 11,
+                                            fontSize: 15,
                                             fontStyle: FontStyle.italic
                                           ),
                                         ),
                                         Row(
 
                                           children: [
-                                            Icon(Icons.star,
+                                            Icon(FontAwesomeIcons.solidStar,
                                                 color: Colors.yellowAccent.shade700,
-                                                size: 28
+                                                size: 25
                                             ),
                                             const SizedBox(width: 4,),
                                             Text("4.7",
                                             style: TextStyle(
-                                                color: Color(0xFF14D9E1),
+                                              fontSize: 18,
+                                                color: Color(0xFF1565C0),
                                                 fontWeight: FontWeight.bold,
                                                 fontFamily: 'Lato Semibol',
 
                                               ),
                                             ),
                                             const SizedBox(width: 5,),
-                                            Text("(8.215 reviews)",
+                                            Text("(8.215)",
                                               style: TextStyle(
-                                                fontSize: 10,
+                                                fontSize: 16,
                                                 fontStyle: FontStyle.italic,
                                                 fontFamily: 'Lato Semibold',
 
@@ -393,11 +396,11 @@ class _HomePageState extends State<HomeScreen> {
                                             fontWeight: FontWeight.bold,
                                             fontFamily:'Lato Semibold',
                                             fontSize: 25,
-                                            color: Color(0xFF14D9E1)
+                                            color: Color(0xFF1565C0)
                                           ),),
                                           Text("/ night",
                                           style: TextStyle(
-                                            fontSize: 12,
+                                            fontSize: 15,
                                             fontStyle: FontStyle.italic
                                           ),),
                                           Padding(
@@ -419,7 +422,7 @@ class _HomePageState extends State<HomeScreen> {
                                                       : Icons.bookmark_add_outlined,
                                                   key: ValueKey<bool>(iconBookMarkRecentlyPressed),
                                                   size: 40,
-                                                  color: Color(0xff9A9EAB),
+                                                  color: Color(0xFF525150),
                                                 ),
                                               ),
                                             ),
@@ -499,24 +502,24 @@ class _HomePageState extends State<HomeScreen> {
         }
       },
 
-      selectedItemColor: Color(0xFF14D9E1),
-      unselectedItemColor: Color(0xff9A9EAB),
-      items: const [
+      selectedItemColor: Color(0xFF1565C0),
+      unselectedItemColor: Color(0xFF525150),
+      items: [
         BottomNavigationBarItem(
           icon: Icon(Icons.home),
-          label: 'Home',
+          label: S.of(context).home,
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.search),
-          label: 'Search',
+          label: S.of(context).search,
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.view_list_outlined),
-          label: 'Booking',
+          label: S.of(context).booking,
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.person),
-          label: 'Profile',
+          label: S.of(context).profile,
         ),
       ],
     );

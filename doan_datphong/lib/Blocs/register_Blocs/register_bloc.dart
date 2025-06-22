@@ -18,17 +18,18 @@ class RegisterBlocs extends Bloc<RegisterEvent, RegisterState> {
       ApiResponse? res = await registerRepository.register(event.email, event.password);
 
       if (res!.success) {
-        // Lưu email vào SharedPreferences để hiển thị trên trang đăng nhập
+
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString("email", event.email);
 
         emit(RegisterSuccess(res.data)); // Trạng thái thành công
-        add(RegisterCompleted(email: event.email)); // Chuyển sự kiện sang đăng nhập
+
       } else {
         emit(RegisterFailure(res.message));
       }
     } catch (e) {
-
+      print("RegisterBloc unexpected error: $e");
+      emit(RegisterFailure("Có lỗi không mong muốn xảy ra: ${e.toString()}"));
     }
   }
 }

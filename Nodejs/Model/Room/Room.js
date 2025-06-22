@@ -8,7 +8,6 @@ const RoomSchema = new mongoose.Schema({
   moTa: { type: String, required: true },
   soLuongGiuong: { type: Number, required: true },
   soLuongNguoiToiDa: { type: Number, required: true },
-  danhSachTienNghi: [{ type: String }],
   tongSoPhong: { type: Number, default: 0 },
   // availableRooms: { type: Number, default: 0 } // Thêm trường mới
 });

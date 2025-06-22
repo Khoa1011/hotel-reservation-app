@@ -1,0 +1,455 @@
+{
+  "@@locale": "vi",
+
+  "@@_LOGIN_SCREEN_SECTION": "=== MÀN HÌNH ĐĂNG NHẬP ===",
+  "@@_MAIN_CONTENT": "--- Nội dung chính ---",
+  "welcomeToStaytion": "Chào mừng",
+  "@welcomeToStaytion": {
+    "description": "Welcome message on login screen"
+  },
+
+  "@@_INPUT_FIELDS": "--- Các trường nhập liệu ---",
+  "emails": "Email",
+  "@emails": {
+    "description": "Email input field hint"
+  },
+  "password": "Mật khẩu",
+  "@password": {
+    "description": "Password input field hint"
+  },
+
+  "@@_BUTTONS_AND_ACTIONS": "--- Nút bấm và hành động ---",
+  "rememberMe": "Ghi nhớ đăng nhập",
+  "@rememberMe": {
+    "description": "Remember me checkbox label"
+  },
+  "signIn": "Đăng nhập",
+  "@signIn": {
+    "description": "Sign in button text"
+  },
+  "forgotPassword": "Quên mật khẩu?",
+  "@forgotPassword": {
+    "description": "Forgot password link text"
+  },
+
+  "@@_SOCIAL_LOGIN": "--- Đăng nhập mạng xã hội ---",
+  "orContinueWith": "hoặc tiếp tục với",
+  "@orContinueWith": {
+    "description": "Alternative login options separator"
+  },
+
+  "@@_REGISTRATION_SECTION": "--- Phần đăng ký ---",
+  "dontHaveAccount": "Chưa có tài khoản?",
+  "@dontHaveAccount": {
+    "description": "Sign up prompt text"
+  },
+  "signUp": "Đăng ký",
+  "@signUp": {
+    "description": "Sign up button text"
+  },
+
+  "@@_VALIDATION_ERRORS": "--- Thông báo lỗi validation ---",
+  "emailCannotBeEmpty": "Email không được để trống!",
+  "@emailCannotBeEmpty": {
+    "description": "Email validation error when empty"
+  },
+  "enterValidEmail": "Vui lòng nhập email hợp lệ!",
+  "@enterValidEmail": {
+    "description": "Email validation error for invalid format"
+  },
+  "passwordMinLength": "Mật khẩu phải có ít nhất 6 ký tự!",
+  "@passwordMinLength": {
+    "description": "Password validation error for minimum length"
+  },
+
+
+  "@@_FILL_PROFILE_SECTION": "=== MÀN HÌNH ĐIỀN HỒ SƠ ===",
+  "fillYourProfile": "Điền Hồ Sơ Của Bạn",
+  "@fillYourProfile": {
+    "description": "Fill profile screen title"
+  },
+  "fullName": "Họ và Tên",
+  "@fullName": {
+    "description": "Full name input field hint"
+  },
+  "selectGender": "Chọn Giới Tính",
+  "@selectGender": {
+    "description": "Gender dropdown hint"
+  },
+  "male": "Nam",
+  "@male": {
+    "description": "Male gender option"
+  },
+  "female": "Nữ",
+  "@female": {
+    "description": "Female gender option"
+  },
+  "dateOfBirth": "Ngày Sinh",
+  "@dateOfBirth": {
+    "description": "Date of birth input field hint"
+  },
+  "phoneNumber": "Số Điện Thoại",
+  "@phoneNumber": {
+    "description": "Phone number input field hint"
+  },
+  "takePhoto": "Chụp Ảnh",
+  "@takePhoto": {
+    "description": "Take photo option in image picker"
+  },
+  "chooseFromGallery": "Chọn Từ Thư Viện",
+  "@chooseFromGallery": {
+    "description": "Choose from gallery option in image picker"
+  },
+  "continueText": "Tiếp Tục",
+  "@continueText": {
+    "description": "Continue button text"
+  },
+
+  "@@_FILL_PROFILE_ERRORS": "--- Thông báo lỗi điền hồ sơ ---",
+  "pleaseSelectGender": "Vui lòng chọn giới tính",
+  "@pleaseSelectGender": {
+    "description": "Gender selection error message"
+  },
+  "pleaseSelectDateOfBirth": "Vui lòng chọn ngày sinh",
+  "@pleaseSelectDateOfBirth": {
+    "description": "Date of birth selection error message"
+  },
+  "pleaseEnterFullName": "Vui lòng nhập họ tên đầy đủ",
+  "@pleaseEnterFullName": {
+    "description": "Full name validation error when empty"
+  },
+  "nameCannotContainSpecialCharacters": "Tên không được chứa ký tự đặc biệt",
+  "@nameCannotContainSpecialCharacters": {
+    "description": "Full name validation error for special characters"
+  },
+  "pleaseEnterPhoneNumber": "Vui lòng nhập số điện thoại",
+  "@pleaseEnterPhoneNumber": {
+    "description": "Phone number validation error when empty"
+  },
+  "invalidPhoneNumber": "Số điện thoại không hợp lệ",
+  "@invalidPhoneNumber": {
+    "description": "Phone number validation error for invalid format"
+  },
+
+  "@@_REGISTER_SCREEN_SECTION": "=== MÀN HÌNH ĐĂNG KÝ ===",
+  "createYourAccount": "Tạo Tài Khoản",
+  "@createYourAccount": {
+    "description": "Register screen title"
+  },
+  "confirmPassword": "Xác Nhận Mật Khẩu",
+  "@confirmPassword": {
+    "description": "Confirm password input field hint"
+  },
+  "passwordsDoNotMatch": "Mật khẩu không khớp!",
+  "@passwordsDoNotMatch": {
+    "description": "Password confirmation error message"
+  },
+  "successful": "Thành Công!",
+  "@successful": {
+    "description": "Success dialog title"
+  },
+  "registrationSuccessful": "Đăng ký thành công!",
+  "@registrationSuccessful": {
+    "description": "Registration success message"
+  },
+
+  "@@_PROFILE_SCREEN_SECTION": "=== MÀN HÌNH HỒ SƠ ===",
+  "@@_PROFILE_HEADER": "--- Tiêu đề hồ sơ ---",
+  "profile": "Hồ sơ",
+  "@profile": {
+    "description": "Profile screen title"
+  },
+
+  "@@_PROFILE_ACTIONS": "--- Hành động hồ sơ ---",
+  "editProfile": "Chỉnh sửa hồ sơ",
+  "@editProfile": {
+    "description": "Edit profile button text"
+  },
+
+  "@@_SETTINGS_SECTION": "--- Phần cài đặt ---",
+  "settings": "Cài đặt",
+  "@settings": {
+    "description": "Settings section title"
+  },
+  "payment": "Thanh toán",
+  "@payment": {
+    "description": "Payment settings option"
+  },
+  "notifications": "Thông báo",
+  "@notifications": {
+    "description": "Notifications settings option"
+  },
+  "security": "Bảo mật",
+  "@security": {
+    "description": "Security settings option"
+  },
+  "help": "Trợ giúp",
+  "@help": {
+    "description": "Help settings option"
+  },
+  "darkTheme": "Chế độ tối",
+  "@darkTheme": {
+    "description": "Dark theme toggle option"
+  },
+  "language": "Ngôn ngữ",
+  "@language": {
+    "description": "Language settings option"
+  },
+  "logout": "Đăng xuất",
+  "@logout": {
+    "description": "Logout option"
+  },
+
+  "@@_BOTTOM_NAVIGATION": "--- Điều hướng dưới ---",
+  "home": "Trang chủ",
+  "@home": {
+    "description": "Home tab label"
+  },
+  "search": "Tìm kiếm",
+  "@search": {
+    "description": "Search tab label"
+  },
+  "booking": "Đặt phòng",
+  "@booking": {
+    "description": "Booking tab label"
+  },
+
+  "@@_DIALOGS": "--- Thông báo dialog ---",
+  "logoutConfirmation": "Bạn có chắc chắn muốn đăng xuất?",
+  "@logoutConfirmation": {
+    "description": "Logout confirmation dialog message"
+  },
+  "cancel": "Hủy",
+  "@cancel": {
+    "description": "Cancel button text"
+  },
+  "error": "Lỗi",
+  "@error": {
+    "description": "Error dialog title"
+  },
+  "ok": "Đồng ý",
+  "@ok": {
+    "description": "OK button text"
+  },
+
+  "@@_LANGUAGE_OPTIONS": "--- Tùy chọn ngôn ngữ ---",
+  "vietnamese": "Tiếng Việt",
+  "@vietnamese": {
+    "description": "Vietnamese language option"
+  },
+  "english": "English",
+  "@english": {
+    "description": "English language option"
+  },
+
+  "@@_COMMON_ACTIONS": "--- Hành động chung ---",
+  "save": "Lưu",
+  "@save": {
+    "description": "Save button text"
+  },
+  "edit": "Chỉnh sửa",
+  "@edit": {
+    "description": "Edit button text"
+  },
+  "delete": "Xóa",
+  "@delete": {
+    "description": "Delete button text"
+  },
+  "confirm": "Xác nhận",
+  "@confirm": {
+    "description": "Confirm button text"
+  },
+  "back": "Quay lại",
+  "@back": {
+    "description": "Back button text"
+  },
+  "next": "Tiếp theo",
+  "@next": {
+    "description": "Next button text"
+  },
+  "done": "Hoàn thành",
+  "@done": {
+    "description": "Done button text"
+  },
+  "close": "Đóng",
+  "@close": {
+    "description": "Close button text"
+  },
+
+  "@@_NOTIFICATION_DIALOG": "--- Hộp thoại thông báo ---",
+  "tryAgain": "Thử lại",
+  "@tryAgain": {
+    "description": "Try again button text"
+  },
+  "warning": "Cảnh báo!",
+  "@warning": {
+    "description": "Warning dialog title"
+  },
+  "information": "Thông tin",
+  "@information": {
+    "description": "Information dialog title"
+  },
+  "pleaseEnterAllFields": "Vui lòng nhập đầy đủ thông tin!",
+  "@pleaseEnterAllFields":{
+    "description": "Message dialog when register"
+  },
+  "pleaseFixValidationErrors": "Đang có lỗi sai khi nhập liệu. Hãy kiểm tra lại!",
+  "@pleaseFixValidationErrors":{
+    "description": "Message dialog when register"
+  },
+  "connectionTimeout": "Hết thời gian kết nối. Vui lòng thử lại sau!",
+
+
+
+  "@@_ERROR_CODE": "--- LỖI HỆ THỐNG ---",
+
+
+  "pleaseTryAgain": "Vui lòng thử lại sau!",
+  "errorConnectionTimeout": "Kết nối timeout. Server có thể đang bận hoặc không phản hồi!",
+  "@errorConnectionTimeout": {
+    "description": "Connection timeout error message"
+  },
+  "connectionTimeoutAgain": "Vui lòng kiểm tra mạng và thử lại",
+  "errorServerRefused": "Server từ chối kết nối. Server có thể đã tắt!",
+  "@errorServerRefused": {
+    "description": "Server refused connection error message"
+  },
+  "errorNetworkUnreachable": "Không thể kết nối mạng. Vui lòng kiểm tra WiFi/Mobile data!",
+  "@errorNetworkUnreachable": {
+    "description": "Network unreachable error message"
+  },
+  "notNetwork": "Không có kết nối internet",
+  "maintenanceServer": "Máy chủ đang bảo trì",
+  "errorInvalidResponse": "Server trả về dữ liệu không hợp lệ!",
+  "@errorInvalidResponse": {
+    "description": "Invalid response error message"
+  },
+  "errorHostLookupFailed": "Không thể tìm thấy server. Vui lòng kiểm tra địa chỉ IP!",
+  "@errorHostLookupFailed": {
+    "description": "Host lookup failed error message"
+  },
+  "errorEmailExists": "Email đã tồn tại!",
+  "@errorEmailExists": {
+    "description": "Email exists error message"
+  },
+  "errorInvalidEmail": "Định dạng email không hợp lệ!",
+  "@errorInvalidEmail": {
+    "description": "Invalid email error message"
+  },
+  "errorWeakPassword": "Mật khẩu quá yếu!",
+  "@errorWeakPassword": {
+    "description": "Weak password error message"
+  },
+  "errorUnknown": "Đã xảy ra lỗi không xác định!",
+  "@errorUnknown": {
+    "description": "Unknown error message"
+  },
+  "processing": "Đang xử lý...",
+  "@processing": {
+    "description": "Processing button text"
+  },
+  "processingRegistration": "Đang xử lý đăng ký...",
+  "@processingRegistration": {
+    "description": "Processing registration message"
+  },
+
+
+
+  "@@_HOME_PAGE": "---HOME PAGE---",
+  "searchPlaceholder": "Tìm kiếm...",
+  "@searchPlaceholder": {
+    "description": "Search bar placeholder text"
+  },
+  "welcome": "Chào mừng",
+  "@welcome": {
+    "description": "Welcome greeting text"
+  },
+  "recommended": "Đề xuất",
+  "@recommended": {
+    "description": "Recommended filter button"
+  },
+  "popular": "Phổ biến",
+  "@popular": {
+    "description": "Popular filter button"
+  },
+  "trending": "Xu hướng",
+  "@trending": {
+    "description": "Trending filter button"
+  },
+  "recentlyBooked": "Đã đặt gần đây",
+  "@recentlyBooked": {
+    "description": "Recently booked section title"
+  },
+  "seeAll": "Xem tất cả",
+  "@seeAll": {
+    "description": "See all button text"
+  },
+  "perNight": "đêm",
+  "@perNight": {
+    "description": "Per night pricing text"
+  },
+  "night": "/ đêm",
+  "@night": {
+    "description": "Night pricing text"
+  },
+  "reviews": "đánh giá",
+  "@reviews": {
+    "description": "Reviews text"
+  },
+
+
+  "@@_LIST_HOTEL": "---DANH SÁCH KHÁCH SẠN---",
+  "@@_LOADING_STATES": "--- TRẠNG THÁI TẢI ---",
+  "loadingHotels": "Đang tải danh sách khách sạn...",
+  "loadingData": "Đang tải dữ liệu...",
+  "pleaseWait": "Vui lòng chờ...",
+
+  "noDataHotelYet": "Chưa có dữ liệu khách sạn",
+  "emptyList": "Danh sách trống",
+
+
+  "checkAvailability": "Kiểm tra tình trạng",
+  "viewDetails": "Xem chi tiết",
+
+
+  "@@_AMENITIES_HOTEL": "---TIỆN ÍCH KHÁCH SẠN---",
+  "amenities": "Tiện ích",
+  "viewAllAmenities": "Xem tất cả tiện nghi",
+  "allAmenities": "Tất cả tiện nghi",
+  "loadingAmenities": "Đang tải tiện nghi...",
+  "noAmenitiesAvailable": "Không có tiện nghi nào",
+  "categories": "Nhóm tiện nghi",
+  "totalAmenities": "Tổng tiện nghi",
+
+
+
+  "description": "Mô tả",
+
+  "locationHotel": "Vị trí của khách sạn",
+  "selectDatesAndTimeCheckIn":"Chọn ngày/giờ nhận phòng",
+  "bookNow": "Đặt ngay",
+
+  "@@_SELECTE_DATE-TIME": "---CHỌN NGÀY GIỜ---",
+  "thu2_Monday": "Thứ 2",
+  "thu3_Tuesday": "Thứ 3",
+  "thu4_Wednesday": "Thứ 4",
+  "thu5_Thursday": "Thứ 5",
+  "thu6_Friday": "Thứ 6",
+  "thu7_Saturday": "Thứ 7",
+  "cn_Sunday": "CN",
+
+  "checkInDate": "Ngày nhận",
+  "checkOutDate": "Ngày trả",
+  "checkInTime": "Thời gian nhận",
+  "messageSelectDateTimeCheckIn": "Vui lòng chọn thời gian nhận trả phòng",
+  "optionSeletedTime": "Tùy chọn giờ",
+  "guestsRooms": "Số lượng khách & phòng",
+  "adults": "Người lớn",
+  "children": "Trẻ em",
+  "selectedTime": "Giờ đã chọn",
+  "rooms": "Phòng",
+  "agesOrAbove": "Từ 13 tuổi trở lên",
+  "age2_12": "Độ tuổi từ 2-12",
+  "howManyRoomsNeeded": "Bạn cần bao nhiêu phòng ?",
+  "apply":"Áp dụng"
+}

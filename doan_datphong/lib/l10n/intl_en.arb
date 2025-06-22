@@ -1,0 +1,449 @@
+{
+  "@@locale": "en",
+
+  "@@_LOGIN_SCREEN_SECTION": "=== LOGIN SCREEN ===",
+  "@@_MAIN_CONTENT": "--- Main Content ---",
+  "welcomeToStaytion": "Welcome to Staytion",
+  "@welcomeToStaytion": {
+    "description": "Welcome message on login screen"
+  },
+
+  "@@_INPUT_FIELDS": "--- Input Fields ---",
+  "emails": "E-mails",
+  "@emails": {
+    "description": "Email input field hint"
+  },
+  "password": "Password",
+  "@password": {
+    "description": "Password input field hint"
+  },
+
+  "@@_BUTTONS_AND_ACTIONS": "--- Buttons and Actions ---",
+  "rememberMe": "Remember me",
+  "@rememberMe": {
+    "description": "Remember me checkbox label"
+  },
+  "signIn": "Sign in",
+  "@signIn": {
+    "description": "Sign in button text"
+  },
+  "forgotPassword": "Forgot the password?",
+  "@forgotPassword": {
+    "description": "Forgot password link text"
+  },
+
+  "@@_SOCIAL_LOGIN": "--- Social Login ---",
+  "orContinueWith": "or continue with",
+  "@orContinueWith": {
+    "description": "Alternative login options separator"
+  },
+
+
+
+  "@@_REGISTER_SCREEN_SECTION": "=== REGISTER SCREEN ===",
+  "createYourAccount": "Create your Account",
+  "@createYourAccount": {
+    "description": "Register screen title"
+  },
+  "confirmPassword": "Confirm Password",
+  "@confirmPassword": {
+    "description": "Confirm password input field hint"
+  },
+  "passwordsDoNotMatch": "Passwords do not match!",
+  "@passwordsDoNotMatch": {
+    "description": "Password confirmation error message"
+  },
+  "successful": "Successful!",
+  "@successful": {
+    "description": "Success dialog title"
+  },
+  "registrationSuccessful": "Registration successful!",
+  "@registrationSuccessful": {
+    "description": "Registration success message"
+  },
+
+
+
+  "@@_REGISTRATION_SECTION": "--- Registration Section ---",
+  "dontHaveAccount": "Don't have an account?",
+  "@dontHaveAccount": {
+    "description": "Sign up prompt text"
+  },
+  "signUp": "Sign up",
+  "@signUp": {
+    "description": "Sign up button text"
+  },
+
+  "@@_VALIDATION_ERRORS": "--- Validation Error Messages ---",
+  "emailCannotBeEmpty": "Email cannot be empty!",
+  "@emailCannotBeEmpty": {
+    "description": "Email validation error when empty"
+  },
+  "enterValidEmail": "Enter a valid email!",
+  "@enterValidEmail": {
+    "description": "Email validation error for invalid format"
+  },
+  "passwordMinLength": "Password must be at least 6 characters!",
+  "@passwordMinLength": {
+    "description": "Password validation error for minimum length"
+  },
+  "@@_FILL_PROFILE_SECTION": "=== FILL PROFILE SCREEN ===",
+  "fillYourProfile": "Fill Your Profile",
+  "@fillYourProfile": {
+    "description": "Fill profile screen title"
+  },
+  "fullName": "Full Name",
+  "@fullName": {
+    "description": "Full name input field hint"
+  },
+  "selectGender": "Select Gender",
+  "@selectGender": {
+    "description": "Gender dropdown hint"
+  },
+  "male": "Male",
+  "@male": {
+    "description": "Male gender option"
+  },
+  "female": "Female",
+  "@female": {
+    "description": "Female gender option"
+  },
+  "dateOfBirth": "Date of Birth",
+  "@dateOfBirth": {
+    "description": "Date of birth input field hint"
+  },
+  "phoneNumber": "Phone Number",
+  "@phoneNumber": {
+    "description": "Phone number input field hint"
+  },
+  "takePhoto": "Take Photo",
+  "@takePhoto": {
+    "description": "Take photo option in image picker"
+  },
+  "chooseFromGallery": "Choose from Gallery",
+  "@chooseFromGallery": {
+    "description": "Choose from gallery option in image picker"
+  },
+  "continueText": "Continue",
+  "@continueText": {
+    "description": "Continue button text"
+  },
+
+  "@@_FILL_PROFILE_ERRORS": "--- Fill Profile Error Messages ---",
+  "pleaseSelectGender": "Please select your gender",
+  "@pleaseSelectGender": {
+    "description": "Gender selection error message"
+  },
+  "pleaseSelectDateOfBirth": "Please select your date of birth",
+  "@pleaseSelectDateOfBirth": {
+    "description": "Date of birth selection error message"
+  },
+  "pleaseEnterFullName": "Please enter your full name",
+  "@pleaseEnterFullName": {
+    "description": "Full name validation error when empty"
+  },
+  "nameCannotContainSpecialCharacters": "The name cannot contain special characters",
+  "@nameCannotContainSpecialCharacters": {
+    "description": "Full name validation error for special characters"
+  },
+  "pleaseEnterPhoneNumber": "Please enter your phone number",
+  "@pleaseEnterPhoneNumber": {
+    "description": "Phone number validation error when empty"
+  },
+  "invalidPhoneNumber": "Invalid phone number",
+  "@invalidPhoneNumber": {
+    "description": "Phone number validation error for invalid format"
+  },
+
+  "@@_PROFILE_SCREEN_SECTION": "=== PROFILE SCREEN ===",
+  "@@_PROFILE_HEADER": "--- Profile Header ---",
+  "profile": "Profile",
+  "@profile": {
+    "description": "Profile screen title"
+  },
+
+  "@@_PROFILE_ACTIONS": "--- Profile Actions ---",
+  "editProfile": "Edit Profile",
+  "@editProfile": {
+    "description": "Edit profile button text"
+  },
+
+  "@@_SETTINGS_SECTION": "--- Settings Section ---",
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings section title"
+  },
+  "payment": "Payment",
+  "@payment": {
+    "description": "Payment settings option"
+  },
+  "notifications": "Notifications",
+  "@notifications": {
+    "description": "Notifications settings option"
+  },
+  "security": "Security",
+  "@security": {
+    "description": "Security settings option"
+  },
+  "help": "Help",
+  "@help": {
+    "description": "Help settings option"
+  },
+  "darkTheme": "Dark Theme",
+  "@darkTheme": {
+    "description": "Dark theme toggle option"
+  },
+  "language": "Language",
+  "@language": {
+    "description": "Language settings option"
+  },
+  "logout": "Logout",
+  "@logout": {
+    "description": "Logout option"
+  },
+
+  "@@_BOTTOM_NAVIGATION": "--- Bottom Navigation ---",
+  "home": "Home",
+  "@home": {
+    "description": "Home tab label"
+  },
+  "search": "Search",
+  "@search": {
+    "description": "Search tab label"
+  },
+  "booking": "Booking",
+  "@booking": {
+    "description": "Booking tab label"
+  },
+
+  "@@_DIALOGS": "--- Dialog Messages ---",
+  "logoutConfirmation": "Are you sure you want to log out?",
+  "@logoutConfirmation": {
+    "description": "Logout confirmation dialog message"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button text"
+  },
+  "error": "Error",
+  "@error": {
+    "description": "Error dialog title"
+  },
+  "ok": "OK",
+  "@ok": {
+    "description": "OK button text"
+  },
+
+  "@@_LANGUAGE_OPTIONS": "--- Language Options ---",
+  "vietnamese": "Tiếng Việt",
+  "@vietnamese": {
+    "description": "Vietnamese language option"
+  },
+  "english": "English",
+  "@english": {
+    "description": "English language option"
+  },
+
+  "@@_COMMON_ACTIONS": "--- Common Actions ---",
+  "save": "Save",
+  "@save": {
+    "description": "Save button text"
+  },
+  "edit": "Edit",
+  "@edit": {
+    "description": "Edit button text"
+  },
+  "delete": "Delete",
+  "@delete": {
+    "description": "Delete button text"
+  },
+  "confirm": "Confirm",
+  "@confirm": {
+    "description": "Confirm button text"
+  },
+  "back": "Back",
+  "@back": {
+    "description": "Back button text"
+  },
+  "next": "Next",
+  "@next": {
+    "description": "Next button text"
+  },
+  "done": "Done",
+  "@done": {
+    "description": "Done button text"
+  },
+  "close": "Close",
+  "@close": {
+    "description": "Close button text"
+  },
+
+
+  "@@_LANGUAGE_OPTIONS": "--- Notification ---",
+  "pleaseTryAgain": "Please try again!",
+  "tryAgain": "Try Again",
+  "@tryAgain": {
+    "description": "Try again button text"
+  },
+  "warning": "Warning!",
+  "@warning": {
+    "description": "Warning dialog title"
+  },
+  "information": "Information",
+  "@information": {
+    "description": "Information dialog title"
+  },
+  "pleaseEnterAllFields": "Please enter all fields!",
+  "@pleaseEnterAllFields":{
+    "description": "Message dialog when register"
+  },
+  "pleaseFixValidationErrors": "Please fix validation errors!",
+  "@pleaseFixValidationErrors":{
+    "description": "Message dialog when register"
+  },
+  "connectionTimeout": "Connection Timeout. Please try again later!",
+
+  "@@_ERROR_CODE": "--- Error code ---",
+  "errorConnectionTimeout": "Connection timeout. Server may be busy or not responding!",
+  "@errorConnectionTimeout": {
+    "description": "Connection timeout error message"
+  },
+  "connectionTimeoutAgain": "Please check your network and try again.",
+  "errorServerRefused": "Server refused connection. Server may be down!",
+  "@errorServerRefused": {
+    "description": "Server refused connection error message"
+  },
+  "maintenanceServer": "Maintenance server",
+  "errorNetworkUnreachable": "Network unreachable. Please check your WiFi/Mobile data!",
+  "@errorNetworkUnreachable": {
+    "description": "Network unreachable error message"
+  },
+  "notNetwork": "No internet connection",
+  "errorInvalidResponse": "Server returned invalid data!",
+  "@errorInvalidResponse": {
+    "description": "Invalid response error message"
+  },
+  "errorHostLookupFailed": "Cannot find server. Please check IP address!",
+  "@errorHostLookupFailed": {
+    "description": "Host lookup failed error message"
+  },
+  "errorEmailExists": "Email already exists!",
+  "@errorEmailExists": {
+    "description": "Email exists error message"
+  },
+  "errorInvalidEmail": "Invalid email format!",
+  "@errorInvalidEmail": {
+    "description": "Invalid email error message"
+  },
+  "errorWeakPassword": "Password is too weak!",
+  "@errorWeakPassword": {
+    "description": "Weak password error message"
+  },
+  "errorUnknown": "An unknown error occurred!",
+  "@errorUnknown": {
+    "description": "Unknown error message"
+  },
+  "processing": "Processing...",
+  "@processing": {
+    "description": "Processing button text"
+  },
+  "processingRegistration": "Processing registration...",
+  "@processingRegistration": {
+    "description": "Processing registration message"
+  },
+
+
+
+  "@@_HOME_PAGE": "---HOME PAGE---",
+  "searchPlaceholder": "Search...",
+  "@searchPlaceholder": {
+    "description": "Search bar placeholder text"
+  },
+  "welcome": "Welcome",
+  "@welcome": {
+    "description": "Welcome greeting text"
+  },
+  "recommended": "Recommended",
+  "@recommended": {
+    "description": "Recommended filter button"
+  },
+  "popular": "Popular",
+  "@popular": {
+    "description": "Popular filter button"
+  },
+  "trending": "Trending",
+  "@trending": {
+    "description": "Trending filter button"
+  },
+  "recentlyBooked": "Recently Booked",
+  "@recentlyBooked": {
+    "description": "Recently booked section title"
+  },
+  "seeAll": "See all",
+  "@seeAll": {
+    "description": "See all button text"
+  },
+  "perNight": "per night",
+  "@perNight": {
+    "description": "Per night pricing text"
+  },
+  "night": "/ night",
+  "@night": {
+    "description": "Night pricing text"
+  },
+  "reviews": "reviews",
+  "@reviews": {
+    "description": "Reviews text"
+  },
+
+  "loadingHotels": "Loading hotel list...",
+  "loadingData": "Loading data...",
+  "pleaseWait": "Please wait...",
+  "noDataHotelYet": "No hotel data yet",
+  "emptyList": "Empty list",
+  "bookNow": "Book Now",
+  "checkAvailability": "Check Availability",
+  "viewDetails": "View Details",
+
+  "@@_AMENITIES_HOTEL": "---HOTELS AMENITIES---",
+
+  "amenities": "Amenities",
+  "viewAllAmenities": "View all amenities",
+  "allAmenities": "All Amenities",
+  "loadingAmenities": "Loading amenities...",
+  "noAmenitiesAvailable": "No amenities available",
+  "categories": "Categories",
+  "totalAmenities": "Total Amenities",
+
+
+
+  "description": "Description",
+  "locationHotel": "Location of the hotel",
+  "selectDatesAndTimeCheckIn":"Select check-in date",
+
+  "@@_SELECTE_DATE-TIME": "---SELECTE DATE TIME---",
+  "thu2_Monday": "Mon",
+  "thu3_Tuesday": "Tue",
+  "thu4_Wednesday": "Wed",
+  "thu5_Thursday": "Thur",
+  "thu6_Friday": "Fri",
+  "thu7_Saturday": "Sat",
+  "cn_Sunday": "Su",
+
+  "checkInDate": "Check-in date",
+  "checkOutDate": "Check-Out date",
+  "checkInTime": "Check-in time",
+  "messageSelectDateTimeCheckIn": "Please select check-in and check-out dates",
+  "optionSeletedTime": "Option",
+  "guestsRooms": "Guests & Rooms",
+  "selectedTime": "Selected time",
+  "adults": "Adults",
+  "children": "Children",
+  "rooms": "Rooms",
+  "agesOrAbove": "Ages 13 or above",
+  "age2_12": "Ages 2-12",
+  "howManyRoomsNeeded": "How many rooms needed ?",
+  "apply":"Apply"
+
+
+}

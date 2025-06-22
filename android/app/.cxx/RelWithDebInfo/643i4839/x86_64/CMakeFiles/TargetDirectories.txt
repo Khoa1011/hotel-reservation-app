@@ -1,2 +1,0 @@
-D:/Android Studio/doan_datphong/android/app/.cxx/RelWithDebInfo/643i4839/x86_64/CMakeFiles/edit_cache.dir
-D:/Android Studio/doan_datphong/android/app/.cxx/RelWithDebInfo/643i4839/x86_64/CMakeFiles/rebuild_cache.dir

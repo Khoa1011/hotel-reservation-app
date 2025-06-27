@@ -5,12 +5,14 @@ const RoomImage = require("../Model/Room/RoomImage");
 const AmenityDetails = require("../Model/Amenities/AmenityDetails");
 const authorizeRoles = require('../middleware/roleAuth');
 const mongoose = require("mongoose");
+
 const Hotel = require("../Model/Hotel/Hotel");
 const Amenities = require("../Model/Amenities/Amenities");
 const AmenityCategory = require("../Model/Amenities/AmenityCategory");
 
 
 const amenitiesRouter = express.Router();
+
 
 // API lấy danh sách hình ảnh của phòng
 amenitiesRouter.get("/images/:roomId", async (req, res) => {
@@ -111,151 +113,6 @@ amenitiesRouter.get("/amenities/:roomId", async (req, res) => {
 });
 
 // API LẤY TIỆN NGHI QUAN TRỌNG CỦA KHÁCH SẠN
-// amenitiesRouter.get("/key-amenities/:hotelId", async (req, res) => {
-//     const { hotelId } = req.params;
-
-//     try {
-//         // Validate ObjectId
-//         if (!mongoose.Types.ObjectId.isValid(hotelId)) {
-//             return res.status(400).json({
-//                 msgBody: "Mã khách sạn không hợp lệ!",
-//                 msgError: true
-//             });
-//         }
-
-//         // Lấy tất cả loại phòng của khách sạn
-//         const roomTypes = await RoomType.find({ maKhachSan: hotelId });
-//         console.log("Cac loai phong trong khach san: ",roomTypes);
-
-//         if (!roomTypes || roomTypes.length === 0) {
-//             return res.status(404).json({
-//                 msgBody: "Khách sạn này chưa có loại phòng nào!",
-//                 msgError: true
-//             });
-//         }
-
-//         // ✅ FIX: dùng $in với danh sách _id
-//         const roomTypeIds = roomTypes.map(rt => rt._id);
-//         const rooms = await Room.find({ maLoaiPhong: { $in: roomTypeIds } });
-
-//         if (!rooms || rooms.length === 0) {
-//             return res.status(404).json({
-//                 msgBody: "Khách sạn này chưa có phòng nào!",
-//                 msgError: true
-//             });
-//         }
-
-//         const roomIds = rooms.map(room => room._id);
-
-//         // Lấy tất cả chi tiết tiện nghi của các phòng này
-//         const amenityDetails = await AmenityDetails.find({
-//             maPhong: { $in: roomIds },
-//             trangThai: true
-//         }).populate({
-//             path: "maTienNghi",
-//             select: "tenTienNghi icon thuTu moTa maNhomTienNghi",
-//             populate: {
-//                 path: "maNhomTienNghi",
-//                 select: "tenNhomTienNghi icon thuTuNhom maKhachSan"
-//             }
-//         });
-
-//         // ✅ Lọc tiện nghi thuộc đúng khách sạn
-//         const amenityDetailsFiltered = amenityDetails.filter(detail => {
-//             const amenity = detail.maTienNghi;
-//             const category = amenity?.maNhomTienNghi;
-//             return category?.maKhachSan?.toString() === hotelId;
-//         });
-
-//         if (!amenityDetailsFiltered || amenityDetailsFiltered.length === 0) {
-//             return res.status(404).json({
-//                 msgBody: "Không tìm thấy tiện nghi nào cho khách sạn này!",
-//                 msgError: true
-//             });
-//         }
-
-//         // Nhóm tiện nghi và đếm số phòng có mỗi tiện nghi
-//         const amenityMap = new Map();
-
-//         amenityDetailsFiltered.forEach(detail => {
-//             const amenity = detail.maTienNghi;
-//             if (!amenity) return;
-
-//             const amenityId = amenity._id.toString();
-
-//             if (!amenityMap.has(amenityId)) {
-//                 amenityMap.set(amenityId, {
-//                     _id: amenity._id,
-//                     tenTienNghi: amenity.tenTienNghi,
-//                     icon: amenity.icon,
-//                     thuTu: amenity.thuTu ?? 999,
-//                     moTa: amenity.moTa,
-//                     tenNhomTienNghi: amenity.maNhomTienNghi?.tenNhomTienNghi || "",
-//                     iconNhom: amenity.maNhomTienNghi?.icon || "",
-//                     thuTuNhom: amenity.maNhomTienNghi?.thuTuNhom ?? 999,
-//                     soPhongCo: new Set(),
-//                     tongSoLuong: 0
-//                 });
-//             }
-
-//             const amenityData = amenityMap.get(amenityId);
-//             amenityData.soPhongCo.add(detail.maPhong.toString());
-//             amenityData.tongSoLuong += detail.soLuong || 1;
-//         });
-
-//         const totalRooms = rooms.length;
-//         const amenitiesArray = Array.from(amenityMap.values()).map(amenity => ({
-//             ...amenity,
-//             soPhongCoTienNghi: amenity.soPhongCo.size,
-//             tongSoPhong: totalRooms,
-//             phanTramPhong: Math.round((amenity.soPhongCo.size / totalRooms) * 100),
-//             soPhongCo: undefined // Xóa Set object
-//         }));
-
-//         // Chỉ lấy các tiện nghi có ở >= 25% phòng
-//         const filteredAmenities = amenitiesArray.filter(amenity =>
-//             amenity.phanTramPhong >= 25
-//         );
-
-//         // Sắp xếp theo độ ưu tiên
-//         const prioritizedAmenities = filteredAmenities.map(amenity => ({
-//             ...amenity,
-//             priorityScore:
-//                 (10 - (amenity.thuTuNhom ?? 5)) * 20 +
-//                 amenity.phanTramPhong +
-//                 (10 - (amenity.thuTu ?? 5))
-//         }))
-//         .sort((a, b) => b.priorityScore - a.priorityScore)
-//         .slice(0, 6); // Top 6 tiện nghi
-
-//         // Kết quả trả về
-//         const keyAmenities = prioritizedAmenities.map(amenity => ({
-//             _id: amenity._id,
-//             tenTienNghi: amenity.tenTienNghi,
-//             icon: amenity.icon,
-//             moTa: amenity.moTa,
-//             tenNhomTienNghi: amenity.tenNhomTienNghi,
-//             iconNhom: amenity.iconNhom,
-//             soPhongCoTienNghi: amenity.soPhongCoTienNghi,
-//             tongSoPhong: amenity.tongSoPhong,
-//             // phanTramPhong: amenity.phanTramPhong
-//         }));
-
-//         return res.status(200).json({
-//             message: "Lấy danh sách tiện nghi quan trọng thành công!",
-//             keyAmenities: keyAmenities,
-//             count: keyAmenities.length
-//         });
-
-//     } catch (error) {
-//         console.error("Lỗi khi lấy tiện nghi quan trọng:", error);
-//         return res.status(500).json({
-//             msgBody: "Lỗi máy chủ khi lấy danh sách tiện nghi!",
-//             msgError: true,
-//             messageError: error.message
-//         });
-//     }
-// });
 amenitiesRouter.get("/key-amenities/:hotelId", async (req, res) => {
     const { hotelId } = req.params;
     
@@ -343,151 +200,6 @@ amenitiesRouter.get("/key-amenities/:hotelId", async (req, res) => {
     }
 });
 
-
-
-//API LẤY TẤT CẢ TIỆN NGHI ĐƯỢC NHÓM THEO LOẠI 
-// amenitiesRouter.get("/grouped-amenities/:hotelId", async (req, res) => {
-//     const { hotelId } = req.params;
-
-//     try {
-//         if (!mongoose.Types.ObjectId.isValid(hotelId)) {
-//             return res.status(400).json({
-//                 msgBody: "Mã khách sạn không hợp lệ!",
-//                 msgError: true
-//             });
-//         }
-
-//         // 1. Lấy loại phòng thuộc khách sạn
-//         const roomTypes = await RoomType.find({ maKhachSan: hotelId });
-//         if (!roomTypes || roomTypes.length === 0) {
-//             return res.status(404).json({
-//                 msgBody: "Khách sạn này chưa có loại phòng nào!",
-//                 msgError: true
-//             });
-//         }
-
-//         const roomTypeIds = roomTypes.map(rt => rt._id);
-
-//         // 2. Lấy các phòng thuộc các loại phòng trên
-//         const rooms = await Room.find({ maLoaiPhong: { $in: roomTypeIds } });
-//         if (!rooms || rooms.length === 0) {
-//             return res.status(404).json({
-//                 msgBody: "Không tìm thấy phòng nào cho khách sạn này!",
-//                 msgError: true
-//             });
-//         }
-
-//         const roomIds = rooms.map(r => r._id);
-
-//         // 3. Lấy chi tiết tiện nghi của các phòng, populate tiện nghi và nhóm
-//         const amenityDetails = await AmenityDetails.find({
-//             maPhong: { $in: roomIds },
-//             trangThai: true
-//         }).populate({
-//             path: "maTienNghi",
-//             select: "tenTienNghi icon thuTu moTa maNhomTienNghi",
-//             populate: {
-//                 path: "maNhomTienNghi",
-//                 select: "tenNhomTienNghi icon thuTuNhom moTa maKhachSan"
-//             }
-//         });
-
-//         if (!amenityDetails || amenityDetails.length === 0) {
-//             return res.status(404).json({
-//                 msgBody: "Không tìm thấy tiện nghi nào cho khách sạn này!",
-//                 msgError: true
-//             });
-//         }
-
-//         // 4. Lọc đúng nhóm tiện nghi của khách sạn này
-//         const filteredDetails = amenityDetails.filter(detail => {
-//             return (
-//                 detail?.maTienNghi?.maNhomTienNghi?.maKhachSan?.toString() === hotelId
-//             );
-//         });
-
-//         const categoryMap = new Map();
-
-//         filteredDetails.forEach(detail => {
-//             const amenity = detail.maTienNghi;
-//             const category = amenity?.maNhomTienNghi;
-
-//             if (!amenity || !category) return;
-
-//             const categoryId = category._id.toString();
-//             const amenityId = amenity._id.toString();
-
-//             if (!categoryMap.has(categoryId)) {
-//                 categoryMap.set(categoryId, {
-//                     _id: category._id,
-//                     tenNhomTienNghi: category.tenNhomTienNghi,
-//                     icon: category.icon,
-//                     thuTuNhom: category.thuTuNhom || 999,
-//                     moTa: category.moTa,
-//                     tienNghi: new Map()
-//                 });
-//             }
-
-//             const categoryData = categoryMap.get(categoryId);
-
-//             if (!categoryData.tienNghi.has(amenityId)) {
-//                 categoryData.tienNghi.set(amenityId, {
-//                     _id: amenity._id,
-//                     tenTienNghi: amenity.tenTienNghi,
-//                     icon: amenity.icon,
-//                     thuTu: amenity.thuTu || 999,
-//                     moTa: amenity.moTa,
-//                     soPhongCo: new Set(),
-//                     tongSoLuong: 0
-//                 });
-//             }
-
-//             const amenityData = categoryData.tienNghi.get(amenityId);
-//             amenityData.soPhongCo.add(detail.maPhong.toString());
-//             amenityData.tongSoLuong += detail.soLuong || 1;
-//         });
-
-//         // Chuyển map → array và sắp xếp
-//         const nhomTienNghi = Array.from(categoryMap.values())
-//             .map(category => ({
-//                 _id: category._id,
-//                 tenNhomTienNghi: category.tenNhomTienNghi,
-//                 icon: category.icon,
-//                 thuTuNhom: category.thuTuNhom,
-//                 moTa: category.moTa,
-//                 tienNghi: Array.from(category.tienNghi.values())
-//                     .map(amenity => ({
-//                         _id: amenity._id,
-//                         tenTienNghi: amenity.tenTienNghi,
-//                         icon: amenity.icon,
-//                         thuTu: amenity.thuTu,
-//                         moTa: amenity.moTa,
-//                         soPhongCo: amenity.soPhongCo.size,
-//                         tongSoLuong: amenity.tongSoLuong
-//                     }))
-//                     .sort((a, b) => a.thuTu - b.thuTu)
-//             }))
-//             .sort((a, b) => a.thuTuNhom - b.thuTuNhom)
-//             .slice(0, 12);
-
-//         const totalAmenities = nhomTienNghi.reduce((sum, group) => sum + group.tienNghi.length, 0);
-
-//         return res.status(200).json({
-//             message: "Lấy danh sách tiện nghi theo nhóm thành công!",
-//             groupedAmenities: nhomTienNghi,
-//             categoriesCount: nhomTienNghi.length,
-//             totalAmenities
-//         });
-
-//     } catch (error) {
-//         console.error("Lỗi khi lấy tiện nghi theo nhóm:", error);
-//         return res.status(500).json({
-//             msgBody: "Lỗi máy chủ khi lấy danh sách tiện nghi theo nhóm!",
-//             msgError: true,
-//             messageError: error.message
-//         });
-//     }
-// });
 
 
 amenitiesRouter.get("/grouped-amenities/:hotelId", async (req, res) => {
@@ -611,7 +323,8 @@ amenitiesRouter.get("/grouped-amenities/:hotelId", async (req, res) => {
     }
 });
 
-
-
-
 module.exports = amenitiesRouter;
+
+
+
+

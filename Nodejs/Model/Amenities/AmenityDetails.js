@@ -4,12 +4,12 @@ const mongoose = require("mongoose");
 const AmenityDetails = new mongoose.Schema({
     maPhong :{
         type: mongoose.Schema.Types.ObjectId,
-        require: true,
+        required: true,
         ref:"phong"
     },
     maTienNghi:{
         type: mongoose.Schema.Types.ObjectId,
-        require: true,
+        required: true,
         ref:"tienNghi"
     },
     soLuong:{

@@ -3,12 +3,12 @@ const mongoose =require ("mongoose");
 const AmenitiesSchema = new mongoose.Schema({
     maNhomTienNghi :{
         type:mongoose.Schema.Types.ObjectId,
-        require:true,
+        required:true,
         ref:"nhomTienNghi"
     },
     tenTienNghi:{
         type:String,
-        require: true,
+        required: true,
     },
     icon:{
         type: String,
@@ -16,7 +16,7 @@ const AmenitiesSchema = new mongoose.Schema({
     },
     thuTu:{
         type:Number,
-        require: true
+        required: true
     },
     moTa:{
         type:String,

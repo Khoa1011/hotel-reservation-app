@@ -1,6 +1,6 @@
-enum BookingStatus {pending, confirmed, canceled}
-enum Booking_PaymentMethod {CreditCard,VNPay,Momo}
-class Booking{
+enum TrangThai {pending, confirmed, canceled}
+enum PhuongThucThanhToan {CreditCard,VNPay,Momo}
+class DonDatPhong{
   String booking_Id;
   String? booking_RoomId;
   String? booking_HotelId;
@@ -10,10 +10,10 @@ class Booking{
   String booking_CheckInTime;
   String booking_CheckOutTime;
   double booking_totalAmount;
-  BookingStatus booking_Status;
-  Booking_PaymentMethod booking_PaymentMethod;
+  TrangThai booking_Status;
+  PhuongThucThanhToan booking_PaymentMethod;
 
-  Booking({required this.booking_Id,
+  DonDatPhong({required this.booking_Id,
     required this.booking_RoomId,
     required this.booking_HotelId,
     required this.booking_UserId,
@@ -22,10 +22,10 @@ class Booking{
     required this.booking_CheckInTime,
     required this.booking_CheckOutTime,
     required this.booking_totalAmount,
-    this.booking_Status = BookingStatus.pending,
-    this.booking_PaymentMethod = Booking_PaymentMethod.VNPay});
+    this.booking_Status = TrangThai.pending,
+    this.booking_PaymentMethod = PhuongThucThanhToan.VNPay});
 
-  Booking.short({
+  DonDatPhong.short({
     required this.booking_RoomId,
     required this.booking_HotelId,
     required this.booking_UserId,
@@ -34,8 +34,8 @@ class Booking{
     required this.booking_CheckInTime,
     required this.booking_CheckOutTime,
     required this.booking_totalAmount,
-    this.booking_Status = BookingStatus.confirmed,
-    this.booking_PaymentMethod = Booking_PaymentMethod.CreditCard
+    this.booking_Status = TrangThai.confirmed,
+    this.booking_PaymentMethod = PhuongThucThanhToan.CreditCard
 }): booking_Id ='';
 
 
@@ -54,14 +54,14 @@ class Booking{
   String getStatusString(){
     return booking_Status.toString().split('.').last;
   }
-  static BookingStatus parseStatus(String status) {
-    return BookingStatus.values.firstWhere(
+  static TrangThai parseStatus(String status) {
+    return TrangThai.values.firstWhere(
           (e) =>
       e
           .toString()
           .split('.')
           .last == status,
-      orElse: () => BookingStatus.confirmed,
+      orElse: () => TrangThai.confirmed,
     );
   }
 
@@ -71,15 +71,15 @@ class Booking{
   }
 
   // Chuyển từ chuỗi thành enum khi lấy từ database
-  static Booking_PaymentMethod parsePaymentMethod(String method) {
-    return Booking_PaymentMethod.values.firstWhere(
+  static PhuongThucThanhToan parsePaymentMethod(String method) {
+    return PhuongThucThanhToan.values.firstWhere(
           (e) => e.toString().split('.').last == method,
-      orElse: () => Booking_PaymentMethod.VNPay, // Mặc định VNPay nếu lỗi
+      orElse: () => PhuongThucThanhToan.VNPay, // Mặc định VNPay nếu lỗi
     );
   }
 
-  factory Booking.fromJson(Map<String,dynamic>json){
-    return Booking(
+  factory DonDatPhong.fromJson(Map<String,dynamic>json){
+    return DonDatPhong(
         booking_Id: json["_id"]??'',
         booking_RoomId: json["roomId"],
         booking_HotelId: json["hotelsId"],

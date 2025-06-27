@@ -2,7 +2,7 @@ const express = require("express");
 const userRouter = express.Router();
 const User = require("../Model/User/User");
 const bcrypt = require("bcryptjs");
-const JWT =require("jsonwebtoken");
+const JWT = require("jsonwebtoken");
 const passport = require("passport");
 const passportConfig = require("../config/passport");
 const JWT_SECRET = process.env.JWT_SECRET || "ThuKhoa";
@@ -13,7 +13,7 @@ const authorizeRoles = require("../middleware/roleAuth");
 //     return JWT.sign({
 //         iss:"ThuKhoa",
 //         sub:userID,
-        
+
 //     },
 //     JWT_SECRET,
 //     {expiresIn:"1d"}
@@ -24,7 +24,7 @@ const signToken = (user) => {
     return JWT.sign({
         iss: "ThuKhoa",
         sub: user._id,
-        role: user.vaiTro,        
+        role: user.vaiTro,
         email: user.email
     }, JWT_SECRET, { expiresIn: "1d" });
 };
@@ -53,12 +53,12 @@ userRouter.post("/hotelowner/register", async (req, res) => {
         }
 
         // Tạo người dùng mới
-        const newUser = new User({ email, matKhau, vaiTro:"chuKhachSan" });
+        const newUser = new User({ email, matKhau, vaiTro: "chuKhachSan" });
         await newUser.save(); // Lưu user vào database
 
         return res.status(200).json({
             message: { msgBody: "Tạo tài khoản cho chủ khách sạn thành công!", msgError: false },
-            user: { id: newUser._id, email: newUser.email, vaiTro:newUser.vaiTro }, // Gửi dữ liệu user về client  
+            user: { id: newUser._id, email: newUser.email, vaiTro: newUser.vaiTro }, // Gửi dữ liệu user về client  
         });
     } catch (err) {
         console.error("Lỗi này:", err);
@@ -103,7 +103,7 @@ userRouter.post("/hotelowner/login", async (req, res) => {
         const token = signToken(user);
 
         // Gửi token cookie
-        res.cookie("token", token, { httpOnly: true, sameSite: "strict" });
+        res.cookie("access_token", token, { httpOnly: true, sameSite: "strict" });
 
         return res.status(200).json({
             msgBody: "Đăng nhập cho chủ khách sạn thành công!",
@@ -140,13 +140,13 @@ userRouter.post("/register", async (req, res) => {
         const newUser = new User({ email, matKhau });
         await newUser.save(); // Lưu user vào database
 
-    
+
         return res.status(200).json({
             message: { msgBody: "Tạo tài khoản thành công!", msgError: false },
-            user: { id: newUser._id, email: newUser.email }, // Gửi dữ liệu user về client  
+            user: { id: newUser._id, email: newUser.email, role: newUser.vaiTro }, // Gửi dữ liệu user về client  
         });
-    } 
-    
+    }
+
     catch (err) {
         console.error("Lỗi này:", err);
         return res.status(500).json({
@@ -164,7 +164,7 @@ userRouter.post("/login", async (req, res) => {
         // Kiểm tra user có tồn tại không
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 msgBody: "Email chưa được đăng ký!",
                 msgError: true
             });
@@ -173,10 +173,10 @@ userRouter.post("/login", async (req, res) => {
         // Kiểm tra mật khẩu
         const isMatch = await bcrypt.compare(matKhau, user.matKhau);
         if (!isMatch) {
-            return res.status(401).json({ 
+            return res.status(401).json({
                 msgBody: "Mật khẩu không chính xác!",
                 msgError: true
-             });
+            });
         }
 
         // Tạo JWT Token
@@ -187,9 +187,10 @@ userRouter.post("/login", async (req, res) => {
 
         return res.status(200).json({
             msgBody: "Đăng nhập thành công!",
-            msgError: false, 
-            isAuthenticated: true, user , token });
-            // ,user: { _id: user._id, _email: user._email }
+            msgError: false,
+            isAuthenticated: true, user, token
+        });
+        // ,user: { _id: user._id, _email: user._email }
     } catch (err) {
         return res.status(500).json({ message: "Lỗi server!", error: err.message });
     }
@@ -209,54 +210,107 @@ userRouter.get(
     "/logout",
     passport.authenticate("jwt", { session: false }),
     (req, res) => {
-      res.clearCookie("access_token"); 
-      res.json({ user: { email: req.user.email  }, success: true });
+        res.clearCookie("access_token");
+        res.json({ user: { email: req.user.email }, success: true });
     }
 );
 
 
-userRouter.post("/updateUser", async (req, res)=> {
+userRouter.post("/updateUser", async (req, res) => {
     try {
-        const { maNguoiDung,ngaySinh ,tenNguoiDung, gioiTinh, soDienThoai, hinhDaiDien } = req.body;
-        console.log("Received Body:", req.body);
+        const { maNguoiDung, ngaySinh, tenNguoiDung, gioiTinh, soDienThoai, hinhDaiDien, viTri } = req.body;
+        console.log("=== UPDATE USER (FILL PROFILE) ===");
+        console.log("Received Body:", JSON.stringify(req.body, null, 2));
+
         if (!maNguoiDung) {
-            return res.status(400).json({ message: "User ID is required" });
+            return res.status(400).json({
+                message: { msgBody: "User ID is required", msgError: true }
+            });
         }
+
         // Kiểm tra user có tồn tại không
         const existingUser = await User.findById(maNguoiDung);
         if (!existingUser) {
             return res.status(404).json({
                 message: { msgBody: "User not found!", msgError: true }
             });
+        }
+
+        console.log("✅ Found user:", existingUser.tenNguoiDung);
+
+        // ✅ Chuẩn bị dữ liệu update
+        const updateData = {};
+
+        // Xử lý ngày sinh
+        if (ngaySinh !== undefined) {
+            updateData.ngaySinh = ngaySinh ? new Date(ngaySinh) : null;
+        }
+        if (tenNguoiDung !== undefined) updateData.tenNguoiDung = tenNguoiDung;
+        if (gioiTinh !== undefined) updateData.gioiTinh = gioiTinh;
+        if (soDienThoai !== undefined) updateData.soDienThoai = soDienThoai;
+        if (hinhDaiDien !== undefined) updateData.hinhDaiDien = hinhDaiDien;
+
+        // Xử lý vị trí
+        if (viTri) {
+            updateData.viTri = {
+                quocGia: viTri.quocGia,
+                thanhPho: viTri.thanhPho,
+                quan: viTri.quan,
+                phuong: viTri.phuong,
+                soNha: viTri.soNha,
+            };
         }
 
         // Cập nhật thông tin user
         const updatedUser = await User.findByIdAndUpdate(
             maNguoiDung,
-            { ngaySinh,tenNguoiDung, gioiTinh, soDienThoai, hinhDaiDien },
-            { new: true }
+            updateData,
+            { new: true, runValidators: true } // ✅ Thêm runValidators
         );
 
+        console.log("✅ User updated successfully");
+
+        // ✅ Không trả về mật khẩu trong response
+        const userResponse = updatedUser.toObject();
+        delete userResponse.matKhau;
+
         return res.status(200).json({
-            message: { msgBody: "Updated user successfully!", msgError: false },
-            user: updatedUser
+            message: { msgBody: "Cập nhật thông tin thành công!", msgError: false },
+            user: userResponse
         });
 
     } catch (err) {
-        return res.status(500).json({ message: 'Lỗi khi cập nhật user', error: err.message });
+        console.error("❌ Update user error:", err);
+        return res.status(500).json({
+            message: { msgBody: 'Lỗi khi cập nhật thông tin', msgError: true },
+            error: err.message
+        });
     }
 });
 
-
-
+// Route cho Edit Profile (có thể cập nhật mật khẩu)
 userRouter.post("/updateProfile", async (req, res) => {
     try {
-        const { maNguoiDung,ngaySinh ,tenNguoiDung, gioiTinh, soDienThoai, hinhDaiDien, matKhau } = req.body;
-        console.log("Received Body:", req.body);
+        const {
+            maNguoiDung,
+            ngaySinh,
+            tenNguoiDung,
+            gioiTinh,
+            soDienThoai,
+            hinhDaiDien,
+            matKhau,
+            viTri,
+            cccd
+        } = req.body;
 
-        // Kiểm tra userId có được gửi không
+        console.log("=== UPDATE PROFILE ===");
+        console.log("Received Body:", JSON.stringify(req.body, null, 2));
+
+        // Validation
         if (!maNguoiDung) {
-            return res.status(400).json({ message: "User ID is required" });
+            return res.status(400).json({
+                message: { msgBody: "User ID is required", msgError: true }
+            });
         }
 
         // Kiểm tra user có tồn tại không
@@ -267,26 +321,82 @@ userRouter.post("/updateProfile", async (req, res) => {
             });
         }
 
-        // Nếu mật khẩu mới được gửi, mã hóa mật khẩu mới
-        let hashedPassword = existingUser.matKhau; // Giữ nguyên mật khẩu cũ nếu không thay đổi
-        if (matKhau) {
-            hashedPassword = await bcrypt.hash(matKhau, 10); // Mã hóa mật khẩu mới
+        console.log("✅ Found user:", existingUser.tenNguoiDung);
+
+        // ✅ Chuẩn bị dữ liệu update
+        const updateData = {};
+
+        // Xử lý ngày sinh
+        if (ngaySinh !== undefined) {
+            updateData.ngaySinh = ngaySinh ? new Date(ngaySinh) : null;
+        }
+        if (tenNguoiDung !== undefined) updateData.tenNguoiDung = tenNguoiDung;
+        if (gioiTinh !== undefined) updateData.gioiTinh = gioiTinh;
+        if (soDienThoai !== undefined) updateData.soDienThoai = soDienThoai;
+        if (hinhDaiDien !== undefined) updateData.hinhDaiDien = hinhDaiDien;
+        if (cccd !== undefined) updateData.cccd = cccd;
+
+        // ✅ Xử lý mật khẩu mới nếu có
+        if (matKhau && matKhau.trim() !== '') {
+            console.log("🔐 Updating password...");
+
+            // Validation mật khẩu
+            if (matKhau.length < 6) {
+                return res.status(400).json({
+                    message: { msgBody: "Mật khẩu phải có ít nhất 6 ký tự", msgError: true }
+                });
+            }
+
+            updateData.matKhau = await bcrypt.hash(matKhau, 10);
         }
 
-        // Cập nhật thông tin user (bao gồm cả mật khẩu nếu có)
+        // Xử lý vị trí
+        if (viTri) {
+            console.log("📍 Updating location...");
+            updateData.viTri = {
+                quocGia: viTri.quocGia,
+                thanhPho: viTri.thanhPho,
+                quan: viTri.quan,
+                phuong: viTri.phuong,
+                soNha: viTri.soNha,
+            };
+        }
+
+        console.log("📝 Update data keys:", Object.keys(updateData));
+
+        // Cập nhật thông tin user
         const updatedUser = await User.findByIdAndUpdate(
             maNguoiDung,
-            { ngaySinh, tenNguoiDung, gioiTinh, soDienThoai, hinhDaiDien, matKhau: hashedPassword },
-            { new: true }
+            updateData,
+            { new: true, runValidators: true } // ✅ Thêm runValidators
         );
 
+        console.log("✅ Profile updated successfully");
+
+        // ✅ Không trả về mật khẩu trong response
+        const userResponse = updatedUser.toObject();
+        delete userResponse.matKhau;
+
         return res.status(200).json({
-            message: { msgBody: "Updated profile successfully!", msgError: false },
-            user: updatedUser
+            message: { msgBody: "Cập nhật thông tin thành công!", msgError: false },
+            user: userResponse
         });
 
     } catch (err) {
-        return res.status(500).json({ message: 'Lỗi khi cập nhật user', error: err.message });
+        console.error("❌ Update profile error:", err);
+
+        // ✅ Xử lý validation errors
+        if (err.name === 'ValidationError') {
+            const validationErrors = Object.values(err.errors).map(e => e.message);
+            return res.status(400).json({
+                message: { msgBody: `Validation error: ${validationErrors.join(', ')}`, msgError: true }
+            });
+        }
+
+        return res.status(500).json({
+            message: { msgBody: 'Lỗi khi cập nhật thông tin', msgError: true },
+            error: err.message
+        });
     }
 });
 
@@ -302,19 +412,11 @@ userRouter.get("/getUser", passport.authenticate("jwt", { session: false }), asy
                 message: { msgBody: "User not found!", msgError: true },
             });
         }
-
+        const userResponse = user.toObject();
         // Trả về thông tin người dùng
         return res.status(200).json({
             message: { msgBody: "User fetched successfully", msgError: false },
-            user: {
-                id: user._id,
-                email: user.email,
-                tenNguoiDung: user.tenNguoiDung,
-                ngaySinh: user.ngaySinh,
-                gioiTinh: user.gioiTinh,
-                soDienThoai: user.soDienThoai,
-                hinhDaiDien: user.hinhDaiDien,
-            },
+            user: userResponse
         });
     } catch (err) {
         return res.status(500).json({ message: "Error fetching user", error: err.message });

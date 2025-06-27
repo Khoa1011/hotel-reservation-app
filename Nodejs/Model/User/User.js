@@ -7,20 +7,30 @@ const UserSchema = new mongoose.Schema({
     tenNguoiDung: {
         type: String,
         default: "",
+        maxlength:[100,"Tên không được nhập quá 100 ký tự"]
     },
     ngaySinh: {
-        type: String,
-        default: () => new Date().toISOString().split('T')[0]
+        type: Date,
+        default:null,
+        validate:{
+            validator: function(v) {
+                if (!v) return true; // Allow null
+                const today = new Date();
+                const age = today.getFullYear() - v.getFullYear();
+                return age >= 16 && age <= 100; 
+            },
+            message: 'Tuổi phải từ 16-100'
+        }
     },
     gioiTinh: {
         type: Boolean,
-        default: true,
+        default: true, // true = Nam, false = Nữ
     },
     email: {
         type: String,
         required: true,
         unique: true,
-
+        lowercase: true
     },
     matKhau: {
         type: String,
@@ -32,6 +42,7 @@ const UserSchema = new mongoose.Schema({
     },
     vaiTro: {
         type: String,
+        enum: ["nguoiDung", "chuKhachSan", "admin","nhanVienKhachSan"],
         default: "nguoiDung"
     },
     ngayTao: {
@@ -45,8 +56,64 @@ const UserSchema = new mongoose.Schema({
     cccd: {
         type: String,
         unique: true,
-        sparse: true, // Cho phép nhiều giá trị null hoặc không tồn tại. Nhưng khi có thì phải duy nhất
+        sparse: true,
+        validate: {
+            validator: function(v) {
+                if (!v) return true; // Allow null/undefined
+                return /^[0-9]{12}$/.test(v); // 12 digits for Vietnamese CCCD
+            },
+            message: 'CCCD phải có 12 chữ số'
+        }
     },
+    trangThaiTaiKhoan: {
+        type: String,
+        enum: ["hoatDong", "khongHoatDong", "cam"],
+        default: "hoatDong"
+    },
+    viTri: {
+        // type: {
+        //     type: String,
+        //     enum: ['Point'],
+        //     required: true,
+        //     default: 'Point'
+        // },
+        // coordinates: {
+        //     type: [Number], // [longitude, latitude]
+        //     required: true,
+        //     validate: {
+        //         validator: function(coordinates) {
+        //             return coordinates.length === 2 &&
+        //                    coordinates[0] >= -180 && coordinates[0] <= 180 && // longitude
+        //                    coordinates[1] >= -90 && coordinates[1] <= 90;     // latitude
+        //         },
+        //         message: 'Tọa độ không hợp lệ!'
+        //     }
+        // },
+        thanhPho: String,
+        quan: String,
+        phuong: String,
+        // tenDuong:String,
+        soNha:String,
+        quocGia: {
+            type:String,
+            default:"Việt Nam"
+        }
+    },
+
+    resetPasswordToken: {
+        type: String,
+        default: null
+    },
+    
+    resetPasswordExpires: {
+        type: Date,
+        default: null
+    },
+    
+    lanCuoiDangNhap: {
+        type: Date,
+        default: null
+    }
 });
 
 //Mã hóa password
@@ -59,7 +126,7 @@ UserSchema.pre("save", function (next) {
     });
 });
 
-UserSchema.method.comparePassword = function (password, cb) {
+UserSchema.methods.comparePassword = function (password, cb) {
     bcrypt.compare(password, this.matKhau, (err, isMatch) => {
         if (err) return cb(err);
         else {

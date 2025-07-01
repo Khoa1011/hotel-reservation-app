@@ -4,19 +4,20 @@ const moment = require("moment");
 const BookingSchema = new mongoose.Schema({
   maNguoiDung: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "nguoiDung", required: true,index: true },
   maKhachSan: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "khachSan", required: true,index: true },
-  maPhong: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "phong", default: null,index: true },
+  maPhong: { type: mongoose.Schema.Types.ObjectId, ref: "phong", default: null,index: true },
   maLoaiPhong: { type: mongoose.Schema.Types.ObjectId, required: true,  ref: "loaiPhong", index: true, index: true },
+  
   cccd: {
-        type: String,
-        sparse: true,
-        validate: {
-            validator: function(v) {
-                if (!v) return true; // Allow null/undefined
-                return /^[0-9]{12}$/.test(v); // 12 digits for Vietnamese CCCD
-            },
-            message: 'CCCD phải có 12 chữ số'
-        }
-    },
+    type: String,
+    validate: {
+        validator: function(v) {
+            // Chỉ validate khi có giá trị thật sự
+            if (!v || v.trim() === '') return true; 
+            return /^[0-9]{12}$/.test(v);
+        },
+        message: 'CCCD phải có 12 chữ số'
+    }
+},
     
   loaiDatPhong: {
     type: String,
@@ -59,17 +60,22 @@ const BookingSchema = new mongoose.Schema({
   gioTraPhong: { type: String, default: "12:00" },
 
 
-  trangThai: { type: String, enum: ["Đang chờ", "Đã xác nhận", "Đã nhận phòng", "Đang sử dụng",
-      "Quá giờ", "Đã trả phòng", "Đã hủy"], default: "Đang chờ" },
-  phuongThucThanhToan: { type: String, enum: ["Thẻ tín dụng", "VNPay", "Momo", "Tiền mặt","ZaloPay",], default: "Tiền mặt" },
+  trangThai: { type: String, enum: ["dang_cho", "da_xac_nhan", "da_nhan_phong", "dang_su_dung",
+      "qua_gio", "da_tra_phong", "da_huy"], default: "Đang chờ" },
+
+  phuongThucThanhToan: 
+  { type: String, 
+    enum: ["the_tin_dung", "VNPay", "Momo", "tien_mat","ZaloPay",], 
+    default: "tien_mat" },
+
   thoiGianTaoDon: {
     type: Date,
     default: Date.now
   },
   trangThaiThanhToan: {
     type: String,
-    enum: ['Chưa thanh toán', 'Đã thanh toán','Thanh toán 1 phần','Đã hoàn tiền'],
-    default: 'Chưa thanh toán' 
+    enum: ['chua_thanh_toan', 'da_thanh_toan','thanh_toan_mot_phan','da_hoan_tien'],
+    default: 'chua_thanh_toan' 
   },
   ghiChu: {
     type: String,
@@ -84,15 +90,15 @@ const BookingSchema = new mongoose.Schema({
     soPhong: {
       type: String,
       required: function() { 
-        return ["Đã nhận phòng", "Đang sử dụng", "Đã trả phòng"].includes(this.parent().trangThai);
+        return ["da_nhan_phong", "dang_su_dung", "da_tra_phong"].includes(this.parent().trangThai);
       }
     },
     tang: Number,
     loaiView: String, // "sea_view", "city_view", etc.
     trangThaiPhong: {
       type: String,
-      enum: ["assigned", "checked_in", "checked_out", "cleaning", "extended"],
-      default: "assigned"
+      enum: ["da_giao_phong", "da_check-in", "da_check-out", "dang_ve_sinh", "dang_bao_tri"],
+      default: "da_giao_phong"
     },
     thoiGianGiaoPhong: {
       type: Date,
@@ -161,7 +167,96 @@ const BookingSchema = new mongoose.Schema({
     required: [true, "Tổng tiền là bắt buộc"],
     min: [0, "Tổng tiền không được âm"]
   },
+  
   },
+  // ✅ HOÀN THIỆN THÔNG TIN THANH TOÁN
+  thongTinThanhToan: {
+    maDonHang: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true
+    },
+    
+    // MoMo payment fields
+    momoData: {
+      orderId: String,
+      requestId: String,
+      transId: String,
+      resultCode: Number,
+      message: String,
+      localMessage: String,
+      amount: Number,
+      signature: String,
+      extraData: String,
+      payType: String,
+      responseTime: Date
+    },
+    
+    // VNPay payment fields
+    vnpayData: {
+      vnp_TxnRef: String,
+      vnp_TransactionNo: String,
+      vnp_ResponseCode: String,
+      vnp_Amount: Number,
+      vnp_BankCode: String,
+      vnp_BankTranNo: String,
+      vnp_CardType: String,
+      vnp_PayDate: String,
+      vnp_SecureHash: String,
+      vnp_TransactionStatus: String
+    },
+    
+    // ZaloPay payment fields
+    zaloPayData: {
+      app_id: String,
+      app_trans_id: String,
+      zp_trans_id: String,
+      server_time: Number,
+      channel: String,
+      merchant_user_id: String,
+      amount: Number,
+      user_fee_amount: Number,
+      discount_amount: Number,
+      status: Number,
+      bank_code: String,
+      sub_return_code: Number,
+      return_message: String,
+      return_code: Number,
+      is_processing: Boolean,
+      response_time: Date
+    },
+    
+    // Credit card payment
+    creditCardData: {
+      gatewayProvider: String,
+      transactionId: String,
+      authorizationCode: String,
+      cardLast4: String,
+      cardBrand: String,
+      responseCode: String,
+      responseMessage: String
+    },
+    
+    // ✅ THÔNG TIN THANH TOÁN CƠ BẢN
+    thoiGianThanhToan: Date,
+    
+    // Payment verification
+    daXacThuc: {
+      type: Boolean,
+      default: false
+    },
+    
+    // Webhook data storage
+    webhookData: [{
+      nguon: String,
+      duLieu: mongoose.Schema.Types.Mixed,
+      thoiGianNhan: { type: Date, default: Date.now },
+      daXuLy: { type: Boolean, default: false }
+    }]
+  }
+}, {
+  timestamps: true // Automatically add createdAt and updatedAt
   
 });
 
@@ -169,6 +264,15 @@ const BookingSchema = new mongoose.Schema({
 
 module.exports = mongoose.model("donDatPhong", BookingSchema);
 
+// ✅ INDEXES FOR PERFORMANCE
+BookingSchema.index({ 'thongTinThanhToan.maDonHang': 1 });
+BookingSchema.index({ 'thongTinThanhToan.momoData.orderId': 1 });
+BookingSchema.index({ 'thongTinThanhToan.vnpayData.vnp_TxnRef': 1 });
+BookingSchema.index({ 'thongTinThanhToan.zaloPayData.app_trans_id': 1 });
+BookingSchema.index({ 'thongTinThanhToan.zaloPayData.zp_trans_id': 1 });
+BookingSchema.index({ trangThaiThanhToan: 1, thoiGianTaoDon: -1 });
+BookingSchema.index({ maNguoiDung: 1, trangThai: 1 });
+BookingSchema.index({ maKhachSan: 1, ngayNhanPhong: 1 });
 
 // chinhSach: {
 //     // For hourly bookings

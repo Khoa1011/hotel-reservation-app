@@ -272,3 +272,5 @@ RoomAvailabilitySchema.index({ ngay: 1, trangThai: 1 });
 RoomAvailabilitySchema.index({ maKhachSan: 1, ngay: 1, soPhongConLai: 1 });
 RoomAvailabilitySchema.index({ maLoaiPhong: 1, ngay: 1, trangThai: 1 });
 RoomAvailabilitySchema.index({ "cacBookingTrongNgay.maBooking": 1 });
+
+module.exports = mongoose.model("lichPhongTrong", RoomAvailabilitySchema);

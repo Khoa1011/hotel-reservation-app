@@ -1,11 +1,17 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const Room = require('../Model/Room/Room');
 const RoomType = require('../Model/RoomType/RoomType');
-const { uploadHotel } = require("../config/upload"); 
-const Hotel = require("../Model/Hotel/Hotel"); 
+const { uploadHotel } = require("../config/upload");
+const Hotel = require("../Model/Hotel/Hotel");
 const { route } = require("./userController");
 const router = express.Router();
 const Booking = require("../Model/Booking/Booking");
+const RoomImage = require("../Model/Room/RoomImage");
+const RoomAvailability = require("../Model/Room/RoomAvailability");
+const moment = require('moment-timezone');
+const AmenityDetails = require("../Model/Amenities/AmenityDetails");
+const Amenities = require("../Model/Amenities/Amenities");
 
 
 router.post("/upload", uploadHotel.single("hinhAnh"), async (req, res) => {
@@ -29,101 +35,178 @@ router.post("/upload", uploadHotel.single("hinhAnh"), async (req, res) => {
     }
 });
 
-router.get("/getHotelList", async (req,res) => {
-    try{
-        const hotels  = await Hotel.find();
-        if(!hotels ){
+// router.get("/getHotelList", async (req, res) => {
+//     try {
+//         const hotels = await Hotel.find();
+//         if (!hotels) {
+//             return res.status(404).json({
+//                 message: { msgBody: "Empty list!", msgError: false }
+//             });
+//         }
+//         return res.status(200).json({
+//             message: { msgBody: "Successfully!", msgError: false },
+//             hotels: hotels
+//         });
+//     } catch (err) {
+//         return res.status(500).json({ message: 'Lỗi Server', error: err.message });
+//     }
+// })
+
+
+router.get("/getHotelList", async (req, res) => {
+    try {
+        const hotels = await Hotel.find();
+        if (!hotels || hotels.length === 0) {
             return res.status(404).json({
-                message:{msgBody:"Empty list!",msgError:false}
+                message: { msgBody: "Empty list!", msgError: true }
             });
         }
+
+        // Enhance mỗi khách sạn với giá theo đêm
+        const enhancedHotels = await Promise.all(hotels.map(async (hotel) => {
+            try {
+                // Lấy loại phòng có giá thấp nhất của khách sạn
+                const cheapestRoomType = await RoomType.findOne({ 
+                    maKhachSan: hotel._id 
+                }).sort({ giaCa: 1 });
+
+                // Tính giá theo đêm (starting from price)
+                let giaTheoNgay = hotel.giaCa || 0;
+                
+                if (cheapestRoomType) {
+                    // Sử dụng giá của room type rẻ nhất
+                    giaTheoNgay = cheapestRoomType.giaCa;
+                }
+
+                return {
+                    _id: hotel._id,
+                    tenKhachSan: hotel.tenKhachSan,
+                    diaChiDayDu: hotel.diaChiDayDu,
+                    thanhPho: hotel.thanhPho,
+                    moTa: hotel.moTa,
+                    soSao: hotel.soSao,
+                    soDienThoai: hotel.soDienThoai,
+                    email: hotel.email,
+                   
+                    hinhAnh: hotel.hinhAnh,
+                    
+                    // ✅ Thuộc tính mới - Giá theo đêm
+                    giaTheoNgay: giaTheoNgay  // Giá khởi điểm theo đêm
+                };
+            } catch (error) {
+                console.error(`Lỗi xử lý khách sạn ${hotel._id}:`, error);
+                // Fallback về giá gốc nếu có lỗi
+                return {
+                    _id: hotel._id,
+                    tenKhachSan: hotel.tenKhachSan,
+                    diaChi: hotel.diaChi,
+                    thanhPho: hotel.thanhPho,
+                    moTa: hotel.moTa,
+                    soSao: hotel.soSao,
+                    soDienThoai: hotel.soDienThoai,
+                    email: hotel.email,
+                    giaCa: hotel.giaCa,
+                    hinhAnh: hotel.hinhAnh,
+                    giaTheoNgay: hotel.giaCa || 0
+                };
+            }
+        }));
+
         return res.status(200).json({
-            message:{msgBody:"Successfully!", msgError:false},
-            hotels : hotels
+            message: { msgBody: "Successfully!", msgError: false },
+            hotels: enhancedHotels
         });
-    }catch(err){
-        return res.status(500).json({ message: 'Lỗi Server', error: err.message });
+
+    } catch (err) {
+        return res.status(500).json({ 
+            message: 'Lỗi Server', 
+            error: err.message 
+        });
     }
-})
+});
 
 
 router.get('/:hotelId/rooms', async (req, res) => {
-  const { hotelId } = req.params;
-  const { checkInDate, checkOutDate } = req.query;
+    const { hotelId } = req.params;
+    const { checkInDate, checkOutDate } = req.query;
 
-  if (!checkInDate || !checkOutDate) {
-    return res.status(400).json({ message: "Missing checkInDate or checkOutDate" });
-  }
+    if (!checkInDate || !checkOutDate) {
+        return res.status(400).json({ message: "Missing checkInDate or checkOutDate" });
+    }
 
-  try {
-    const rooms = await Room.find({ maKhachsan: hotelId }).populate('maLoaiPhong');
+    try {
+        const rooms = await Room.find({ maKhachsan: hotelId }).populate('maLoaiPhong');
 
-    const parsedCheckIn = new Date(checkInDate);
-    const parsedCheckOut = new Date(checkOutDate);
+        const parsedCheckIn = new Date(checkInDate);
+        const parsedCheckOut = new Date(checkOutDate);
 
-    const roomDetails = await Promise.all(rooms.map(async (room) => {
-      // Tìm các booking giao với khoảng này
-      const overlappingBookings = await Booking.find({
-        roomId: room._id,
-        checkInDate: { $lte: parsedCheckOut },
-        checkOutDate: { $gte: parsedCheckIn }
-      });
+        const roomDetails = await Promise.all(rooms.map(async (room) => {
+            // Tìm các booking giao với khoảng này
+            const overlappingBookings = await Booking.find({
+                roomId: room._id,
+                checkInDate: { $lte: parsedCheckOut },
+                checkOutDate: { $gte: parsedCheckIn }
+            });
 
-      let bookedCount = 0;
-      for (const booking of overlappingBookings) {
-        bookedCount += booking.quantity || 1;
-      }
+            let bookedCount = 0;
+            for (const booking of overlappingBookings) {
+                bookedCount += booking.quantity || 1;
+            }
 
-      const availableRooms = Math.max(room.totalRooms - bookedCount, 0);
+            const availableRooms = Math.max(room.totalRooms - bookedCount, 0);
 
-      return {
-        maPhong: room._id,
-        maLoaiPhong: room.maLoaiPhong.tenLoaiPhong,
-        giaCa: room.roomTypeId.giaCa,
-        hinhAnh: room.hinhAnh,
-        trangThaiPhong: room.trangThaiPhong,
-        moTa: room.moTa,
-        soLuongGiuong: room.soLuongGiuong,
-        soLuongNguoiToiDa: room.soLuongNguoiToiDa,
-        danhSachTienNghi: room.danhSachTienNghi,
-        tongSoPhong: room.tongSoPhong,
-        availableRooms: availableRooms
+            return {
+                maPhong: room._id,
+                maLoaiPhong: room.maLoaiPhong.tenLoaiPhong,
+                giaCa: room.roomTypeId.giaCa,
+                hinhAnh: room.hinhAnh,
+                trangThaiPhong: room.trangThaiPhong,
+                moTa: room.moTa,
+                soLuongGiuong: room.soLuongGiuong,
+                soLuongNguoiToiDa: room.soLuongNguoiToiDa,
+                danhSachTienNghi: room.danhSachTienNghi,
+                tongSoPhong: room.tongSoPhong,
+                availableRooms: availableRooms
 
-      };
-    }));
+            };
+        }));
 
-    return res.status(200).json({
-      message: { msgBody: "Lấy danh sách phòng thành công!", msgError: false },
-      rooms: roomDetails
-    });
+        return res.status(200).json({
+            message: { msgBody: "Lấy danh sách phòng thành công!", msgError: false },
+            rooms: roomDetails
+        });
 
-  } catch (error) {
-    res.status(500).json({ message: "Lỗi server", error: error.message });
-  }
+    } catch (error) {
+        res.status(500).json({ message: "Lỗi server", error: error.message });
+    }
 });
-
 
 router.post('/:hotelId/rooms/update-availability', async (req, res) => {
-  const { hotelId } = req.params;
+    const { hotelId } = req.params;
 
-  try {
-    const rooms = await Room.find({ maKhachsan: hotelId });
-    
-    await Promise.all(rooms.map(async (room) => {
-      // Tính toán số phòng đã được đặt
-      const bookings = await Booking.find({ maPhong: room._id });
-      const bookedCount = bookings.reduce((sum, booking) => sum + (booking.quantity || 1), 0);
-      
-      // Cập nhật TRỰC TIẾP vào totalRooms (giả sử totalRooms ban đầu là tổng phòng)
-      room.tongSoPhong = room.tongSoPhong - bookedCount;
-      await room.save();
-    }));
+    try {
+        const rooms = await RoomType.find({ maKhachSan: hotelId });
 
-    res.status(200).json({ message: 'Room availability updated successfully' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+        await Promise.all(rooms.map(async (room) => {
+            // Tính toán số phòng đã được đặt
+            const bookings = await Booking.find({ maPhong: room._id });
+            const bookedCount = bookings.reduce((sum, booking) => sum + (booking.quantity || 1), 0);
+
+            // Cập nhật TRỰC TIẾP vào totalRooms (giả sử totalRooms ban đầu là tổng phòng)
+            room.tongSoPhong = room.tongSoPhong - bookedCount;
+            await room.save();
+        }));
+
+        res.status(200).json({ message: 'Room availability updated successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
+
+
+
+
+
 
 // API tìm kiếm phòng theo khoảng thời gian - CHÍNH
 router.post('/:hotelId/search-roomtypes', async (req, res) => {
@@ -172,9 +255,9 @@ router.post('/:hotelId/search-roomtypes', async (req, res) => {
             });
         }
 
+
         const availableRoomTypes = [];
         const totalGuests = (guests?.adults || 0) + (guests?.children || 0);
-
         // Duyệt từng loại phòng để kiểm tra availability
         for (const roomType of roomTypes) {
             try {
@@ -190,16 +273,17 @@ router.post('/:hotelId/search-roomtypes', async (req, res) => {
                 });
 
                 // Chỉ hiển thị loại phòng có sẵn và phù hợp
-                if (availability.isAvailable && 
+                if (availability.isAvailable &&
                     availability.availableRooms >= requestedRooms &&
                     roomType.soLuongKhach >= totalGuests) {
-                    
+
                     // Lấy danh sách hình ảnh của loại phòng này
                     const roomImages = await getRoomTypeImages(roomType._id);
-                    
                     // Lấy tiện nghi của loại phòng
                     const amenities = await getRoomTypeAmenities(roomType._id);
-                    
+
+                    const bedConfig = await getSimpleBedConfiguration(roomType._id);
+
                     // Tính giá cho khoảng thời gian này
                     const pricing = calculatePricing({
                         roomType,
@@ -216,13 +300,18 @@ router.post('/:hotelId/search-roomtypes', async (req, res) => {
                         moTa: roomType.moTa || "",
                         soLuongKhach: roomType.soLuongKhach,
                         giaCa: roomType.giaCa,
-                        
+
+
                         // Hình ảnh loại phòng
                         images: roomImages,
-                        
+
                         // Tiện nghi
                         amenities: amenities,
                         
+                        //Cấu hình giường
+                        cauHinhGiuong: bedConfig,
+
+
                         // Thông tin availability
                         availability: {
                             isAvailable: availability.isAvailable,
@@ -231,10 +320,10 @@ router.post('/:hotelId/search-roomtypes', async (req, res) => {
                             occupiedRooms: availability.occupiedRooms,
                             canBook: true
                         },
-                        
+
                         // Thông tin giá cả
                         pricing: pricing,
-                        
+
                         // Thông tin display cho Flutter
                         displayInfo: {
                             pricePerUnit: pricing.finalPrice,
@@ -270,7 +359,7 @@ router.post('/:hotelId/search-roomtypes', async (req, res) => {
             statistics: {
                 totalRoomTypes: roomTypes.length,
                 availableRoomTypes: availableRoomTypes.length,
-                totalAvailableRooms: availableRoomTypes.reduce((sum, room) => 
+                totalAvailableRooms: availableRoomTypes.reduce((sum, room) =>
                     sum + room.availability.availableRooms, 0)
             },
             roomTypes: availableRoomTypes
@@ -290,7 +379,7 @@ router.post('/:hotelId/search-roomtypes', async (req, res) => {
 router.get('/:hotelId/room-type/:roomTypeId/images', async (req, res) => {
     try {
         const { roomTypeId } = req.params;
-        
+
         if (!mongoose.Types.ObjectId.isValid(roomTypeId)) {
             return res.status(400).json({
                 msgBody: "Mã loại phòng không hợp lệ!",
@@ -310,8 +399,8 @@ router.get('/:hotelId/room-type/:roomTypeId/images', async (req, res) => {
         }
 
         // Lấy hình ảnh
-        const images = await RoomImage.find({ 
-            maPhong: { $in: roomIds } 
+        const images = await RoomImage.find({
+            maPhong: { $in: roomIds }
         }).sort({ thuTuAnh: 1 });
 
         return res.status(200).json({
@@ -339,7 +428,7 @@ router.get('/:hotelId/room-type/:roomTypeId/time-slots', async (req, res) => {
     try {
         const { roomTypeId } = req.params;
         const { date } = req.query;
-        
+
         if (!date || !moment(date, 'YYYY-MM-DD', true).isValid()) {
             return res.status(400).json({
                 msgBody: "Ngày không hợp lệ! Định dạng: YYYY-MM-DD",
@@ -363,18 +452,18 @@ router.get('/:hotelId/room-type/:roomTypeId/time-slots', async (req, res) => {
         const timeSlots = [];
         for (let hour = 6; hour < 24; hour++) {
             const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
-            
+
             // Tính phòng bị chiếm tại thời điểm này
             const occupiedRooms = existingBookings.filter(booking => {
                 const bookingStart = moment(`${date} ${booking.gioNhanPhong}`, 'YYYY-MM-DD HH:mm');
                 const bookingEnd = moment(`${date} ${booking.gioTraPhong}`, 'YYYY-MM-DD HH:mm');
                 const slotTime = moment(`${date} ${timeSlot}`, 'YYYY-MM-DD HH:mm');
-                
+
                 // Xử lý checkout ngày hôm sau
                 if (bookingEnd.isSameOrBefore(bookingStart)) {
                     bookingEnd.add(1, 'day');
                 }
-                
+
                 return slotTime.isSameOrAfter(bookingStart) && slotTime.isBefore(bookingEnd);
             }).reduce((sum, booking) => sum + booking.soLuongPhong, 0);
 
@@ -419,8 +508,8 @@ const getRoomTypeImages = async (roomTypeId) => {
         }
 
         // Lấy hình ảnh từ các phòng thuộc loại này
-        const images = await RoomImage.find({ 
-            maPhong: { $in: roomIds } 
+        const images = await RoomImage.find({
+            maPhong: { $in: roomIds }
         }).sort({ thuTuAnh: 1 });
 
         // Loại bỏ duplicate và lấy tối đa 10 ảnh
@@ -445,6 +534,65 @@ const getRoomTypeImages = async (roomTypeId) => {
         return [];
     }
 };
+
+// Lấy cấu hình giường
+async function getSimpleBedConfiguration(roomTypeId) {
+    try {
+        // Lấy TẤT CẢ phòng của loại phòng này
+        const allRooms = await Room.find({ maLoaiPhong: roomTypeId })
+            .select('cauHinhGiuong')
+            .lean();
+
+        if (!allRooms || allRooms.length === 0) {
+            return [{
+                loaiGiuong: "double",
+                soLuong: 1
+            }];
+        }
+
+        // Tập hợp tất cả các cấu hình giường khác nhau
+        const bedConfigMap = new Map();
+        
+        allRooms.forEach(room => {
+            if (room.cauHinhGiuong && room.cauHinhGiuong.length > 0) {
+                room.cauHinhGiuong.forEach(config => {
+                    const key = config.loaiGiuong;
+                    // Lưu số lượng MAX của từng loại giường
+                    if (bedConfigMap.has(key)) {
+                        bedConfigMap.set(key, Math.max(bedConfigMap.get(key), config.soLuong));
+                    } else {
+                        bedConfigMap.set(key, config.soLuong);
+                    }
+                });
+            }
+        });
+
+        // Nếu không có cấu hình nào, trả về mặc định
+        if (bedConfigMap.size === 0) {
+            return [{
+                loaiGiuong: "double",
+                soLuong: 1
+            }];
+        }
+
+        // Chuyển đổi thành array và sắp xếp theo thứ tự kích thước giường
+        const bedSizeOrder = { 'single': 1, 'double': 2, 'queen': 3, 'king': 4 };
+        
+        return Array.from(bedConfigMap.entries())
+            .map(([loaiGiuong, soLuong]) => ({
+                loaiGiuong,
+                soLuong
+            }))
+            .sort((a, b) => (bedSizeOrder[a.loaiGiuong] || 0) - (bedSizeOrder[b.loaiGiuong] || 0));
+
+    } catch (error) {
+        console.error('Lỗi lấy cấu hình giường:', error);
+        return [{
+            loaiGiuong: "double", 
+            soLuong: 1
+        }];
+    }
+}
 
 // Lấy tiện nghi của loại phòng
 const getRoomTypeAmenities = async (roomTypeId) => {
@@ -477,25 +625,25 @@ const getRoomTypeAmenities = async (roomTypeId) => {
                 const amenityId = detail.maTienNghi._id.toString();
                 if (!amenityMap[amenityId]) {
                     amenityMap[amenityId] = {
-                        amenityId: detail.maTienNghi._id,
-                        name: detail.maTienNghi.tenTienNghi,
+                        _id: detail.maTienNghi._id,
+                        tenTienNghi: detail.maTienNghi.tenTienNghi,
                         icon: detail.maTienNghi.icon || "🏨",
-                        description: detail.maTienNghi.moTa || "",
-                        category: detail.maTienNghi.maNhomTienNghi?.tenNhomTienNghi || "Khác",
-                        categoryIcon: detail.maTienNghi.maNhomTienNghi?.icon || "📋",
-                        roomCount: 0,
-                        totalQuantity: 0
+                        moTa: detail.maTienNghi.moTa || "",
+                        categtenNhomTienNghiory: detail.maTienNghi.maNhomTienNghi?.tenNhomTienNghi || "Khác",
+                        iconNhom: detail.maTienNghi.maNhomTienNghi?.icon || "📋",
+                        soPhongCoTienNghi: 0,
+                        tongSoPhong: 0
                     };
                 }
-                amenityMap[amenityId].roomCount++;
-                amenityMap[amenityId].totalQuantity += detail.soLuong || 1;
+                amenityMap[amenityId].soPhongCoTienNghi++;
+                amenityMap[amenityId].tongSoPhong += detail.soLuong || 1;
             }
         });
 
         // Chuyển về array và tính coverage percentage
         const amenities = Object.values(amenityMap).map(amenity => ({
             ...amenity,
-            coveragePercentage: Math.round((amenity.roomCount / rooms.length) * 100)
+            coveragePercentage: Math.round((amenity.soPhongCoTienNghi / rooms.length) * 100)
         }));
 
         // Sắp xếp theo độ phổ biến
@@ -518,7 +666,7 @@ const checkRoomTypeAvailability = async ({
             });
         } else {
             return await checkOvernightRoomAvailability({
-                hotelId, roomTypeId, checkInDate, 
+                hotelId, roomTypeId, checkInDate,
                 checkOutDate: checkOutDate || moment(checkInDate).add(1, 'day').format('YYYY-MM-DD')
             });
         }
@@ -559,7 +707,7 @@ const checkHourlyRoomAvailability = async ({ hotelId, roomTypeId, date, checkInT
         // Tìm booking conflicts trong khoảng thời gian
         const requestStart = moment(`${date} ${checkInTime}`, 'YYYY-MM-DD HH:mm');
         let requestEnd = moment(`${date} ${checkOutTime}`, 'YYYY-MM-DD HH:mm');
-        
+
         // Xử lý checkout ngày hôm sau
         if (requestEnd.isSameOrBefore(requestStart)) {
             requestEnd.add(1, 'day');
@@ -577,7 +725,7 @@ const checkHourlyRoomAvailability = async ({ hotelId, roomTypeId, date, checkInT
         conflictingBookings.forEach(booking => {
             const bookingStart = moment(`${date} ${booking.gioNhanPhong}`, 'YYYY-MM-DD HH:mm');
             let bookingEnd = moment(`${date} ${booking.gioTraPhong}`, 'YYYY-MM-DD HH:mm');
-            
+
             if (bookingEnd.isSameOrBefore(bookingStart)) {
                 bookingEnd.add(1, 'day');
             }
@@ -625,7 +773,7 @@ const checkOvernightRoomAvailability = async ({ hotelId, roomTypeId, checkInDate
         if (!availabilities.length) {
             const roomType = await RoomType.findById(roomTypeId);
             totalRooms = roomType?.tongSoPhong || 0;
-            
+
             if (totalRooms === 0) {
                 return { isAvailable: false, availableRooms: 0, reason: "Không có phòng" };
             }
@@ -634,7 +782,7 @@ const checkOvernightRoomAvailability = async ({ hotelId, roomTypeId, checkInDate
             const dateRange = [];
             const current = moment(checkInDate);
             const end = moment(checkOutDate);
-            
+
             while (current.isBefore(end)) {
                 dateRange.push(current.format('YYYY-MM-DD'));
                 current.add(1, 'day');
@@ -655,7 +803,7 @@ const checkOvernightRoomAvailability = async ({ hotelId, roomTypeId, checkInDate
                     trangThai: { $in: ['Đã xác nhận', 'Đã nhận phòng', 'Đang sử dụng'] }
                 });
 
-                const occupiedForDate = conflictingBookings.reduce((sum, booking) => 
+                const occupiedForDate = conflictingBookings.reduce((sum, booking) =>
                     sum + (booking.soLuongPhong || 1), 0);
 
                 const availableForDate = totalRooms - occupiedForDate;
@@ -666,7 +814,7 @@ const checkOvernightRoomAvailability = async ({ hotelId, roomTypeId, checkInDate
             for (const avail of availabilities) {
                 totalRooms = avail.tongSoPhong;
                 const dateStr = moment(avail.ngay).format('YYYY-MM-DD');
-                
+
                 // Kiểm tra booking conflicts cho ngày này
                 const conflictingBookings = await Booking.find({
                     maLoaiPhong: roomTypeId,
@@ -680,10 +828,10 @@ const checkOvernightRoomAvailability = async ({ hotelId, roomTypeId, checkInDate
                     trangThai: { $in: ['Đã xác nhận', 'Đã nhận phòng', 'Đang sử dụng'] }
                 });
 
-                const occupiedForDate = conflictingBookings.reduce((sum, booking) => 
+                const occupiedForDate = conflictingBookings.reduce((sum, booking) =>
                     sum + (booking.soLuongPhong || 1), 0);
 
-                const availableForDate = Math.max(0, 
+                const availableForDate = Math.max(0,
                     avail.tongSoPhong - avail.soPhongBaoTri - avail.soPhongBlock - occupiedForDate
                 );
 
@@ -706,6 +854,8 @@ const checkOvernightRoomAvailability = async ({ hotelId, roomTypeId, checkInDate
     }
 };
 
+
+
 // Tính giá cho khoảng thời gian
 const calculatePricing = ({ roomType, bookingType, checkInDate, checkOutDate, checkInTime, checkOutTime }) => {
     let basePrice = roomType.giaCa;
@@ -716,11 +866,11 @@ const calculatePricing = ({ roomType, bookingType, checkInDate, checkOutDate, ch
         // Tính theo giờ
         const startTime = moment(`${checkInDate} ${checkInTime}`, 'YYYY-MM-DD HH:mm');
         let endTime = moment(`${checkInDate} ${checkOutTime}`, 'YYYY-MM-DD HH:mm');
-        
+
         if (endTime.isSameOrBefore(startTime)) {
             endTime.add(1, 'day');
         }
-        
+
         duration = endTime.diff(startTime, 'hours', true);
         unit = "giờ";
         // Giá theo giờ = giá phòng / 8 (giả sử 8 tiếng 1 ngày)
@@ -734,22 +884,22 @@ const calculatePricing = ({ roomType, bookingType, checkInDate, checkOutDate, ch
 
     // Áp dụng multiplier cơ bản (có thể mở rộng)
     let finalPrice = basePrice;
-    
+
     // Weekend multiplier
     if (isWeekend(checkInDate)) {
         finalPrice = Math.round(finalPrice * 1.2); // +20% cuối tuần
     }
 
     return {
-        basePrice,
-        finalPrice,
-        duration,
+        basePrice, // Giá gốc chưa tính phụ phí
+        finalPrice, //  Giá cuối cùng sau multiplier
+        duration, // Số giờ/ngày/đêm
         unit,
         breakdown: {
-            baseRate: Math.round(roomType.giaCa),
-            duration: duration,
-            multiplier: finalPrice / basePrice,
-            total: finalPrice
+            baseRate: Math.round(roomType.giaCa), // Giá gốc theo ngày
+            duration: duration, // Số đơn vị thời gian
+            multiplier: finalPrice / basePrice, // Tỉ lệ cộng thêm (ví dụ: 1.2 nếu cuối tuần)
+            total: finalPrice // Tổng tiền cuối cùng
         }
     };
 };
@@ -774,7 +924,7 @@ const isWeekend = (date) => {
 router.get('/:hotelId/room-type/:roomTypeId/details', async (req, res) => {
     try {
         const { hotelId, roomTypeId } = req.params;
-        
+
         if (!mongoose.Types.ObjectId.isValid(roomTypeId)) {
             return res.status(400).json({
                 msgBody: "Mã loại phòng không hợp lệ!",
@@ -783,11 +933,11 @@ router.get('/:hotelId/room-type/:roomTypeId/details', async (req, res) => {
         }
 
         // Lấy thông tin loại phòng
-        const roomType = await RoomType.findOne({ 
-            _id: roomTypeId, 
-            maKhachSan: hotelId 
+        const roomType = await RoomType.findOne({
+            _id: roomTypeId,
+            maKhachSan: hotelId
         });
-        
+
         if (!roomType) {
             return res.status(404).json({
                 msgBody: "Loại phòng không tồn tại!",
@@ -810,13 +960,13 @@ router.get('/:hotelId/room-type/:roomTypeId/details', async (req, res) => {
                 soLuongKhach: roomType.soLuongKhach,
                 giaCa: roomType.giaCa,
                 tongSoPhong: roomType.tongSoPhong,
-                
+
                 // Danh sách hình ảnh
                 images: images,
-                
+
                 // Danh sách tiện nghi
                 amenities: amenities,
-                
+
                 // Thống kê
                 statistics: {
                     imageCount: images.length,
@@ -840,7 +990,7 @@ router.post('/:hotelId/room-type/:roomTypeId/check-availability', async (req, re
     try {
         const { hotelId, roomTypeId } = req.params;
         const { bookingType, checkInDate, checkOutDate, checkInTime, checkOutTime } = req.body;
-        
+
         if (!mongoose.Types.ObjectId.isValid(roomTypeId)) {
             return res.status(400).json({
                 msgBody: "Mã loại phòng không hợp lệ!",

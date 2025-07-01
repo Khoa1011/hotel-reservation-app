@@ -1,21 +1,37 @@
 const express = require("express");
 const Booking = require("../Model/Booking/Booking");
-const bookingRouter = express.Router();
 const Room = require("../Model/Room/Room");
 const Hotel = require("../Model/Hotel/Hotel");
 const mongoose = require("mongoose");
 const authorizeRoles = require('../middleware/roleAuth');
 const User = require("../Model/User/User");
 const moment = require('moment-timezone');
+const bookingRouter = express.Router();
+const crypto = require('crypto');
+const axios = require('axios');
 
-// Tạo mới một đơn đặt phòng
-bookingRouter.post("/addbooking", async (req, res) => {
+
+bookingRouter.post('/addbooking', async (req, res) => {
   try {
+    console.log('📝 Creating new booking:', req.body);
+    
     const newBooking = new Booking(req.body);
     await newBooking.save();
-    res.status(201).json({ message: "Đặt phòng thành công!", booking: newBooking });
+    
+    console.log('✅ Booking created successfully:', newBooking._id);
+    
+    res.status(201).json({ 
+      success: true,
+      message: "Đặt phòng thành công!", 
+      booking: newBooking 
+    });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('❌ Booking creation error:', error);
+    res.status(400).json({ 
+      success: false,
+      message: "Đặt phòng thất bại",
+      error: error.message 
+    });
   }
 });
 

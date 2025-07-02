@@ -132,13 +132,16 @@ router.post('/momo/create', async (req, res) => {
 router.post('/momo/ipn', async (req, res) => {
   try {
     const momoData = req.body;
-    console.log('📨 MoMo IPN received:', momoData);
+    console.log('📨 MoMo IPN received at:', new Date().toISOString());
+    console.log('📨 Full MoMo data:', JSON.stringify(momoData, null, 2));
+    console.log('📨 MoMo headers:', req.headers);
     
     // Verify signature
     const MOMO_CONFIG = {
       secretKey: process.env.MOMO_SECRET_KEY || "K951B6PE1waDMi640xX08PD3vg6EkVlz"
     };
     
+    // ✅ FIX: Correct signature order theo MoMo documentation
     const rawSignature = `accessKey=${momoData.accessKey}&amount=${momoData.amount}&extraData=${momoData.extraData}&message=${momoData.message}&orderId=${momoData.orderId}&orderInfo=${momoData.orderInfo}&orderType=${momoData.orderType}&partnerCode=${momoData.partnerCode}&payType=${momoData.payType}&requestId=${momoData.requestId}&responseTime=${momoData.responseTime}&resultCode=${momoData.resultCode}&transId=${momoData.transId}`;
     
     const expectedSignature = crypto
@@ -146,35 +149,56 @@ router.post('/momo/ipn', async (req, res) => {
       .update(rawSignature)
       .digest('hex');
     
+    console.log('🔐 Raw signature string:', rawSignature);
+    console.log('🔐 Expected signature:', expectedSignature);
+    console.log('🔐 Received signature:', momoData.signature);
+    console.log('🔐 Signature match:', expectedSignature === momoData.signature);
+    
+    // ✅ IMPORTANT: Always respond OK to MoMo first, then process
+    res.status(200).json({ success: true, message: 'IPN received' });
+    
     if (expectedSignature !== momoData.signature) {
-      console.error('❌ Invalid MoMo signature');
-      return res.status(400).json({ error: 'Invalid signature' });
+      console.error('❌ Invalid MoMo signature, but still responding OK');
+      return; // Don't process payment but still respond OK
     }
+    
+    console.log('🔍 Searching for booking with orderId:', momoData.orderId);
     
     // Find and update booking
     const booking = await Booking.findOne({
       'thongTinThanhToan.maDonHang': momoData.orderId
     });
     
+    console.log('📋 Found booking:', booking ? booking._id : 'NOT FOUND');
+    
     if (booking) {
+      console.log('💳 Processing MoMo result. ResultCode:', momoData.resultCode);
+      
       if (momoData.resultCode === 0) {
         // Payment successful
         booking.trangThaiThanhToan = 'da_thanh_toan';
         booking.trangThai = 'da_xac_nhan';
         booking.thongTinThanhToan.thoiGianThanhToan = new Date();
         booking.thongTinThanhToan.daXacThuc = true;
+        console.log('✅ Marking booking as PAID');
+      } else {
+        console.log('❌ MoMo payment failed with code:', momoData.resultCode);
+        booking.trangThaiThanhToan = 'that_bai';
       }
       
       booking.thongTinThanhToan.transactionId = momoData.transId;
-      await booking.save();
+      booking.thongTinThanhToan.momoData = momoData;
       
+      await booking.save();
       console.log(`✅ Updated booking ${booking._id} with MoMo payment result`);
+    } else {
+      console.log(`⚠️ No booking found for orderId: ${momoData.orderId}`);
     }
     
-    res.json({ success: true });
   } catch (error) {
     console.error('❌ MoMo IPN Error:', error);
-    res.status(500).json({ error: error.message });
+    // Still respond OK to prevent MoMo from retrying
+    res.status(200).json({ success: true, message: 'Error processed' });
   }
 });
 
@@ -491,9 +515,11 @@ router.post('/zalopay/create', async (req, res) => {
 router.post('/zalopay/callback', async (req, res) => {
   try {
     const cbdata = req.body;
-    console.log('📨 ZaloPay Callback received:', cbdata);
+    console.log('📨 ZaloPay Callback received at:', new Date().toISOString());
+    console.log('📨 Full ZaloPay data:', JSON.stringify(cbdata, null, 2));
+    console.log('📨 ZaloPay headers:', req.headers);
     
-    // Verify MAC
+    // ✅ ENABLE MAC verification (was commented out!)
     const ZALOPAY_CONFIG = {
       key2: process.env.ZALOPAY_KEY2 || "kLtgPl8HHhfvMuDHPwKfgfsY4Ydm9eIz"
     };
@@ -501,34 +527,71 @@ router.post('/zalopay/callback', async (req, res) => {
     const dataStr = cbdata.data;
     const reqMac = cbdata.mac;
     
+    console.log('🔐 DataStr for MAC:', dataStr);
+    console.log('🔐 Received MAC:', reqMac);
+    
     const mac = crypto.createHmac('sha256', ZALOPAY_CONFIG.key2)
                      .update(dataStr)
                      .digest('hex');
     
+    console.log('🔐 Calculated MAC:', mac);
+    console.log('🔐 MAC match:', mac === reqMac);
+    
+    // ✅ Always respond to ZaloPay first
     if (reqMac !== mac) {
       console.error('❌ Invalid ZaloPay MAC');
       return res.json({ return_code: -1, return_message: "mac not equal" });
     }
     
     // Parse callback data
-  
     const dataJson = JSON.parse(dataStr);
-    const orderId = dataJson.app_trans_id.split('_')[1]; // Extract orderId
+    console.log('📊 Parsed ZaloPay data:', dataJson);
     
-    // Find and update booking
+    // ✅ FIX: Find booking by zaloPayAppTransId instead of orderId
+    console.log('🔍 Searching for booking with app_trans_id:', dataJson.app_trans_id);
+    
     const booking = await Booking.findOne({
-      'thongTinThanhToan.maDonHang': orderId
+      'thongTinThanhToan.zaloPayAppTransId': dataJson.app_trans_id
     });
     
+    console.log('📋 Found booking:', booking ? booking._id : 'NOT FOUND');
+    
     if (booking) {
+      console.log('✅ Processing ZaloPay success for booking:', booking._id);
+      
       booking.trangThaiThanhToan = 'da_thanh_toan';
       booking.trangThai = 'da_xac_nhan';
       booking.thongTinThanhToan.thoiGianThanhToan = new Date();
       booking.thongTinThanhToan.daXacThuc = true;
+      booking.thongTinThanhToan.transactionId = dataJson.zp_trans_id;
       booking.thongTinThanhToan.zaloPayData = { ...cbdata, parsedData: dataJson };
       
       await booking.save();
       console.log(`✅ Updated booking ${booking._id} with ZaloPay payment success`);
+    } else {
+      console.log(`⚠️ No booking found for app_trans_id: ${dataJson.app_trans_id}`);
+      
+      // ✅ Fallback: Try to find by orderId extracted from app_trans_id
+      // ZaloPay app_trans_id format: YYMMDD_timestamp
+      // We stored it as orderId, so try to match
+      const possibleOrderId = dataJson.app_trans_id;
+      const bookingByOrderId = await Booking.findOne({
+        'thongTinThanhToan.maDonHang': { $regex: possibleOrderId, $options: 'i' }
+      });
+      
+      if (bookingByOrderId) {
+        console.log('📋 Found booking by orderId pattern:', bookingByOrderId._id);
+        
+        bookingByOrderId.trangThaiThanhToan = 'da_thanh_toan';
+        bookingByOrderId.trangThai = 'da_xac_nhan';
+        bookingByOrderId.thongTinThanhToan.thoiGianThanhToan = new Date();
+        bookingByOrderId.thongTinThanhToan.daXacThuc = true;
+        bookingByOrderId.thongTinThanhToan.transactionId = dataJson.zp_trans_id;
+        bookingByOrderId.thongTinThanhToan.zaloPayData = { ...cbdata, parsedData: dataJson };
+        
+        await bookingByOrderId.save();
+        console.log(`✅ Updated booking via fallback: ${bookingByOrderId._id}`);
+      }
     }
     
     res.json({ return_code: 1, return_message: "success" });

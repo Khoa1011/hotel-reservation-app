@@ -28,7 +28,7 @@ function getClientIP(req) {
 // ===== MOMO PAYMENT ===== ✅ ENHANCED
 router.post('/momo/create', async (req, res) => {
   try {
-    const { orderId, amount, orderInfo } = req.body;
+    const { orderId, amount, orderInfo, userId  } = req.body;
     
     // Validate input
     if (!orderId || !amount || !orderInfo) {
@@ -93,15 +93,25 @@ router.post('/momo/create', async (req, res) => {
     console.log('✅ MoMo Response:', response.data);
     
     // Store payment info in booking
-    await Booking.findOneAndUpdate(
-      { 'thongTinThanhToan.maDonHang': orderId },
-      { 
-        $set: { 
-          'thongTinThanhToan.momoRequestId': requestId,
-          'thongTinThanhToan.phuongThucThanhToan': 'Momo'
-        }
+     if (userId) {
+      const latestBooking = await Booking.findOne({
+        maNguoiDung: userId,
+        trangThaiThanhToan: 'chua_thanh_toan'
+      }).sort({ createdAt: -1 });
+      
+      if (latestBooking) {
+        await Booking.findByIdAndUpdate(latestBooking._id, {
+          $set: { 
+            'thongTinThanhToan.maDonHang': orderId,
+            'thongTinThanhToan.momoRequestId': requestId,
+            'thongTinThanhToan.phuongThucThanhToan': 'Momo'
+          }
+        });
+        console.log(`✅ Updated booking ${latestBooking._id} with orderId: ${orderId}`);
+      } else {
+        console.log('⚠️ No unpaid booking found for user:', userId);
       }
-    );
+    }
     
     res.json({
       success: true,
@@ -155,7 +165,7 @@ router.post('/momo/ipn', async (req, res) => {
         booking.thongTinThanhToan.daXacThuc = true;
       }
       
-      booking.thongTinThanhToan.momoData = momoData;
+      booking.thongTinThanhToan.transactionId = momoData.transId;
       await booking.save();
       
       console.log(`✅ Updated booking ${booking._id} with MoMo payment result`);
@@ -560,6 +570,11 @@ router.get('/status/:orderId', async (req, res) => {
         amount: booking.thongTinGia?.tongDonDat || 0,
         paymentTime: booking.thongTinThanhToan?.thoiGianThanhToan,
         isVerified: booking.thongTinThanhToan?.daXacThuc || false,
+        transactionId: booking.thongTinThanhToan?.transactionId || 
+                      booking.thongTinThanhToan?.momoData?.transId || 
+                      booking.thongTinThanhToan?.vnpayData?.vnp_TransactionNo ||
+                      booking.thongTinThanhToan?.zaloPayData?.zp_trans_id ||
+                      null,
         transactionData: {
           momo: booking.thongTinThanhToan?.momoData,
           vnpay: booking.thongTinThanhToan?.vnpayData,

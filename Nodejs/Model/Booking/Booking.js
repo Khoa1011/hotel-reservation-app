@@ -48,12 +48,6 @@ const BookingSchema = new mongoose.Schema({
   ngayTraPhong: {
     type: Date,
     required: [true, "Ngày trả phòng là bắt buộc"],
-    validate: {
-      validator: function(v) {
-        return v > this.ngayNhanPhong; // Must be after check-in
-      },
-      message: "Ngày trả phòng phải sau ngày nhận phòng"
-    }
   },
 
   gioNhanPhong: { type: String, default: "14:00" },

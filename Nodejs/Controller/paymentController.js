@@ -448,16 +448,7 @@ router.post('/zalopay/create', async (req, res) => {
       });
     }
     
-    // Store payment info in booking
-    await Booking.findOneAndUpdate(
-      { 'thongTinThanhToan.maDonHang': orderId },
-      { 
-        $set: { 
-          'thongTinThanhToan.zaloPayAppTransId': appTransId,
-          'thongTinThanhToan.phuongThucThanhToan': 'ZaloPay'
-        }
-      }
-    );
+
     if (userId) {
       const latestBooking = await Booking.findOne({
         maNguoiDung: userId,

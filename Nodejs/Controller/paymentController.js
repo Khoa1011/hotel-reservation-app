@@ -356,7 +356,7 @@ router.get('/vnpay/return', async (req, res) => {
 // ===== ZALOPAY PAYMENT ===== ✅ ALREADY FIXED
 router.post('/zalopay/create', async (req, res) => {
   try {
-    const { orderId, amount, description } = req.body;
+    const { orderId, amount, description,  userId } = req.body;
     
     // Validate input
     if (!orderId || !amount || !description) {
@@ -458,6 +458,26 @@ router.post('/zalopay/create', async (req, res) => {
         }
       }
     );
+    if (userId) {
+      const latestBooking = await Booking.findOne({
+        maNguoiDung: userId,
+        trangThaiThanhToan: 'chua_thanh_toan'
+      }).sort({ createdAt: -1 });
+      
+      if (latestBooking) {
+        await Booking.findByIdAndUpdate(latestBooking._id, {
+          $set: { 
+            'thongTinThanhToan.maDonHang': orderId,
+            'thongTinThanhToan.zaloPayAppTransId': appTransId,
+            'thongTinThanhToan.phuongThucThanhToan': 'ZaloPay'
+          }
+        });
+        console.log(`✅ Updated booking ${latestBooking._id} with orderId: ${orderId}`);
+      } else {
+        console.log('⚠️ No unpaid booking found for user:', userId);
+      }
+    }
+    
     
     res.json({
       success: true,

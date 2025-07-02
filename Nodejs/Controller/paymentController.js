@@ -494,24 +494,24 @@ router.post('/zalopay/callback', async (req, res) => {
     console.log('📨 ZaloPay Callback received:', cbdata);
     
     // Verify MAC
-    // const ZALOPAY_CONFIG = {
-    //   key2: process.env.ZALOPAY_KEY2 || "kLtgPl8HHhfvMuDHPwKfgfsY4Ydm9eIz"
-    // };
+    const ZALOPAY_CONFIG = {
+      key2: process.env.ZALOPAY_KEY2 || "kLtgPl8HHhfvMuDHPwKfgfsY4Ydm9eIz"
+    };
     
-    // const dataStr = cbdata.data;
-    // const reqMac = cbdata.mac;
+    const dataStr = cbdata.data;
+    const reqMac = cbdata.mac;
     
-    // const mac = crypto.createHmac('sha256', ZALOPAY_CONFIG.key2)
-    //                  .update(dataStr)
-    //                  .digest('hex');
+    const mac = crypto.createHmac('sha256', ZALOPAY_CONFIG.key2)
+                     .update(dataStr)
+                     .digest('hex');
     
-    // if (reqMac !== mac) {
-    //   console.error('❌ Invalid ZaloPay MAC');
-    //   return res.json({ return_code: -1, return_message: "mac not equal" });
-    // }
+    if (reqMac !== mac) {
+      console.error('❌ Invalid ZaloPay MAC');
+      return res.json({ return_code: -1, return_message: "mac not equal" });
+    }
     
     // Parse callback data
-    const dataStr = cbdata.data;
+  
     const dataJson = JSON.parse(dataStr);
     const orderId = dataJson.app_trans_id.split('_')[1]; // Extract orderId
     

@@ -16,6 +16,7 @@ const searchRouter = express.Router();
 // Mục đích: Tìm kiếm khách sạn với nhiều tiêu chí filter khác nhau
 searchRouter.get('/search', async (req, res) => {
     try {
+        
         // 📥 NHẬN CÁC THAM SỐ TỪ QUERY STRING
         const {
             // === TÌM KIẾM CƠ BẢN ===

@@ -66,13 +66,13 @@ router.get("/getHotelList", async (req, res) => {
         const enhancedHotels = await Promise.all(hotels.map(async (hotel) => {
             try {
                 // Lấy loại phòng có giá thấp nhất của khách sạn
-                const cheapestRoomType = await RoomType.findOne({ 
-                    maKhachSan: hotel._id 
+                const cheapestRoomType = await RoomType.findOne({
+                    maKhachSan: hotel._id
                 }).sort({ giaCa: 1 });
 
                 // Tính giá theo đêm (starting from price)
                 let giaTheoNgay = hotel.giaCa || 0;
-                
+
                 if (cheapestRoomType) {
                     // Sử dụng giá của room type rẻ nhất
                     giaTheoNgay = cheapestRoomType.giaCa;
@@ -87,9 +87,9 @@ router.get("/getHotelList", async (req, res) => {
                     soSao: hotel.soSao,
                     soDienThoai: hotel.soDienThoai,
                     email: hotel.email,
-                   
+
                     hinhAnh: hotel.hinhAnh,
-                    
+
                     // ✅ Thuộc tính mới - Giá theo đêm
                     giaTheoNgay: giaTheoNgay  // Giá khởi điểm theo đêm
                 };
@@ -118,94 +118,12 @@ router.get("/getHotelList", async (req, res) => {
         });
 
     } catch (err) {
-        return res.status(500).json({ 
-            message: 'Lỗi Server', 
-            error: err.message 
+        return res.status(500).json({
+            message: 'Lỗi Server',
+            error: err.message
         });
     }
 });
-
-
-router.get('/:hotelId/rooms', async (req, res) => {
-    const { hotelId } = req.params;
-    const { checkInDate, checkOutDate } = req.query;
-
-    if (!checkInDate || !checkOutDate) {
-        return res.status(400).json({ message: "Missing checkInDate or checkOutDate" });
-    }
-
-    try {
-        const rooms = await Room.find({ maKhachsan: hotelId }).populate('maLoaiPhong');
-
-        const parsedCheckIn = new Date(checkInDate);
-        const parsedCheckOut = new Date(checkOutDate);
-
-        const roomDetails = await Promise.all(rooms.map(async (room) => {
-            // Tìm các booking giao với khoảng này
-            const overlappingBookings = await Booking.find({
-                roomId: room._id,
-                checkInDate: { $lte: parsedCheckOut },
-                checkOutDate: { $gte: parsedCheckIn }
-            });
-
-            let bookedCount = 0;
-            for (const booking of overlappingBookings) {
-                bookedCount += booking.quantity || 1;
-            }
-
-            const availableRooms = Math.max(room.totalRooms - bookedCount, 0);
-
-            return {
-                maPhong: room._id,
-                maLoaiPhong: room.maLoaiPhong.tenLoaiPhong,
-                giaCa: room.roomTypeId.giaCa,
-                hinhAnh: room.hinhAnh,
-                trangThaiPhong: room.trangThaiPhong,
-                moTa: room.moTa,
-                soLuongGiuong: room.soLuongGiuong,
-                soLuongNguoiToiDa: room.soLuongNguoiToiDa,
-                danhSachTienNghi: room.danhSachTienNghi,
-                tongSoPhong: room.tongSoPhong,
-                availableRooms: availableRooms
-
-            };
-        }));
-
-        return res.status(200).json({
-            message: { msgBody: "Lấy danh sách phòng thành công!", msgError: false },
-            rooms: roomDetails
-        });
-
-    } catch (error) {
-        res.status(500).json({ message: "Lỗi server", error: error.message });
-    }
-});
-
-router.post('/:hotelId/rooms/update-availability', async (req, res) => {
-    const { hotelId } = req.params;
-
-    try {
-        const rooms = await RoomType.find({ maKhachSan: hotelId });
-
-        await Promise.all(rooms.map(async (room) => {
-            // Tính toán số phòng đã được đặt
-            const bookings = await Booking.find({ maPhong: room._id });
-            const bookedCount = bookings.reduce((sum, booking) => sum + (booking.quantity || 1), 0);
-
-            // Cập nhật TRỰC TIẾP vào totalRooms (giả sử totalRooms ban đầu là tổng phòng)
-            room.tongSoPhong = room.tongSoPhong - bookedCount;
-            await room.save();
-        }));
-
-        res.status(200).json({ message: 'Room availability updated successfully' });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-
-
-
 
 
 // API tìm kiếm phòng theo khoảng thời gian - CHÍNH
@@ -213,31 +131,30 @@ router.post('/:hotelId/search-roomtypes', async (req, res) => {
     try {
         const { hotelId } = req.params;
         const {
-            bookingType,      // theo_gio, qua_dem, dai_ngay
-            checkInDate,      // 2025-06-28
-            checkOutDate,     // 2025-06-29 (optional cho theo_gio)
-            checkInTime,      // 14:00
-            checkOutTime,     // 17:00 (bắt buộc cho theo_gio)
-            guests,           // {adults: 2, children: 0}
-            rooms: requestedRooms = 1
+            bookingType, checkInDate, checkOutDate, checkInTime, checkOutTime,
+            guests, rooms: requestedRooms = 1
         } = req.body;
 
-        // Validate input
-        if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+        console.log('🔍 Yêu cầu tìm kiếm nhiều phòng:', {
+            hotelId, bookingType, checkInDate, checkOutDate, checkInTime, checkOutTime,
+            guests, requestedRooms
+        });
+
+        // ✅ Validation nâng cao cho đặt nhiều phòng
+        const validation = validateMultiRoomSearchInput({
+            hotelId, bookingType, checkInDate, checkOutDate,
+            checkInTime, checkOutTime, guests, requestedRooms
+        });
+
+        if (!validation.valid) {
             return res.status(400).json({
-                msgBody: "Mã khách sạn không hợp lệ!",
-                msgError: true
+                msgBody: validation.message,
+                msgError: true,
+                suggestion: validation.suggestion
             });
         }
 
-        if (!bookingType || !['theo_gio', 'qua_dem', 'dai_ngay'].includes(bookingType)) {
-            return res.status(400).json({
-                msgBody: "Loại đặt phòng không hợp lệ!",
-                msgError: true
-            });
-        }
-
-        // Kiểm tra khách sạn tồn tại
+        // Kiểm tra khách sạn có tồn tại không
         const hotel = await Hotel.findById(hotelId);
         if (!hotel) {
             return res.status(404).json({
@@ -255,44 +172,93 @@ router.post('/:hotelId/search-roomtypes', async (req, res) => {
             });
         }
 
-
-        const availableRoomTypes = [];
         const totalGuests = (guests?.adults || 0) + (guests?.children || 0);
-        // Duyệt từng loại phòng để kiểm tra availability
+        console.log('👥 Phân tích phân bổ khách:', {
+            totalGuests,
+            requestedRooms,
+            avgGuestsPerRoom: Math.ceil(totalGuests / requestedRooms)
+        });
+
+        // ✅ Logic đặt nhiều phòng
+        const availableRoomTypes = [];
+        const roomAllocationSuggestions = [];
+
         for (const roomType of roomTypes) {
             try {
-                // Kiểm tra availability trong khoảng thời gian
-                const availability = await checkRoomTypeAvailability({
+                console.log(`\n🏨 Đang phân tích loại phòng: ${roomType.tenLoaiPhong}`);
+                console.log('📊 Thông số phòng:', {
+                    capacity: roomType.soLuongKhach,
+                    totalRooms: roomType.tongSoPhong,
+                    price: roomType.giaCa
+                });
+
+                // ✅ Tính toán khả năng chứa cho nhiều phòng
+                const capacityAnalysis = calculateMultiRoomCapacity({
+                    roomCapacity: roomType.soLuongKhach,
+                    totalGuests,
+                    requestedRooms
+                });
+
+                console.log('🧮 Phân tích khả năng chứa:', capacityAnalysis);
+
+                // Bỏ qua nếu không thể chứa khách với số phòng yêu cầu
+                if (!capacityAnalysis.canAccommodate) {
+                    console.log('❌ Không thể chứa khách với số phòng yêu cầu');
+
+                    // Đề xuất số phòng cần thiết
+                    if (capacityAnalysis.suggestedRooms <= roomType.tongSoPhong) {
+                        roomAllocationSuggestions.push({
+                            roomTypeId: roomType._id,
+                            roomTypeName: roomType.tenLoaiPhong,
+                            capacity: roomType.soLuongKhach,
+                            suggestedRooms: capacityAnalysis.suggestedRooms,
+                            distribution: capacityAnalysis.guestDistribution,
+                            totalPrice: calculateMultiRoomPrice(roomType, capacityAnalysis.suggestedRooms, bookingType, checkInDate, checkOutDate, checkInTime, checkOutTime)
+                        });
+                    }
+                    continue;
+                }
+
+                // ✅ Kiểm tra tình trạng phòng trống cho số phòng yêu cầu
+                const availability = await checkEnhancedRoomAvailability({
                     hotelId,
                     roomTypeId: roomType._id,
                     bookingType,
                     checkInDate,
                     checkOutDate,
                     checkInTime,
-                    checkOutTime
+                    checkOutTime,
+                    requestedRooms
                 });
 
-                // Chỉ hiển thị loại phòng có sẵn và phù hợp
-                if (availability.isAvailable &&
-                    availability.availableRooms >= requestedRooms &&
-                    roomType.soLuongKhach >= totalGuests) {
+                console.log('📋 Kết quả kiểm tra phòng trống:', {
+                    isAvailable: availability.isAvailable,
+                    availableRooms: availability.availableRooms,
+                    requestedRooms
+                });
 
-                    // Lấy danh sách hình ảnh của loại phòng này
-                    const roomImages = await getRoomTypeImages(roomType._id);
-                    // Lấy tiện nghi của loại phòng
-                    const amenities = await getRoomTypeAmenities(roomType._id);
+                if (availability.isAvailable && availability.availableRooms >= requestedRooms) {
+                    // Lấy thông tin bổ sung: hình ảnh, tiện nghi, cấu hình giường
+                    const [roomImages, amenities, bedConfig] = await Promise.all([
+                        getRoomTypeImages(roomType._id),
+                        getRoomTypeAmenities(roomType._id),
+                        getSimpleBedConfiguration(roomType._id)
+                    ]);
 
-                    const bedConfig = await getSimpleBedConfiguration(roomType._id);
-
-                    // Tính giá cho khoảng thời gian này
-                    const pricing = calculatePricing({
-                        roomType,
-                        bookingType,
-                        checkInDate,
-                        checkOutDate,
-                        checkInTime,
-                        checkOutTime
+                    // ✅ Tính giá cho nhiều phòng
+                    const singleRoomPricing = calculateEnhancedPricing({
+                        roomType, bookingType, checkInDate, checkOutDate, checkInTime, checkOutTime
                     });
+
+                    const multiRoomPricing = {
+                        ...singleRoomPricing,
+                        pricePerRoom: singleRoomPricing.finalPrice,
+                        totalPriceAllRooms: singleRoomPricing.finalPrice * requestedRooms,
+                        roomCount: requestedRooms,
+                        // Giảm giá nhóm cho >= 3 phòng
+                        groupDiscount: requestedRooms >= 3 ? 0.05 : 0,
+                        finalTotalPrice: Math.round(singleRoomPricing.finalPrice * requestedRooms * (1 - (requestedRooms >= 3 ? 0.05 : 0)))
+                    };
 
                     availableRoomTypes.push({
                         roomTypeId: roomType._id,
@@ -300,73 +266,97 @@ router.post('/:hotelId/search-roomtypes', async (req, res) => {
                         moTa: roomType.moTa || "",
                         soLuongKhach: roomType.soLuongKhach,
                         giaCa: roomType.giaCa,
-
-
-                        // Hình ảnh loại phòng
                         images: roomImages,
-
-                        // Tiện nghi
                         amenities: amenities,
-                        
-                        //Cấu hình giường
                         cauHinhGiuong: bedConfig,
 
-
-                        // Thông tin availability
-                        availability: {
-                            isAvailable: availability.isAvailable,
-                            totalRooms: availability.totalRooms,
-                            availableRooms: availability.availableRooms,
-                            occupiedRooms: availability.occupiedRooms,
-                            canBook: true
+                        // ✅ Thông tin đặc biệt cho nhiều phòng
+                        multiRoomInfo: {
+                            requestedRooms,
+                            totalCapacity: roomType.soLuongKhach * requestedRooms,
+                            guestDistribution: capacityAnalysis.guestDistribution,
+                            canAccommodateAll: capacityAnalysis.canAccommodate,
+                            occupancyRate: Math.round((totalGuests / (roomType.soLuongKhach * requestedRooms)) * 100)
                         },
 
-                        // Thông tin giá cả
-                        pricing: pricing,
+                        availability: {
+                            ...availability,
+                            totalRequestedRooms: requestedRooms,
+                            canBookRequestedQuantity: availability.availableRooms >= requestedRooms
+                        },
 
-                        // Thông tin display cho Flutter
+                        // ✅ Giá cả cho nhiều phòng
+                        pricing: multiRoomPricing,
+
                         displayInfo: {
-                            pricePerUnit: pricing.finalPrice,
+                            pricePerRoom: singleRoomPricing.finalPrice,
+                            totalPrice: multiRoomPricing.finalTotalPrice,
                             unit: getUnitText(bookingType),
-                            duration: pricing.duration,
-                            maxCapacity: roomType.soLuongKhach,
+                            duration: singleRoomPricing.duration,
+                            roomCount: requestedRooms,
+                            totalCapacity: roomType.soLuongKhach * requestedRooms,
                             availableCount: availability.availableRooms,
                             hasImages: roomImages.length > 0,
-                            imageCount: roomImages.length
+                            imageCount: roomImages.length,
+                            groupDiscount: multiRoomPricing.groupDiscount > 0
                         }
                     });
+
+                    console.log('✅ Đã thêm vào danh sách với hỗ trợ nhiều phòng!');
+                } else {
+                    console.log('❌ Không đủ phòng trống');
                 }
+
             } catch (error) {
-                console.error(`Lỗi xử lý loại phòng ${roomType._id}:`, error);
+                console.error(`❌ Lỗi khi xử lý loại phòng ${roomType._id}:`, error);
             }
         }
 
-        return res.status(200).json({
-            message: `Tìm thấy ${availableRoomTypes.length} loại phòng có sẵn!`,
+        // ✅ Phản hồi kèm đề xuất nếu không có phòng nào phù hợp
+        const response = {
+            message: availableRoomTypes.length > 0
+                ? `Tìm thấy ${availableRoomTypes.length} loại phòng có sẵn cho ${requestedRooms} phòng (${totalGuests} khách)!`
+                : `Không tìm thấy loại phòng nào có sẵn cho ${requestedRooms} phòng với ${totalGuests} khách.`,
+
             searchInfo: {
                 hotelId: hotel._id,
                 tenKhachSan: hotel.tenKhachSan,
                 diaChiKhachSan: hotel.diaChiDayDu || `${hotel.diaChi?.quan}, ${hotel.diaChi?.thanhPho}`,
-                bookingType,
-                checkInDate,
-                checkOutDate: checkOutDate || checkInDate,
-                checkInTime,
-                checkOutTime,
-                guests: guests || {},
-                requestedRooms,
+                bookingType, checkInDate, checkOutDate: checkOutDate || checkInDate,
+                checkInTime, checkOutTime, guests: guests || {}, requestedRooms,
+                totalGuests,
                 searchTime: new Date().toISOString()
             },
+
             statistics: {
                 totalRoomTypes: roomTypes.length,
                 availableRoomTypes: availableRoomTypes.length,
                 totalAvailableRooms: availableRoomTypes.reduce((sum, room) =>
-                    sum + room.availability.availableRooms, 0)
+                    sum + room.availability.availableRooms, 0),
+                totalCapacityIfBooked: availableRoomTypes.reduce((sum, room) =>
+                    sum + (room.multiRoomInfo.totalCapacity), 0),
+                averagePricePerRoom: availableRoomTypes.length > 0 ?
+                    Math.round(availableRoomTypes.reduce((sum, room) =>
+                        sum + room.pricing.pricePerRoom, 0) / availableRoomTypes.length) : 0,
+                totalPriceRange: availableRoomTypes.length > 0 ? {
+                    min: Math.min(...availableRoomTypes.map(room => room.pricing.finalTotalPrice)),
+                    max: Math.max(...availableRoomTypes.map(room => room.pricing.finalTotalPrice))
+                } : null
             },
-            roomTypes: availableRoomTypes
-        });
+
+            roomTypes: availableRoomTypes,
+
+            // ✅ Đề xuất nếu không có kết quả
+            suggestions: availableRoomTypes.length === 0 ? {
+                message: "Không tìm thấy phòng phù hợp. Dưới đây là các đề xuất:",
+                alternatives: roomAllocationSuggestions.slice(0, 3) // Top 3 đề xuất
+            } : null
+        };
+
+        return res.status(200).json(response);
 
     } catch (error) {
-        console.error('Lỗi tìm kiếm phòng:', error);
+        console.error('❌ Lỗi tìm kiếm nhiều phòng:', error);
         return res.status(500).json({
             msgBody: "Lỗi máy chủ khi tìm kiếm phòng!",
             msgError: true,
@@ -374,6 +364,680 @@ router.post('/:hotelId/search-roomtypes', async (req, res) => {
         });
     }
 });
+
+
+function validateMultiRoomSearchInput({
+    hotelId, bookingType, checkInDate, checkOutDate,
+    checkInTime, checkOutTime, guests, requestedRooms
+}) {
+    // Validation cơ bản
+    if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+        return { valid: false, message: "Mã khách sạn không hợp lệ!" };
+    }
+
+    if (!bookingType || !['theo_gio', 'qua_dem', 'dai_ngay'].includes(bookingType)) {
+        return { valid: false, message: "Loại đặt phòng không hợp lệ!" };
+    }
+
+    if (!checkInDate || !moment(checkInDate, 'YYYY-MM-DD', true).isValid()) {
+        return { valid: false, message: "Ngày nhận phòng không hợp lệ!" };
+    }
+
+    // ✅ Validation đặc biệt cho nhiều phòng
+    if (requestedRooms < 1 || requestedRooms > 20) {
+        return {
+            valid: false,
+            message: "Số phòng phải từ 1-20!",
+            suggestion: "Vui lòng chọn số phòng từ 1 đến 20"
+        };
+    }
+
+    const totalGuests = (guests?.adults || 0) + (guests?.children || 0);
+    if (totalGuests < 1 || totalGuests > 50) {
+        return {
+            valid: false,
+            message: "Số khách phải từ 1-50!",
+            suggestion: "Vui lòng điều chỉnh số lượng khách"
+        };
+    }
+
+    // ✅ Kiểm tra logic: Quá nhiều phòng so với khách
+    if (requestedRooms > totalGuests) {
+        return {
+            valid: false,
+            message: `${requestedRooms} phòng cho ${totalGuests} khách là quá nhiều!`,
+            suggestion: `Đề xuất: ${Math.ceil(totalGuests / 2)} phòng sẽ phù hợp hơn`
+        };
+    }
+
+    // ✅ Kiểm tra logic: Quá ít phòng cho nhóm đông (giả sử tối đa 4 người/phòng)
+    const maxGuestsWithCurrentRooms = requestedRooms * 4; // Giả sử tối đa 4 khách/phòng
+    if (totalGuests > maxGuestsWithCurrentRooms) {
+        const minRoomsNeeded = Math.ceil(totalGuests / 4);
+        return {
+            valid: false,
+            message: `${requestedRooms} phòng không đủ cho ${totalGuests} khách!`,
+            suggestion: `Đề xuất: Cần ít nhất ${minRoomsNeeded} phòng cho ${totalGuests} khách`
+        };
+    }
+
+    // Booking type specific validations (same as before)
+    const checkInMoment = moment(checkInDate);
+    const checkOutMoment = checkOutDate ? moment(checkOutDate) : null;
+
+    switch (bookingType) {
+        case 'theo_gio':
+            if (!checkInTime || !checkOutTime) {
+                return { valid: false, message: "Đặt theo giờ cần có giờ nhận và giờ trả!" };
+            }
+            break;
+
+        case 'qua_dem':
+            if (!checkOutDate) {
+                return { valid: false, message: "Đặt qua đêm cần có ngày trả phòng!" };
+            }
+            const nightDiff = checkOutMoment.diff(checkInMoment, 'days');
+            if (nightDiff !== 1) {
+                return { valid: false, message: "Đặt qua đêm phải chính xác 1 ngày!" };
+            }
+            break;
+
+        case 'dai_ngay':
+            if (!checkOutDate) {
+                return { valid: false, message: "Đặt dài ngày cần có ngày trả phòng!" };
+            }
+            const longDiff = checkOutMoment.diff(checkInMoment, 'days');
+            if (longDiff < 3) {
+                return { valid: false, message: "Đặt dài ngày tối thiểu 3 ngày!" };
+            }
+            break;
+    }
+
+    return { valid: true, message: "Input hợp lệ" };
+}
+
+
+// ✅ HELPER: Validate search input
+function validateSearchInput({ hotelId, bookingType, checkInDate, checkOutDate, checkInTime, checkOutTime, guests, requestedRooms }) {
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+        return { valid: false, message: "Mã khách sạn không hợp lệ!" };
+    }
+
+    // Validate booking type
+    if (!bookingType || !['theo_gio', 'qua_dem', 'dai_ngay'].includes(bookingType)) {
+        return { valid: false, message: "Loại đặt phòng không hợp lệ!" };
+    }
+
+    // Validate dates
+    if (!checkInDate || !moment(checkInDate, 'YYYY-MM-DD', true).isValid()) {
+        return { valid: false, message: "Ngày nhận phòng không hợp lệ!" };
+    }
+
+    // Validate theo từng loại booking
+    const checkInMoment = moment(checkInDate);
+    const checkOutMoment = checkOutDate ? moment(checkOutDate) : null;
+
+    switch (bookingType) {
+        case 'theo_gio':
+            if (!checkInTime || !checkOutTime) {
+                return { valid: false, message: "Đặt theo giờ cần có giờ nhận và giờ trả!" };
+            }
+            break;
+
+        case 'qua_dem':
+            if (!checkOutDate) {
+                return { valid: false, message: "Đặt qua đêm cần có ngày trả phòng!" };
+            }
+            const nightDiff = checkOutMoment.diff(checkInMoment, 'days');
+            if (nightDiff !== 1) {
+                return { valid: false, message: "Đặt qua đêm phải chính xác 1 ngày!" };
+            }
+            break;
+
+        case 'dai_ngay':
+            if (!checkOutDate) {
+                return { valid: false, message: "Đặt dài ngày cần có ngày trả phòng!" };
+            }
+            const longDiff = checkOutMoment.diff(checkInMoment, 'days');
+            if (longDiff < 3) {
+                return { valid: false, message: "Đặt dài ngày tối thiểu 3 ngày!" };
+            }
+            break;
+    }
+
+    // Validate guests và rooms
+    if (requestedRooms < 1 || requestedRooms > 10) {
+        return { valid: false, message: "Số phòng phải từ 1-10!" };
+    }
+
+    const totalGuests = (guests?.adults || 0) + (guests?.children || 0);
+    if (totalGuests < 1 || totalGuests > 20) {
+        return { valid: false, message: "Số khách phải từ 1-20!" };
+    }
+
+    return { valid: true, message: "Dữ liệu đầu vào hợp lệ" };
+}
+
+
+// ✅ Tính toán capacity cho multi-room
+function calculateMultiRoomCapacity({ roomCapacity, totalGuests, requestedRooms }) {
+    const totalCapacity = roomCapacity * requestedRooms;
+    const canAccommodate = totalCapacity >= totalGuests;
+
+    // Đề xuất số phòng tối thiểu cần thiết
+    const suggestedRooms = Math.ceil(totalGuests / roomCapacity);
+
+    // Phân bổ khách theo phòng
+    const guestDistribution = [];
+    let remainingGuests = totalGuests;
+
+    for (let i = 0; i < requestedRooms && remainingGuests > 0; i++) {
+        const guestsInThisRoom = Math.min(roomCapacity, remainingGuests);
+        guestDistribution.push({
+            roomNumber: i + 1,
+            guests: guestsInThisRoom,
+            capacity: roomCapacity,
+            utilization: Math.round((guestsInThisRoom / roomCapacity) * 100)
+        });
+        remainingGuests -= guestsInThisRoom;
+    }
+
+    return {
+        canAccommodate,
+        totalCapacity,
+        suggestedRooms,
+        guestDistribution,
+        remainingGuests, // Phải = 0 nếu có thể chứa được
+        occupancyRate: Math.round((totalGuests / totalCapacity) * 100)
+    };
+}
+
+// ✅ Tính giá cho nhiều phòng
+function calculateMultiRoomPrice(roomType, numberOfRooms, bookingType, checkInDate, checkOutDate, checkInTime, checkOutTime) {
+    const singleRoomPrice = calculateEnhancedPricing({
+        roomType, bookingType, checkInDate, checkOutDate, checkInTime, checkOutTime
+    });
+
+    const subtotal = singleRoomPrice.finalPrice * numberOfRooms;
+
+    // Giảm giá nhóm
+    let groupDiscount = 0;
+    if (numberOfRooms >= 5) groupDiscount = 0.10; // 10% cho >= 5 phòng
+    else if (numberOfRooms >= 3) groupDiscount = 0.05; // 5% cho >= 3 phòng
+
+    const totalPrice = Math.round(subtotal * (1 - groupDiscount));
+
+    return {
+        pricePerRoom: singleRoomPrice.finalPrice,
+        numberOfRooms,
+        subtotal,
+        groupDiscount,
+        totalPrice,
+        savings: subtotal - totalPrice
+    };
+}
+
+// ✅ API để lấy đề xuất khi không có phòng phù hợp
+router.post('/:hotelId/room-suggestions', async (req, res) => {
+    try {
+        const { hotelId } = req.params;
+        const { guests, bookingType, checkInDate, checkOutDate, checkInTime, checkOutTime } = req.body;
+
+        const totalGuests = (guests?.adults || 0) + (guests?.children || 0);
+        const roomTypes = await RoomType.find({ maKhachSan: hotelId }).sort({ giaCa: 1 });
+
+        const suggestions = [];
+
+        for (const roomType of roomTypes) {
+            const suggestedRooms = Math.ceil(totalGuests / roomType.soLuongKhach);
+
+            if (suggestedRooms <= roomType.tongSoPhong) {
+                const availability = await checkEnhancedRoomAvailability({
+                    hotelId,
+                    roomTypeId: roomType._id,
+                    bookingType,
+                    checkInDate,
+                    checkOutDate,
+                    checkInTime,
+                    checkOutTime,
+                    requestedRooms: suggestedRooms
+                });
+
+                if (availability.isAvailable && availability.availableRooms >= suggestedRooms) {
+                    const pricing = calculateMultiRoomPrice(roomType, suggestedRooms, bookingType, checkInDate, checkOutDate, checkInTime, checkOutTime);
+
+                    suggestions.push({
+                        roomTypeId: roomType._id,
+                        roomTypeName: roomType.tenLoaiPhong,
+                        capacity: roomType.soLuongKhach,
+                        suggestedRooms,
+                        totalCapacity: roomType.soLuongKhach * suggestedRooms,
+                        pricing,
+                        guestDistribution: calculateMultiRoomCapacity({
+                            roomCapacity: roomType.soLuongKhach,
+                            totalGuests,
+                            requestedRooms: suggestedRooms
+                        }).guestDistribution
+                    });
+                }
+            }
+        }
+
+        return res.json({
+            message: `Đề xuất ${suggestions.length} phương án cho ${totalGuests} khách`,
+            totalGuests,
+            suggestions: suggestions.sort((a, b) => a.pricing.totalPrice - b.pricing.totalPrice)
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            msgBody: "Lỗi khi tạo đề xuất!",
+            msgError: true,
+            messageError: error.message
+        });
+    }
+});
+
+
+
+
+// ✅ ENHANCED: Kiểm tra availability chi tiết
+async function checkEnhancedRoomAvailability({
+    hotelId, roomTypeId, bookingType, checkInDate, checkOutDate,
+    checkInTime, checkOutTime, requestedRooms
+}) {
+    try {
+        // Lấy thông tin loại phòng
+        const roomType = await RoomType.findById(roomTypeId);
+        if (!roomType) {
+            return { isAvailable: false, availableRooms: 0, reason: "Loại phòng không tồn tại" };
+        }
+
+        const totalRooms = roomType.tongSoPhong || 0;
+        if (totalRooms === 0) {
+            return { isAvailable: false, availableRooms: 0, reason: "Không có phòng" };
+        }
+
+        // Xử lý theo loại đặt phòng
+        switch (bookingType) {
+            case 'theo_gio':
+                return await checkHourlyAvailabilityEnhanced({
+                    hotelId, roomTypeId, totalRooms, checkInDate, checkInTime, checkOutTime, requestedRooms
+                });
+
+            case 'qua_dem':
+                return await checkOvernightAvailabilityEnhanced({
+                    hotelId, roomTypeId, totalRooms, checkInDate, checkOutDate, requestedRooms
+                });
+
+            case 'dai_ngay':
+                return await checkLongStayAvailabilityEnhanced({
+                    hotelId, roomTypeId, totalRooms, checkInDate, checkOutDate, requestedRooms
+                });
+
+            default:
+                return { isAvailable: false, availableRooms: 0, reason: "Loại đặt phòng không hỗ trợ" };
+        }
+
+    } catch (error) {
+        console.error('❌ Enhanced availability check error:', error);
+        return { isAvailable: false, availableRooms: 0, reason: "Lỗi hệ thống" };
+    }
+}
+
+
+// ✅ Kiểm tra availability theo giờ - ENHANCED
+async function checkHourlyAvailabilityEnhanced({
+    hotelId, roomTypeId, totalRooms, checkInDate, checkInTime, checkOutTime, requestedRooms
+}) {
+    try {
+        const targetDate = moment(checkInDate).startOf('day');
+        const requestStart = moment(`${checkInDate} ${checkInTime}`, 'YYYY-MM-DD HH:mm');
+        let requestEnd = moment(`${checkInDate} ${checkOutTime}`, 'YYYY-MM-DD HH:mm');
+
+        // Xử lý checkout ngày hôm sau
+        if (requestEnd.isSameOrBefore(requestStart)) {
+            requestEnd.add(1, 'day');
+        }
+
+        // Lấy tất cả booking conflicts trong khoảng thời gian
+        const conflictingBookings = await Booking.find({
+            maKhachSan: hotelId,
+            maLoaiPhong: roomTypeId,
+            trangThai: { $nin: ['da_huy'] },
+            $or: [
+                // Booking theo giờ cùng ngày
+                {
+                    loaiDatPhong: 'theo_gio',
+                    ngayNhanPhong: {
+                        $gte: targetDate.toDate(),
+                        $lt: targetDate.clone().add(1, 'day').toDate()
+                    }
+                },
+                // Booking qua đêm/dài ngày overlap
+                {
+                    loaiDatPhong: { $in: ['qua_dem', 'dai_ngay'] },
+                    ngayNhanPhong: { $lte: requestEnd.toDate() },
+                    ngayTraPhong: { $gte: requestStart.toDate() }
+                }
+            ]
+        }).select('loaiDatPhong ngayNhanPhong ngayTraPhong gioNhanPhong gioTraPhong soLuongPhong');
+
+        let maxConflictRooms = 0;
+        const conflictDetails = [];
+
+        // Kiểm tra từng booking conflict
+        for (const booking of conflictingBookings) {
+            let isConflict = false;
+            let conflictPeriod = '';
+
+            if (booking.loaiDatPhong === 'theo_gio') {
+                const bookingStart = moment(`${moment(booking.ngayNhanPhong).format('YYYY-MM-DD')} ${booking.gioNhanPhong}`);
+                let bookingEnd = moment(`${moment(booking.ngayNhanPhong).format('YYYY-MM-DD')} ${booking.gioTraPhong}`);
+
+                if (bookingEnd.isSameOrBefore(bookingStart)) {
+                    bookingEnd.add(1, 'day');
+                }
+
+                // Check overlap
+                if (requestStart.isBefore(bookingEnd) && requestEnd.isAfter(bookingStart)) {
+                    isConflict = true;
+                    conflictPeriod = `${bookingStart.format('HH:mm')}-${bookingEnd.format('HH:mm')}`;
+                }
+            } else {
+                // Qua đêm/dài ngày chiếm cả ngày
+                const bookingStart = moment(booking.ngayNhanPhong);
+                const bookingEnd = moment(booking.ngayTraPhong);
+
+                if (requestStart.isBefore(bookingEnd) && requestEnd.isAfter(bookingStart)) {
+                    isConflict = true;
+                    conflictPeriod = `${bookingStart.format('DD/MM')} - ${bookingEnd.format('DD/MM')}`;
+                }
+            }
+
+            if (isConflict) {
+                maxConflictRooms += booking.soLuongPhong;
+                conflictDetails.push({
+                    bookingType: booking.loaiDatPhong,
+                    period: conflictPeriod,
+                    rooms: booking.soLuongPhong
+                });
+            }
+        }
+
+        // Kiểm tra room availability records
+        const roomAvailability = await RoomAvailability.findOne({
+            maKhachSan: hotelId,
+            maLoaiPhong: roomTypeId,
+            ngay: targetDate.toDate()
+        });
+
+        let maintenanceRooms = 0;
+        let blockedRooms = 0;
+        let supportedBookingTypes = ['theo_gio', 'qua_dem', 'dai_ngay'];
+
+        if (roomAvailability) {
+            maintenanceRooms = roomAvailability.soPhongBaoTri || 0;
+            blockedRooms = roomAvailability.soPhongBlock || 0;
+            supportedBookingTypes = roomAvailability.loaiDatPhongHoTro || supportedBookingTypes;
+        }
+
+        const availableRooms = Math.max(0, totalRooms - maxConflictRooms - maintenanceRooms - blockedRooms);
+
+        return {
+            isAvailable: availableRooms >= requestedRooms && supportedBookingTypes.includes('theo_gio'),
+            availableRooms,
+            totalRooms,
+            bookedRooms: maxConflictRooms,
+            maintenanceRooms,
+            blockedRooms,
+            supportedBookingTypes,
+            conflictInfo: conflictDetails,
+            dateBreakdown: [{
+                date: checkInDate,
+                timeSlot: `${checkInTime}-${checkOutTime}`,
+                availableRooms,
+                conflicts: conflictDetails.length
+            }]
+        };
+
+    } catch (error) {
+        console.error('❌ Hourly availability error:', error);
+        return { isAvailable: false, availableRooms: 0 };
+    }
+}
+
+
+// ✅ Kiểm tra availability qua đêm - ENHANCED
+async function checkOvernightAvailabilityEnhanced({
+    hotelId, roomTypeId, totalRooms, checkInDate, checkOutDate, requestedRooms
+}) {
+    try {
+        const startDate = moment(checkInDate);
+        const endDate = moment(checkOutDate);
+
+        // Tạo array các ngày cần check
+        const datesInRange = [];
+        const current = startDate.clone();
+        while (current.isBefore(endDate)) {
+            datesInRange.push(current.format('YYYY-MM-DD'));
+            current.add(1, 'day');
+        }
+
+        let minAvailableRooms = totalRooms;
+        const dateBreakdown = [];
+        const allConflicts = [];
+
+        // Check availability cho từng ngày
+        for (const dateStr of datesInRange) {
+            const dayStart = moment(dateStr).startOf('day');
+            const dayEnd = moment(dateStr).endOf('day');
+
+            // Lấy bookings overlap với ngày này
+            const conflictingBookings = await Booking.find({
+                maKhachSan: hotelId,
+                maLoaiPhong: roomTypeId,
+                trangThai: { $nin: ['da_huy'] },
+                $or: [
+                    { ngayNhanPhong: { $gte: dayStart.toDate(), $lte: dayEnd.toDate() } },
+                    { ngayTraPhong: { $gte: dayStart.toDate(), $lte: dayEnd.toDate() } },
+                    {
+                        ngayNhanPhong: { $lt: dayStart.toDate() },
+                        ngayTraPhong: { $gt: dayEnd.toDate() }
+                    }
+                ]
+            }).select('loaiDatPhong soLuongPhong ngayNhanPhong ngayTraPhong');
+
+            let dayConflictRooms = 0;
+            const dayConflicts = [];
+
+            for (const booking of conflictingBookings) {
+                dayConflictRooms += booking.soLuongPhong;
+                dayConflicts.push({
+                    bookingType: booking.loaiDatPhong,
+                    rooms: booking.soLuongPhong,
+                    period: `${moment(booking.ngayNhanPhong).format('DD/MM')} - ${moment(booking.ngayTraPhong).format('DD/MM')}`
+                });
+            }
+
+            // Check maintenance/blocked rooms
+            const roomAvailability = await RoomAvailability.findOne({
+                maKhachSan: hotelId,
+                maLoaiPhong: roomTypeId,
+                ngay: dayStart.toDate()
+            });
+
+            let maintenanceRooms = 0;
+            let blockedRooms = 0;
+            if (roomAvailability) {
+                maintenanceRooms = roomAvailability.soPhongBaoTri || 0;
+                blockedRooms = roomAvailability.soPhongBlock || 0;
+            }
+
+            const dayAvailableRooms = Math.max(0, totalRooms - dayConflictRooms - maintenanceRooms - blockedRooms);
+            minAvailableRooms = Math.min(minAvailableRooms, dayAvailableRooms);
+
+            dateBreakdown.push({
+                date: dateStr,
+                availableRooms: dayAvailableRooms,
+                bookedRooms: dayConflictRooms,
+                maintenanceRooms,
+                blockedRooms,
+                conflicts: dayConflicts
+            });
+
+            allConflicts.push(...dayConflicts);
+        }
+
+        return {
+            isAvailable: minAvailableRooms >= requestedRooms,
+            availableRooms: minAvailableRooms,
+            totalRooms,
+            bookedRooms: totalRooms - minAvailableRooms,
+            supportedBookingTypes: ['theo_gio', 'qua_dem', 'dai_ngay'],
+            conflictInfo: allConflicts,
+            dateBreakdown
+        };
+
+    } catch (error) {
+        console.error('❌ Overnight availability error:', error);
+        return { isAvailable: false, availableRooms: 0 };
+    }
+}
+
+
+// ✅ Kiểm tra availability dài ngày - ENHANCED
+async function checkLongStayAvailabilityEnhanced({
+    hotelId, roomTypeId, totalRooms, checkInDate, checkOutDate, requestedRooms
+}) {
+    try {
+        // Sử dụng cùng logic với overnight nhưng có thêm discount calculation
+        const overnightResult = await checkOvernightAvailabilityEnhanced({
+            hotelId, roomTypeId, totalRooms, checkInDate, checkOutDate, requestedRooms
+        });
+
+        // Tính discount cho lưu trú dài ngày
+        const stayDuration = moment(checkOutDate).diff(moment(checkInDate), 'days');
+        let discount = 0;
+        if (stayDuration >= 7) discount = 15;
+        else if (stayDuration >= 5) discount = 10;
+        else if (stayDuration >= 3) discount = 5;
+
+        return {
+            ...overnightResult,
+            longStayDiscount: discount,
+            stayDuration
+        };
+
+    } catch (error) {
+        console.error('❌ Long stay availability error:', error);
+        return { isAvailable: false, availableRooms: 0 };
+    }
+}
+
+// ✅ Enhanced pricing calculation
+    function calculateEnhancedPricing({
+        roomType, bookingType, checkInDate, checkOutDate, checkInTime, checkOutTime
+    }) {
+        let basePrice = roomType.giaCa;         // ✅ Giá cơ bản của 1 đơn vị (giờ/ngày/đêm)
+        let duration = 1;                        // ✅ Khoảng thời gian sử dụng phòng
+        let unit = "đêm";                        // ✅ Đơn vị thời gian: đêm, ngày, giờ
+        let multiplier = 1;                     // ✅ Hệ số nhân tổng hợp (bao gồm cả phụ thu + giảm giá)
+        let priceDiscountPercent = 0;           // ✅ Phần trăm giảm giá nếu ở dài ngày
+        let taxPrice = 0;                        // ✅ Giá phụ thu (ví dụ cuối tuần)
+        
+        // ---------------------------------------------
+        // ⏰ TÍNH KHOẢNG THỜI GIAN VÀ GIÁ CƠ BẢN
+        // ---------------------------------------------
+
+        if (bookingType === "theo_gio") {
+            const startTime = moment(`${checkInDate} ${checkInTime}`, "YYYY-MM-DD HH:mm");
+            let endTime = moment(`${checkInDate} ${checkOutTime}`, "YYYY-MM-DD HH:mm");
+
+            // Nếu checkoutTime trước checkinTime thì chuyển sang ngày hôm sau
+            if (endTime.isSameOrBefore(startTime)) {
+                endTime.add(1, "day");
+            }
+
+            duration = Math.ceil(endTime.diff(startTime, "hours", true)); // Làm tròn lên số giờ
+            unit = "giờ";
+
+            // ⚠️ Quy ước: giá phòng theo giờ được tính theo tỷ lệ 1/8 giá cơ bản
+            basePrice = Math.round((roomType.giaCa / 14) * duration);
+        } else if (checkOutDate) {
+            duration = moment(checkOutDate).diff(moment(checkInDate), "days");
+            unit = bookingType === "qua_dem" ? "đêm" : "ngày";
+
+            // Giá gốc = giá theo đêm/ngày * số lượng ngày
+            basePrice = roomType.giaCa * duration;
+        }
+
+        // ---------------------------------------------
+        // 🔼 PHỤ THU CUỐI TUẦN
+        // ---------------------------------------------
+        const weekendMultiplier = isWeekend(checkInDate) ? 1.2 : 1; // Tăng 20% nếu là cuối tuần
+        if (weekendMultiplier > 1) {
+            taxPrice = Math.round(basePrice * (weekendMultiplier - 1)); // Phụ thu = phần tăng
+        }
+
+        // ---------------------------------------------
+        // 🔽 GIẢM GIÁ DÀI NGÀY
+        // ---------------------------------------------
+        let longStayMultiplier = 1;
+        if (bookingType === 'dai_ngay') {
+            if (duration >= 7) {
+                longStayMultiplier = 0.85; // Giảm 15%
+                priceDiscountPercent = 15;
+            } else if (duration >= 5) {
+                longStayMultiplier = 0.90; // Giảm 10%
+                priceDiscountPercent = 10;
+            } else if (duration >= 3) {
+                longStayMultiplier = 0.95; // Giảm 5%
+                priceDiscountPercent = 5;
+            }
+        }
+
+        // ✅ Tổng hệ số nhân cuối cùng
+        multiplier = weekendMultiplier * longStayMultiplier;
+
+        // ---------------------------------------------
+        // 💰 TÍNH GIÁ CUỐI CÙNG
+        // ---------------------------------------------
+        const finalPrice = Math.round(basePrice * multiplier);
+        const discountAmount = Math.round(basePrice * (1 - longStayMultiplier)); // Số tiền được giảm
+
+        // ---------------------------------------------
+        // 🧾 TRẢ VỀ KẾT QUẢ
+        // ---------------------------------------------
+        return {
+            basePrice: roomType.giaCa, // Giá gốc của 1 đơn vị
+            unitPrice: Math.round(basePrice / duration), // Giá mỗi đơn vị thời gian
+            finalPrice, // Tổng giá đã cộng phụ thu và trừ giảm giá
+            duration,
+            unit,
+            multiplier,
+            discounts: {
+                weekend: isWeekend(checkInDate),
+                longStay: bookingType === 'dai_ngay' && duration >= 3,
+                discountPercent: priceDiscountPercent,
+                discountAmount
+            },
+            breakdown: {
+                baseRate: roomType.giaCa,
+                duration: duration,
+                subtotal: basePrice,
+                taxPrice: taxPrice, // ✅ Phần tiền phụ thu (nếu có)
+                discountAmount: discountAmount, // ✅ Phần tiền giảm giá (nếu có)
+                multiplier: multiplier,
+                total: finalPrice,
+            },
+        };
+    }
+
+
+
+
 
 // Lấy hình ảnh loại phòng
 router.get('/:hotelId/room-type/:roomTypeId/images', async (req, res) => {
@@ -552,7 +1216,7 @@ async function getSimpleBedConfiguration(roomTypeId) {
 
         // Tập hợp tất cả các cấu hình giường khác nhau
         const bedConfigMap = new Map();
-        
+
         allRooms.forEach(room => {
             if (room.cauHinhGiuong && room.cauHinhGiuong.length > 0) {
                 room.cauHinhGiuong.forEach(config => {
@@ -577,7 +1241,7 @@ async function getSimpleBedConfiguration(roomTypeId) {
 
         // Chuyển đổi thành array và sắp xếp theo thứ tự kích thước giường
         const bedSizeOrder = { 'single': 1, 'double': 2, 'queen': 3, 'king': 4 };
-        
+
         return Array.from(bedConfigMap.entries())
             .map(([loaiGiuong, soLuong]) => ({
                 loaiGiuong,
@@ -588,7 +1252,7 @@ async function getSimpleBedConfiguration(roomTypeId) {
     } catch (error) {
         console.error('Lỗi lấy cấu hình giường:', error);
         return [{
-            loaiGiuong: "double", 
+            loaiGiuong: "double",
             soLuong: 1
         }];
     }
@@ -655,254 +1319,6 @@ const getRoomTypeAmenities = async (roomTypeId) => {
     }
 };
 
-// Kiểm tra availability của loại phòng trong khoảng thời gian
-const checkRoomTypeAvailability = async ({
-    hotelId, roomTypeId, bookingType, checkInDate, checkOutDate, checkInTime, checkOutTime
-}) => {
-    try {
-        if (bookingType === 'theo_gio') {
-            return await checkHourlyRoomAvailability({
-                hotelId, roomTypeId, date: checkInDate, checkInTime, checkOutTime
-            });
-        } else {
-            return await checkOvernightRoomAvailability({
-                hotelId, roomTypeId, checkInDate,
-                checkOutDate: checkOutDate || moment(checkInDate).add(1, 'day').format('YYYY-MM-DD')
-            });
-        }
-    } catch (error) {
-        console.error('Lỗi kiểm tra availability:', error);
-        return { isAvailable: false, availableRooms: 0 };
-    }
-};
-
-// Kiểm tra availability theo giờ cho loại phòng
-const checkHourlyRoomAvailability = async ({ hotelId, roomTypeId, date, checkInTime, checkOutTime }) => {
-    try {
-        // Lấy thông tin availability từ RoomAvailability
-        const availability = await RoomAvailability.findOne({
-            maKhachSan: hotelId,
-            maLoaiPhong: roomTypeId,
-            ngay: new Date(date)
-        });
-
-        // Nếu không có data availability, kiểm tra từ RoomType
-        let totalRooms = 0;
-        if (availability) {
-            totalRooms = availability.tongSoPhong;
-            // Kiểm tra hỗ trợ booking theo giờ
-            if (!availability.loaiDatPhongHoTro.includes('theo_gio')) {
-                return { isAvailable: false, availableRooms: 0, reason: "Không hỗ trợ đặt theo giờ" };
-            }
-        } else {
-            // Fallback: lấy tổng số phòng từ RoomType
-            const roomType = await RoomType.findById(roomTypeId);
-            totalRooms = roomType?.tongSoPhong || 0;
-        }
-
-        if (totalRooms === 0) {
-            return { isAvailable: false, availableRooms: 0, reason: "Không có phòng" };
-        }
-
-        // Tìm booking conflicts trong khoảng thời gian
-        const requestStart = moment(`${date} ${checkInTime}`, 'YYYY-MM-DD HH:mm');
-        let requestEnd = moment(`${date} ${checkOutTime}`, 'YYYY-MM-DD HH:mm');
-
-        // Xử lý checkout ngày hôm sau
-        if (requestEnd.isSameOrBefore(requestStart)) {
-            requestEnd.add(1, 'day');
-        }
-
-        const conflictingBookings = await Booking.find({
-            maLoaiPhong: roomTypeId,
-            ngayNhanPhong: new Date(date),
-            loaiDatPhong: 'theo_gio',
-            trangThai: { $in: ['Đã xác nhận', 'Đã nhận phòng', 'Đang sử dụng'] }
-        });
-
-        // Tính phòng bị chiếm trong khoảng thời gian yêu cầu
-        let occupiedRooms = 0;
-        conflictingBookings.forEach(booking => {
-            const bookingStart = moment(`${date} ${booking.gioNhanPhong}`, 'YYYY-MM-DD HH:mm');
-            let bookingEnd = moment(`${date} ${booking.gioTraPhong}`, 'YYYY-MM-DD HH:mm');
-
-            if (bookingEnd.isSameOrBefore(bookingStart)) {
-                bookingEnd.add(1, 'day');
-            }
-
-            // Kiểm tra overlap: có giao thời gian không
-            if (requestStart.isBefore(bookingEnd) && bookingStart.isBefore(requestEnd)) {
-                occupiedRooms += booking.soLuongPhong || 1;
-            }
-        });
-
-        // Tính phòng có sẵn (trừ bảo trì và block nếu có)
-        const maintenanceRooms = availability?.soPhongBaoTri || 0;
-        const blockedRooms = availability?.soPhongBlock || 0;
-        const availableRooms = Math.max(0, totalRooms - occupiedRooms - maintenanceRooms - blockedRooms);
-
-        return {
-            isAvailable: availableRooms > 0,
-            availableRooms,
-            totalRooms,
-            occupiedRooms,
-            maintenanceRooms,
-            blockedRooms
-        };
-
-    } catch (error) {
-        console.error('Lỗi kiểm tra availability theo giờ:', error);
-        return { isAvailable: false, availableRooms: 0 };
-    }
-};
-
-// Kiểm tra availability qua đêm cho loại phòng
-const checkOvernightRoomAvailability = async ({ hotelId, roomTypeId, checkInDate, checkOutDate }) => {
-    try {
-        // Lấy availability cho tất cả ngày trong khoảng thời gian
-        const availabilities = await RoomAvailability.find({
-            maKhachSan: hotelId,
-            maLoaiPhong: roomTypeId,
-            ngay: { $gte: new Date(checkInDate), $lt: new Date(checkOutDate) }
-        }).sort({ ngay: 1 });
-
-        let totalRooms = 0;
-        let minAvailableRooms = Infinity;
-
-        // Nếu không có availability data, lấy từ RoomType
-        if (!availabilities.length) {
-            const roomType = await RoomType.findById(roomTypeId);
-            totalRooms = roomType?.tongSoPhong || 0;
-
-            if (totalRooms === 0) {
-                return { isAvailable: false, availableRooms: 0, reason: "Không có phòng" };
-            }
-
-            // Kiểm tra booking conflicts cho từng ngày
-            const dateRange = [];
-            const current = moment(checkInDate);
-            const end = moment(checkOutDate);
-
-            while (current.isBefore(end)) {
-                dateRange.push(current.format('YYYY-MM-DD'));
-                current.add(1, 'day');
-            }
-
-            for (const date of dateRange) {
-                const conflictingBookings = await Booking.find({
-                    maLoaiPhong: roomTypeId,
-                    $or: [
-                        // Booking bắt đầu trong ngày này
-                        { ngayNhanPhong: new Date(date) },
-                        // Booking đang diễn ra qua ngày này
-                        {
-                            ngayNhanPhong: { $lte: new Date(date) },
-                            ngayTraPhong: { $gt: new Date(date) }
-                        }
-                    ],
-                    trangThai: { $in: ['Đã xác nhận', 'Đã nhận phòng', 'Đang sử dụng'] }
-                });
-
-                const occupiedForDate = conflictingBookings.reduce((sum, booking) =>
-                    sum + (booking.soLuongPhong || 1), 0);
-
-                const availableForDate = totalRooms - occupiedForDate;
-                minAvailableRooms = Math.min(minAvailableRooms, availableForDate);
-            }
-        } else {
-            // Có availability data
-            for (const avail of availabilities) {
-                totalRooms = avail.tongSoPhong;
-                const dateStr = moment(avail.ngay).format('YYYY-MM-DD');
-
-                // Kiểm tra booking conflicts cho ngày này
-                const conflictingBookings = await Booking.find({
-                    maLoaiPhong: roomTypeId,
-                    $or: [
-                        { ngayNhanPhong: new Date(dateStr) },
-                        {
-                            ngayNhanPhong: { $lte: new Date(dateStr) },
-                            ngayTraPhong: { $gt: new Date(dateStr) }
-                        }
-                    ],
-                    trangThai: { $in: ['Đã xác nhận', 'Đã nhận phòng', 'Đang sử dụng'] }
-                });
-
-                const occupiedForDate = conflictingBookings.reduce((sum, booking) =>
-                    sum + (booking.soLuongPhong || 1), 0);
-
-                const availableForDate = Math.max(0,
-                    avail.tongSoPhong - avail.soPhongBaoTri - avail.soPhongBlock - occupiedForDate
-                );
-
-                minAvailableRooms = Math.min(minAvailableRooms, availableForDate);
-            }
-        }
-
-        const finalAvailable = minAvailableRooms === Infinity ? 0 : Math.max(0, minAvailableRooms);
-
-        return {
-            isAvailable: finalAvailable > 0,
-            availableRooms: finalAvailable,
-            totalRooms,
-            occupiedRooms: totalRooms - finalAvailable
-        };
-
-    } catch (error) {
-        console.error('Lỗi kiểm tra availability qua đêm:', error);
-        return { isAvailable: false, availableRooms: 0 };
-    }
-};
-
-
-
-// Tính giá cho khoảng thời gian
-const calculatePricing = ({ roomType, bookingType, checkInDate, checkOutDate, checkInTime, checkOutTime }) => {
-    let basePrice = roomType.giaCa;
-    let duration = 1;
-    let unit = "đêm";
-
-    if (bookingType === 'theo_gio') {
-        // Tính theo giờ
-        const startTime = moment(`${checkInDate} ${checkInTime}`, 'YYYY-MM-DD HH:mm');
-        let endTime = moment(`${checkInDate} ${checkOutTime}`, 'YYYY-MM-DD HH:mm');
-
-        if (endTime.isSameOrBefore(startTime)) {
-            endTime.add(1, 'day');
-        }
-
-        duration = endTime.diff(startTime, 'hours', true);
-        unit = "giờ";
-        // Giá theo giờ = giá phòng / 8 (giả sử 8 tiếng 1 ngày)
-        basePrice = Math.round((roomType.giaCa / 8) * duration);
-    } else if (checkOutDate) {
-        // Tính theo ngày/đêm
-        duration = moment(checkOutDate).diff(moment(checkInDate), 'days');
-        unit = bookingType === 'qua_dem' ? "đêm" : "ngày";
-        basePrice = roomType.giaCa * duration;
-    }
-
-    // Áp dụng multiplier cơ bản (có thể mở rộng)
-    let finalPrice = basePrice;
-
-    // Weekend multiplier
-    if (isWeekend(checkInDate)) {
-        finalPrice = Math.round(finalPrice * 1.2); // +20% cuối tuần
-    }
-
-    return {
-        basePrice, // Giá gốc chưa tính phụ phí
-        finalPrice, //  Giá cuối cùng sau multiplier
-        duration, // Số giờ/ngày/đêm
-        unit,
-        breakdown: {
-            baseRate: Math.round(roomType.giaCa), // Giá gốc theo ngày
-            duration: duration, // Số đơn vị thời gian
-            multiplier: finalPrice / basePrice, // Tỉ lệ cộng thêm (ví dụ: 1.2 nếu cuối tuần)
-            total: finalPrice // Tổng tiền cuối cùng
-        }
-    };
-};
 
 // Lấy text đơn vị
 const getUnitText = (bookingType) => {

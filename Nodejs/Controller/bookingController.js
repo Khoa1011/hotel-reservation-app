@@ -35,8 +35,54 @@ bookingRouter.post('/addbooking', async (req, res) => {
   }
 });
 
+
 // Lấy danh sách đặt phòng
 // GET danh sách booking kèm tên khách sạn
+// bookingRouter.get("/getBookingList/:userId", async (req, res) => {
+//   try {
+//     const { userId } = req.params;
+
+//     const bookings = await Booking.find({ maNguoiDung: new mongoose.Types.ObjectId(userId) })
+//       .populate({
+//         path: "maKhachSan",
+//         select: "tenKhachSan diaChi hinhAnh",
+//       })
+//       .populate({
+//         path: "maPhong",
+//         populate: {
+//           path: "maLoaiPhong",
+//           select: "tenLoaiPhong",
+//         },
+//         select: "maLoaiPhong",
+//       });
+
+//     // Tạo mảng dữ liệu đơn giản hóa
+//     const formattedBookings = bookings.map((b) => ({
+//       id: b._id,
+//       tenKhachSan: b.maKhachSan?.tenKhachSan ?? "Unknown Hotel",
+//       diaChiKhachSan: b.maKhachSan?.diaChi ?? "Unknown Address",
+//       tenLoaiPhong: b.maPhong?.maLoaiPhong?.tenLoaiPhong ?? "Unknown Room Type",
+//       hinhAnhKhachSan: b.maKhachSan?.hinhAnh,
+//       // Thêm các field khác như ngày nhận, trả, tổng tiền...
+//       ngayNhanPhong: b.ngayNhanPhong,
+//       ngayTraPhong: b.ngayTraPhong,
+//       gioNhanPhong: b.gioNhanPhong,
+//       gioTraPhong: b.gioTraPhong,
+//       tongTien: b.tongTien,
+//       phuongThucThanhToan: b.phuongThucThanhToan,
+//       trangThai: b.trangThai,
+//     }));
+
+//     return res.status(200).json({
+//       message: "Successfully",
+//       bookings: formattedBookings,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// });
+
+
 bookingRouter.get("/getBookingList/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
@@ -44,42 +90,287 @@ bookingRouter.get("/getBookingList/:userId", async (req, res) => {
     const bookings = await Booking.find({ maNguoiDung: new mongoose.Types.ObjectId(userId) })
       .populate({
         path: "maKhachSan",
-        select: "tenKhachSan diaChi hinhAnh",
+        select: "tenKhachSan diaChiDayDu hinhAnh",
       })
       .populate({
-        path: "maPhong",
-        populate: {
-          path: "maLoaiPhong",
-          select: "tenLoaiPhong",
-        },
-        select: "maLoaiPhong",
-      });
+        path: "maLoaiPhong",
+        select: "tenLoaiPhong giaTheoGio giaTheoNgay giaQuaDem",
+      })
+      .sort({ thoiGianTaoDon: -1 }); // Sắp xếp theo thời gian tạo mới nhất
+
+    // Helper function để xác định trạng thái booking
+    const getBookingStatus = (booking) => {
+      const now = new Date();
+      const checkInDate = new Date(booking.ngayNhanPhong);
+      const checkOutDate = new Date(booking.ngayTraPhong);
+
+      // Nếu đã hủy
+      if (booking.trangThai === "da_huy") {
+        return "canceled";
+      }
+
+      // Nếu đã trả phòng
+      if (booking.trangThai === "da_tra_phong") {
+        return "completed";
+      }
+
+      // Nếu quá hạn
+      if (booking.trangThai === "qua_gio") {
+        return "expired";
+      }
+
+      // Các trạng thái ongoing
+      if (["dang_cho", "da_xac_nhan", "da_nhan_phong", "dang_su_dung"].includes(booking.trangThai)) {
+        return "ongoing";
+      }
+
+      return "ongoing";
+    };
+
+    // Helper function để format ngày
+    const formatDate = (date) => {
+      if (!date) return null;
+      return new Date(date).toISOString().split('T')[0]; // YYYY-MM-DD
+    };
 
     // Tạo mảng dữ liệu đơn giản hóa
     const formattedBookings = bookings.map((b) => ({
       id: b._id,
-      tenKhachSan: b.maKhachSan?.tenKhachSan ?? "Unknown Hotel",
-      diaChiKhachSan: b.maKhachSan?.diaChi ?? "Unknown Address",
-      tenLoaiPhong: b.maPhong?.maLoaiPhong?.tenLoaiPhong ?? "Unknown Room Type",
-      hinhAnhKhachSan: b.maKhachSan?.hinhAnh,
-      // Thêm các field khác như ngày nhận, trả, tổng tiền...
-      ngayNhanPhong: b.ngayNhanPhong,
-      ngayTraPhong: b.ngayTraPhong,
-      gioNhanPhong: b.gioNhanPhong,
-      gioTraPhong: b.gioTraPhong,
-      tongTien: b.tongTien,
-      phuongThucThanhToan: b.phuongThucThanhToan,
-      trangThai: b.trangThai,
+      hotelName: b.maKhachSan?.tenKhachSan || "Unknown Hotel",
+      hotelAddress: b.maKhachSan?.diaChiDayDu || "Unknown Address",
+      roomType: b.maLoaiPhong?.tenLoaiPhong || "Unknown Room Type",
+      image: b.maKhachSan?.hinhAnh || null,
+      
+      // Thông tin thời gian
+      checkInDate: formatDate(b.ngayNhanPhong),
+      checkOutDate: formatDate(b.ngayTraPhong),
+      checkInTime: b.gioNhanPhong || "14:00",
+      checkOutTime: b.gioTraPhong || "12:00",
+      
+      // Thông tin giá
+      totalAmount: b.thongTinGia?.tongDonDat || 0,
+      roomQuantity: b.soLuongPhong || 1,
+      
+      // Thông tin thanh toán
+      paymentMethod: b.phuongThucThanhToan || "tien_mat",
+      paymentStatus: b.trangThaiThanhToan || "chua_thanh_toan",
+      
+      // Trạng thái
+      status: getBookingStatus(b),
+      originalStatus: b.trangThai,
+      
+      // Thông tin đặt phòng
+      bookingType: b.loaiDatPhong || "qua_dem",
+      note: b.ghiChu || "",
+      phoneNumber: b.soDienThoai || "",
+      
+      // Thông tin thời gian tạo
+      createdAt: b.thoiGianTaoDon || b.createdAt,
+      
+      // Thông tin phòng đã giao (nếu có)
+      assignedRooms: b.phongDuocGiao || [],
+      
+      // Thông tin chi tiết giá
+      priceDetails: {
+        unitPrice: b.thongTinGia?.donGia || 0,
+        quantity: b.thongTinGia?.soLuongDonVi || 1,
+        unit: b.thongTinGia?.donVi || "dem",
+        roomTotal: b.thongTinGia?.tongTienPhong || 0,
+        serviceFee: b.thongTinGia?.phiDichVu || 0,
+        tax: b.thongTinGia?.thue || 0,
+        discount: b.thongTinGia?.giamGia || 0,
+        total: b.thongTinGia?.tongDonDat || 0
+      }
     }));
 
     return res.status(200).json({
-      message: "Successfully",
-      bookings: formattedBookings,
+      success: true,
+      message: "Lấy danh sách booking thành công",
+      data: formattedBookings,
+      count: formattedBookings.length
     });
+
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Lỗi khi lấy danh sách booking:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ khi lấy danh sách đặt phòng",
+      error: error.message
+    });
   }
 });
+
+// API để lấy chi tiết booking
+bookingRouter.get("/getBookingDetail/:bookingId", async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+
+    const booking = await Booking.findById(bookingId)
+      .populate({
+        path: "maKhachSan",
+        select: "tenKhachSan diaChiDayDu hinhAnh soDienThoai email",
+      })
+      .populate({
+        path: "maLoaiPhong",
+        select: "tenLoaiPhong giaTheoGio giaTheoNgay giaQuaDem moTa tienNghi",
+      })
+      .populate({
+        path: "maNguoiDung",
+        select: "tenNguoiDung email soDienThoai",
+      });
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy booking"
+      });
+    }
+
+    // Format dữ liệu chi tiết
+    const bookingDetail = {
+      id: booking._id,
+      
+      // Thông tin khách sạn
+      hotel: {
+        id: booking.maKhachSan?._id,
+        name: booking.maKhachSan?.tenKhachSan || "Unknown Hotel",
+        address: booking.maKhachSan?.diaChiDayDu || "Unknown Address",
+        image: booking.maKhachSan?.hinhAnh || null,
+        phone: booking.maKhachSan?.soDienThoai || "",
+        email: booking.maKhachSan?.email || "",
+      },
+      
+      // Thông tin phòng
+      room: {
+        type: booking.maLoaiPhong?.tenLoaiPhong || "Unknown Room Type",
+        description: booking.maLoaiPhong?.moTa || "",
+        amenities: booking.maLoaiPhong?.tienNghi || [],
+        quantity: booking.soLuongPhong || 1,
+      },
+      
+      // Thông tin khách hàng
+      guest: {
+        name: booking.maNguoiDung?.tenNguoiDung || "Unknown Guest",
+        email: booking.maNguoiDung?.email || "",
+        phone: booking.maNguoiDung?.soDienThoai || booking.soDienThoai || "",
+        cccd: booking.cccd || "",
+      },
+      
+      // Thông tin đặt phòng
+      booking: {
+        type: booking.loaiDatPhong || "qua_dem",
+        checkInDate: booking.ngayNhanPhong,
+        checkOutDate: booking.ngayTraPhong,
+        checkInTime: booking.gioNhanPhong || "14:00",
+        checkOutTime: booking.gioTraPhong || "12:00",
+        note: booking.ghiChu || "",
+        status: booking.trangThai,
+        createdAt: booking.thoiGianTaoDon || booking.createdAt,
+      },
+      
+      // Thông tin thanh toán
+      payment: {
+        method: booking.phuongThucThanhToan || "tien_mat",
+        status: booking.trangThaiThanhToan || "chua_thanh_toan",
+        paidAt: booking.thongTinThanhToan?.thoiGianThanhToan || null,
+        orderId: booking.thongTinThanhToan?.maDonHang || null,
+      },
+      
+      // Chi tiết giá
+      pricing: {
+        unitPrice: booking.thongTinGia?.donGia || 0,
+        quantity: booking.thongTinGia?.soLuongDonVi || 1,
+        unit: booking.thongTinGia?.donVi || "dem",
+        roomTotal: booking.thongTinGia?.tongTienPhong || 0,
+        serviceFee: booking.thongTinGia?.phiDichVu || 0,
+        tax: booking.thongTinGia?.thue || 0,
+        discount: booking.thongTinGia?.giamGia || 0,
+        total: booking.thongTinGia?.tongDonDat || 0,
+      },
+      
+      // Phòng đã giao
+      assignedRooms: booking.phongDuocGiao || [],
+    };
+
+    return res.status(200).json({
+      success: true,
+      message: "Lấy chi tiết booking thành công",
+      data: bookingDetail
+    });
+
+  } catch (error) {
+    console.error("Lỗi khi lấy chi tiết booking:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ khi lấy chi tiết đặt phòng",
+      error: error.message
+    });
+  }
+});
+
+// API để hủy booking
+bookingRouter.put("/cancelBooking/:bookingId", async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { reason } = req.body;
+
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy booking"
+      });
+    }
+
+    // Kiểm tra xem có thể hủy được không
+    if (booking.trangThai === "da_huy") {
+      return res.status(400).json({
+        success: false,
+        message: "Booking đã được hủy trước đó"
+      });
+    }
+
+    if (booking.trangThai === "da_tra_phong") {
+      return res.status(400).json({
+        success: false,
+        message: "Không thể hủy booking đã hoàn thành"
+      });
+    }
+
+    // Cập nhật trạng thái
+    const updatedBooking = await Booking.findByIdAndUpdate(
+      bookingId,
+      {
+        trangThai: "da_huy",
+        trangThaiThanhToan: "da_hoan_tien",
+        ghiChu: reason || "Khách hàng yêu cầu hủy"
+      },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Hủy booking thành công",
+      data: updatedBooking
+    });
+
+  } catch (error) {
+    console.error("Lỗi khi hủy booking:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ khi hủy đặt phòng",
+      error: error.message
+    });
+  }
+});
+
+
+
+
+
+
+
+
 
 
 
@@ -100,38 +391,6 @@ bookingRouter.delete("/delete/:id", async (req, res) => {
     res.status(200).json({ message: "Đã xóa đặt phòng!" });
   } catch (error) {
     res.status(500).json({ error: error.message });
-  }
-});
-
-
-// API để giảm số lượng phòng sau khi đặt
-bookingRouter.put('/:hotelId/rooms/:roomId/book', async (req, res) => {
-  const { hotelId, roomId } = req.params;
-
-  try {
-    // Tìm phòng theo hotelId và roomId
-    const room = await Room.findOne({ hotelId, roomId });
-
-    if (!room) {
-      return res.status(404).json({ message: 'Room not found' });
-    }
-
-    // Kiểm tra xem có phòng còn không
-    if (room.availableCount <= 0) {
-      return res.status(400).json({ message: 'No rooms available' });
-    }
-
-    // Giảm số phòng còn lại
-    room.availableCount -= 1;
-    await room.save(); // Lưu lại phòng với số lượng mới
-
-    return res.status(200).json({
-      message: 'Room successfully booked',
-      availableCount: room.availableCount,
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Server error' });
   }
 });
 

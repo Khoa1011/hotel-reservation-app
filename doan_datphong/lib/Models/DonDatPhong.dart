@@ -1,112 +1,238 @@
-enum TrangThai {pending, confirmed, canceled}
-enum PhuongThucThanhToan {CreditCard,VNPay,Momo}
-class DonDatPhong{
-  String booking_Id;
-  String? booking_RoomId;
-  String? booking_HotelId;
-  String? booking_UserId;
-  String booking_CheckInDate;
-  String booking_CheckOutDate;
-  String booking_CheckInTime;
-  String booking_CheckOutTime;
-  double booking_totalAmount;
-  TrangThai booking_Status;
-  PhuongThucThanhToan booking_PaymentMethod;
+enum LoaiDatPhong { theo_gio, qua_dem, dai_ngay }
+enum TrangThai { dang_cho, da_xac_nhan, da_nhan_phong, dang_su_dung, qua_gio, da_tra_phong, da_huy }
+enum PhuongThucThanhToan { the_tin_dung, VNPay, Momo, tien_mat, ZaloPay }
+enum TrangThaiThanhToan { chua_thanh_toan, da_thanh_toan, thanh_toan_mot_phan, da_hoan_tien }
 
-  DonDatPhong({required this.booking_Id,
-    required this.booking_RoomId,
-    required this.booking_HotelId,
-    required this.booking_UserId,
-    required this.booking_CheckInDate,
-    required this.booking_CheckOutDate,
-    required this.booking_CheckInTime,
-    required this.booking_CheckOutTime,
-    required this.booking_totalAmount,
-    this.booking_Status = TrangThai.pending,
-    this.booking_PaymentMethod = PhuongThucThanhToan.VNPay});
+class DonDatPhong {
+  String maDonDat;
+  String? maPhong;
+  String? maKhachSan;
+  String maNguoiDung;
+  String? maLoaiPhong;
+  String? cccd;
+  LoaiDatPhong loaiDatPhong;
+  int soLuongPhong;
+  String ngayNhanPhong;
+  String ngayTraPhong;
+  String gioNhanPhong;
+  String gioTraPhong;
+  TrangThai trangThai;
+  PhuongThucThanhToan phuongThucThanhToan;
+  TrangThaiThanhToan trangThaiThanhToan;
+  DateTime thoiGianTaoDon;
+  String ghiChu;
+  String soDienThoai;
+
+  // Thông tin giá
+  double donGia;
+  int soLuongDonVi;
+  String donVi; // "gio", "dem", "ngay"
+  double tongTienPhong;
+  double phiDichVu;
+  double thue;
+  double giamGia;
+  double phuPhiGio;
+  double phuPhiCuoiTuan;
+  double tongDonDat;
+
+  DonDatPhong({
+    required this.maDonDat,
+    this.maPhong,
+    this.maKhachSan,
+    required this.maNguoiDung,
+    this.maLoaiPhong,
+    this.cccd,
+    required this.loaiDatPhong,
+    this.soLuongPhong = 1,
+    required this.ngayNhanPhong,
+    required this.ngayTraPhong,
+    required this.gioNhanPhong,
+    required this.gioTraPhong,
+    this.trangThai = TrangThai.dang_cho,
+    this.phuongThucThanhToan = PhuongThucThanhToan.VNPay,
+    this.trangThaiThanhToan = TrangThaiThanhToan.chua_thanh_toan,
+    DateTime? thoiGianTaoDon,
+    this.ghiChu = '',
+    this.soDienThoai = '',
+    required this.donGia,
+    required this.soLuongDonVi,
+    required this.donVi,
+    required this.tongTienPhong,
+    this.phiDichVu = 0,
+    this.thue = 0,
+    this.giamGia = 0,
+    this.phuPhiGio = 0,
+    this.phuPhiCuoiTuan = 0,
+    required this.tongDonDat,
+  }) : thoiGianTaoDon = thoiGianTaoDon ?? DateTime.now();
+
+
+  DonDatPhong.empty()
+      : maDonDat = '',
+        maLoaiPhong = '',
+        maKhachSan = '',
+        maNguoiDung = '',
+        ngayNhanPhong = DateTime.now().toIso8601String(),
+        ngayTraPhong = DateTime.now().add(Duration(days: 1)).toIso8601String(),
+        gioNhanPhong = '14:00',
+        gioTraPhong = '12:00',
+        tongDonDat = 0.0,
+        trangThaiThanhToan = TrangThaiThanhToan.chua_thanh_toan,
+        phuongThucThanhToan = PhuongThucThanhToan.tien_mat,
+        loaiDatPhong = LoaiDatPhong.qua_dem,
+        donGia = 0.0,
+        donVi = 'dem',
+        soLuongDonVi = 1,
+        tongTienPhong = 0.0,
+  // ✅ Initialize all non-nullable fields
+        ghiChu = '',
+        giamGia = 0.0,
+        phiDichVu = 0.0,
+        phuPhiCuoiTuan = 0.0,
+        phuPhiGio = 0.0,
+        soDienThoai = '',
+        soLuongPhong = 1,
+        thoiGianTaoDon = DateTime.now(),
+        thue = 0.0,
+        trangThai = TrangThai.dang_cho;
 
   DonDatPhong.short({
-    required this.booking_RoomId,
-    required this.booking_HotelId,
-    required this.booking_UserId,
-    required this.booking_CheckInDate,
-    required this.booking_CheckOutDate,
-    required this.booking_CheckInTime,
-    required this.booking_CheckOutTime,
-    required this.booking_totalAmount,
-    this.booking_Status = TrangThai.confirmed,
-    this.booking_PaymentMethod = PhuongThucThanhToan.CreditCard
-}): booking_Id ='';
+    this.maPhong,
+    required this.maKhachSan,
+    required this.maNguoiDung,
+    required this.maLoaiPhong,
+    required this.soDienThoai,
+    required this.loaiDatPhong,
+    required this.ngayNhanPhong,
+    required this.ngayTraPhong,
+    required this.gioNhanPhong,
+    required this.gioTraPhong,
+    required this.donGia,
+    required this.soLuongDonVi,
+    required this.phuPhiCuoiTuan,
+    required this.donVi,
+    required this.tongTienPhong,
+    required this.tongDonDat,
+    this.trangThai = TrangThai.dang_cho,
+    required this.soLuongPhong,
+    this.trangThaiThanhToan = TrangThaiThanhToan.da_thanh_toan,
+    this.phuongThucThanhToan = PhuongThucThanhToan.the_tin_dung,
+  }) : maDonDat = '',
+        cccd = '',
+        thoiGianTaoDon = DateTime.now(),
+        ghiChu = '',
+        phiDichVu = 0,
+        thue = 0,
+        giamGia = 0,
+        phuPhiGio = 0;
 
-
-//   User.short({
-//   required this.id,
-//   required this.userName,
-//   required this.gender,
-//   required this.phoneNumber,
-//   required this.Dob,
-//   required this.avatar,
-// })  : email = '',
-// password = '',
-// role = 'user',
-// createAt = DateTime.now();
-
-  String getStatusString(){
-    return booking_Status.toString().split('.').last;
+  String getTrangThaiString() {
+    return trangThai.toString().split('.').last;
   }
-  static TrangThai parseStatus(String status) {
+
+  String getLoaiDatPhongString() {
+    return loaiDatPhong.toString().split('.').last;
+  }
+
+  String getPhuongThucThanhToanString() {
+    return phuongThucThanhToan.toString().split('.').last;
+  }
+
+  String getTrangThaiThanhToanString() {
+    return trangThaiThanhToan.toString().split('.').last;
+  }
+
+  static LoaiDatPhong parseLoaiDatPhong(String loai) {
+    return LoaiDatPhong.values.firstWhere(
+          (e) => e.toString().split('.').last == loai,
+      orElse: () => LoaiDatPhong.qua_dem,
+    );
+  }
+
+  static TrangThai parseTrangThai(String trangThai) {
     return TrangThai.values.firstWhere(
-          (e) =>
-      e
-          .toString()
-          .split('.')
-          .last == status,
-      orElse: () => TrangThai.confirmed,
+          (e) => e.toString().split('.').last == trangThai,
+      orElse: () => TrangThai.dang_cho,
     );
   }
 
-  // Chuyển enum thành chuỗi để lưu vào database
-  String getPaymentMethodString() {
-    return booking_PaymentMethod.toString().split('.').last;
-  }
-
-  // Chuyển từ chuỗi thành enum khi lấy từ database
-  static PhuongThucThanhToan parsePaymentMethod(String method) {
+  static PhuongThucThanhToan parsePhuongThucThanhToan(String phuongThuc) {
     return PhuongThucThanhToan.values.firstWhere(
-          (e) => e.toString().split('.').last == method,
-      orElse: () => PhuongThucThanhToan.VNPay, // Mặc định VNPay nếu lỗi
+          (e) => e.toString().split('.').last == phuongThuc,
+      orElse: () => PhuongThucThanhToan.VNPay,
     );
   }
 
-  factory DonDatPhong.fromJson(Map<String,dynamic>json){
+  static TrangThaiThanhToan parseTrangThaiThanhToan(String trangThai) {
+    return TrangThaiThanhToan.values.firstWhere(
+          (e) => e.toString().split('.').last == trangThai,
+      orElse: () => TrangThaiThanhToan.chua_thanh_toan,
+    );
+  }
+
+  factory DonDatPhong.fromJson(Map<String, dynamic> json) {
     return DonDatPhong(
-        booking_Id: json["_id"]??'',
-        booking_RoomId: json["roomId"],
-        booking_HotelId: json["hotelsId"],
-        booking_UserId: json["userId"],
-        booking_CheckInDate: json["checkInDate"],
-        booking_CheckOutDate: json["checkOutDate"],
-        booking_CheckInTime: json["checkInTime"],
-        booking_CheckOutTime: json["checkOutTime"],
-      booking_totalAmount: (json['totalAmount'] as num).toDouble(),
-      booking_Status: parseStatus(json["status"]),
-      booking_PaymentMethod: parsePaymentMethod(json["paymentMethod"]),
+      maDonDat: json["_id"] ?? '',
+      maPhong: json["maPhong"],
+      maKhachSan: json["maKhachSan"],
+      maNguoiDung: json["maNguoiDung"],
+      maLoaiPhong: json["maLoaiPhong"],
+      cccd: json["cccd"],
+      loaiDatPhong: parseLoaiDatPhong(json["loaiDatPhong"]),
+      soLuongPhong: json["soLuongPhong"] ?? 1,
+      ngayNhanPhong: json["ngayNhanPhong"],
+      ngayTraPhong: json["ngayTraPhong"],
+      gioNhanPhong: json["gioNhanPhong"],
+      gioTraPhong: json["gioTraPhong"],
+      trangThai: parseTrangThai(json["trangThai"]),
+      phuongThucThanhToan: parsePhuongThucThanhToan(json["phuongThucThanhToan"]),
+      trangThaiThanhToan: parseTrangThaiThanhToan(json["trangThaiThanhToan"]),
+      thoiGianTaoDon: DateTime.parse(json["thoiGianTaoDon"]),
+      ghiChu: json["ghiChu"] ?? '',
+      soDienThoai: json["soDienThoai"] ?? '',
+      donGia: (json['thongTinGia']['donGia'] as num).toDouble(),
+      soLuongDonVi: json['thongTinGia']['soLuongDonVi'],
+      donVi: json['thongTinGia']['donVi'],
+      tongTienPhong: (json['thongTinGia']['tongTienPhong'] as num).toDouble(),
+      phiDichVu: (json['thongTinGia']['phiDichVu'] as num?)?.toDouble() ?? 0,
+      thue: (json['thongTinGia']['thue'] as num?)?.toDouble() ?? 0,
+      giamGia: (json['thongTinGia']['giamGia'] as num?)?.toDouble() ?? 0,
+      phuPhiGio: (json['thongTinGia']['phuPhiGio'] as num?)?.toDouble() ?? 0,
+      phuPhiCuoiTuan: (json['thongTinGia']['phuPhiCuoiTuan'] as num?)?.toDouble() ?? 0,
+      tongDonDat: (json['thongTinGia']['tongDonDat'] as num).toDouble(),
     );
   }
-  Map<String,dynamic> toMap(){
-    return {
-      "roomId":booking_RoomId,
-      "hotelsId":booking_HotelId,
-      "userId":booking_UserId,
-      "checkInDate":booking_CheckInDate,
-      "checkOutDate":booking_CheckOutDate,
-      "checkInTime":booking_CheckInTime,
-      "checkOutTime":booking_CheckOutTime,
-      "totalAmount":booking_totalAmount,
-      "status": getStatusString(),
-      "paymentMethod": getPaymentMethodString(),
 
+  Map<String, dynamic> toMap() {
+    return {
+      "maPhong": maPhong,
+      "maKhachSan": maKhachSan,
+      "maNguoiDung": maNguoiDung,
+      "maLoaiPhong": maLoaiPhong,
+      "cccd": cccd,
+      "loaiDatPhong": getLoaiDatPhongString(),
+      "soLuongPhong": soLuongPhong,
+      "ngayNhanPhong": ngayNhanPhong,
+      "ngayTraPhong": ngayTraPhong,
+      "gioNhanPhong": gioNhanPhong,
+      "gioTraPhong": gioTraPhong,
+      "trangThai": getTrangThaiString(),
+      "phuongThucThanhToan": getPhuongThucThanhToanString(),
+      "trangThaiThanhToan": getTrangThaiThanhToanString(),
+      "ghiChu": ghiChu,
+      "soDienThoai": soDienThoai,
+      "thongTinGia": {
+        "donGia": donGia,
+        "soLuongDonVi": soLuongDonVi,
+        "donVi": donVi,
+        "tongTienPhong": tongTienPhong,
+        "phiDichVu": phiDichVu,
+        "thue": thue,
+        "giamGia": giamGia,
+        "phuPhiGio": phuPhiGio,
+        "phuPhiCuoiTuan": phuPhiCuoiTuan,
+        "tongDonDat": tongDonDat,
+      }
     };
   }
-
 }

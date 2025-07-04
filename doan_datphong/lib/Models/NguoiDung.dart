@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:doan_datphong/Models/ViTri.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class NguoiDung {
@@ -11,8 +12,12 @@ class NguoiDung {
   String soDienThoai;
   String vaiTro;
   String hinhDaiDien;
-  String ngaySinh;
+  DateTime? ngaySinh;
   DateTime ngayTao;
+  String? cccd;
+  ViTri? viTri;
+  String trangThaiTaiKhoan;
+
 
   NguoiDung({
     required this.id,
@@ -25,6 +30,9 @@ class NguoiDung {
     required this.hinhDaiDien,
     required this.ngaySinh,
     required this.ngayTao,
+    this.cccd,
+    this.viTri,
+    this.trangThaiTaiKhoan = "hoatDong",
   });
 
 
@@ -33,12 +41,16 @@ class NguoiDung {
     required this.tenNguoiDung,
     required this.gioiTinh,
     required this.soDienThoai,
-    required this.ngaySinh,
+    this.ngaySinh,
     required this.hinhDaiDien,
   })  : email = '',
         matKhau = '',
-        vaiTro = 'user',
-        ngayTao = DateTime.now();
+        vaiTro = 'nguoiDung',
+        ngayTao = DateTime.now(),
+        cccd = null,
+        trangThaiTaiKhoan = 'hoatDong',
+        viTri = null;
+
 
   NguoiDung.shortUpdateProfile({
     required this.id,
@@ -48,25 +60,69 @@ class NguoiDung {
     required this.hinhDaiDien,
     required this.matKhau,
 }): email = '',
-        vaiTro = 'user',
+        vaiTro = 'nguoiDung',
         ngayTao = DateTime.now(),
-  gioiTinh= true;
+        gioiTinh = true,
+        cccd = null,
+        trangThaiTaiKhoan = 'hoatDong',
+        viTri = null;
 
   // Chuyển từ JSON sang Object
+  // factory NguoiDung.fromJson(Map<String, dynamic> json) {
+  //   return NguoiDung(
+  //     id: json["_id"],
+  //     tenNguoiDung: json["tenNguoiDung"],
+  //     gioiTinh: json["gioiTinh"],
+  //     email: json["email"],
+  //     matKhau: json["matKhau"],
+  //     soDienThoai: json["soDienThoai"],
+  //     vaiTro: json["vaiTro"],
+  //     hinhDaiDien: json["hinhDaiDien"],
+  //     ngayTao: DateTime.parse(json["ngayTao"]),
+  //     ngaySinh: json["ngaySinh"] != null ? DateTime.parse(json["ngaySinh"]) : null,
+  //     cccd: json["cccd"],
+  //     trangThaiTaiKhoan: json["trangThaiTaiKhoan"] ?? 'hoatDong',
+  //     viTri: json["viTri"] != null ? ViTri.fromJson(json["viTri"]) : null,
+  //   );
+  // }
+
   factory NguoiDung.fromJson(Map<String, dynamic> json) {
-    return NguoiDung(
-      id: json["_id"],
-      tenNguoiDung: json["tenNguoiDung"],
-      gioiTinh: json["gioiTinh"],
-      email: json["email"],
-      matKhau: json["matKhau"],
-      soDienThoai: json["soDienThoai"],
-      vaiTro: json["vaiTro"],
-      hinhDaiDien: json["hinhDaiDien"],
-      ngaySinh: json["ngaySinh"],
-      ngayTao: DateTime.parse(json["ngayTao"]),
-    );
+    try {
+      return NguoiDung(
+        // ✅ Tất cả String fields phải có null check
+        id: json["_id"]?.toString() ?? '',
+        tenNguoiDung: json["tenNguoiDung"]?.toString() ?? '',
+        gioiTinh: json["gioiTinh"] == true,
+        email: json["email"]?.toString() ?? '',
+        matKhau: json["matKhau"]?.toString() ?? '',
+        soDienThoai: json["soDienThoai"]?.toString() ?? '',
+        vaiTro: json["vaiTro"]?.toString() ?? 'nguoiDung',
+        hinhDaiDien: json["hinhDaiDien"]?.toString() ?? '',
+        trangThaiTaiKhoan: json["trangThaiTaiKhoan"]?.toString() ?? 'hoatDong',
+
+        // ✅ Parse DateTime an toàn
+        ngayTao: json["ngayTao"] != null
+            ? DateTime.parse(json["ngayTao"])
+            : DateTime.now(),
+
+        ngaySinh: json["ngaySinh"] != null
+            ? DateTime.parse(json["ngaySinh"])
+            : null,
+
+        // ✅ Optional fields
+        cccd: json["cccd"]?.toString(),
+
+        viTri: json["viTri"] != null
+            ? ViTri.fromJson(json["viTri"])
+            : null,
+      );
+    } catch (e) {
+      print("❌ Error in NguoiDung.fromJson(): $e");
+      print("❌ JSON data: $json");
+      rethrow;
+    }
   }
+
 
   // Chuyển từ Object sang JSON
   Map<String, dynamic> toMap() {
@@ -79,8 +135,11 @@ class NguoiDung {
       "soDienThoai": soDienThoai,
       "vaiTro": vaiTro,
       "hinhDaiDien": hinhDaiDien,
-      "ngaySinh": ngaySinh,
+      "ngaySinh": ngaySinh?.toIso8601String(),
       "ngayTao": ngayTao.toIso8601String(),
+      "cccd": cccd,
+      "trangThaiTaiKhoan": trangThaiTaiKhoan,
+      "viTri": viTri?.toJson(),
     };
   }
 

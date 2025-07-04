@@ -2,10 +2,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:doan_datphong/Models/KhachSan.dart';
 
-class HotelBloc extends Cubit<Hotels?> {
+class HotelBloc extends Cubit<KhachSan?> {
   HotelBloc() : super(null);
 
-  void setCurrentHotel(Hotels hotel) {
+  void setCurrentHotel(KhachSan hotel) {
     emit(hotel);
   }
 

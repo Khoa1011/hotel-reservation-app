@@ -7,7 +7,7 @@ import 'package:doan_datphong/Models/NguoiDung.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../Provider/ErrorCode.dart';
+import '../../../Helper/ErrorCode.dart';
 import '../../Provider/IP_v4_Address.dart';
 
 
@@ -44,8 +44,11 @@ class LoginRepository{
         //Trả về user nếu đăng nhập thành công
         return ApiResponse(success: true, message: "Đăng nhập thành công",data: user);
       }else if(respone.statusCode == 400) {
-        return ApiResponse(success: false, message: "Email không tồn tại!");
-      }else{
+        return ApiResponse(success: false, message: ErrorCodes.emailNotExists);
+      }else if (respone.statusCode == 401) {
+        return ApiResponse(success: false, message: ErrorCodes.passwordIncorrect);
+      }
+      else{
         return ApiResponse(success: false, message: "Lỗi server!");
       }
     }on TimeoutException catch(e){

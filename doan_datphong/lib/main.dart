@@ -10,7 +10,7 @@ import 'package:doan_datphong/Blocs/register_Blocs/register_bloc.dart';
 import 'package:doan_datphong/Blocs/updateProfile/updateProfile_bloc.dart';
 import 'package:doan_datphong/Data/Repository/getBookingList_Repository/getBookingList_repo.dart';
 import 'package:doan_datphong/Data/Repository/getHotelList_Repository/getHotelList_repo.dart';
-import 'package:doan_datphong/Data/Repository/getListOfRoom_Repository/getListOfRoom_repo.dart';
+import 'package:doan_datphong/Data/Repository/getListOfRoomTypes_Repository/getListOfRoom_repo.dart';
 import 'package:doan_datphong/Data/Repository/login_Repository/login_repo.dart';
 import 'package:doan_datphong/Data/Repository/logout_Repository/logout_repo.dart';
 import 'package:doan_datphong/Data/Repository/payment_Repository/payment_repo.dart';
@@ -26,8 +26,10 @@ import 'Blocs/Hotel_Blocs/hotel_bloc.dart';
 import 'Blocs/checkLogin_Blocs/checkLogin_bloc.dart';
 import 'Blocs/getAmenities_Blocs/getAmenities_bloc.dart';
 import 'Blocs/logout_bloc/logout_event.dart';
+import 'Blocs/searchHotels_Blocs/searchHotels_bloc.dart';
 import 'Data/Repository/fillProfile_Repository/fillProfile_repo.dart';
 import 'Data/Repository/getAmenities_Repository/getAmenities_repo.dart';
+import 'Data/Repository/searchHotels_Repository/searchHotels_repo.dart';
 import 'LanguageProvider.dart';
 import 'SplashScreen.dart';
 import 'generated/l10n.dart'; // Sử dụng file generated
@@ -40,9 +42,19 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  void _handleLogout() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("token");
+    prefs.remove(token.toString());
+    await prefs.clear();
+  }
+
+
   @override
   Widget build(BuildContext context) {
+
     return MultiProvider(
+
       providers: [
         // LanguageProvider phải được khởi tạo đầu tiên
         ChangeNotifierProvider<LanguageProvider>(
@@ -56,13 +68,14 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (context) => CheckLoginBloc()),
         BlocProvider(create: (context) => FillProfileBloc(fpr: FillProfileRepository())),
         BlocProvider(create: (context) => GetHotelListBloc(fetchList: GetHotelListRepository())),
-        BlocProvider(create: (context) => GetListOfRoomBloc(getListRoomRepo: GetListOfRoomRepository())),
+        BlocProvider(create: (context) => GetListOfRoomBloc(repository: GetListOfRoomTypeRepository())),
         BlocProvider(create: (context) => HotelBloc()),
         BlocProvider(create: (context) => UserBloc()),
         BlocProvider(create: (context) => PaymentBloc(paymentRepository: PaymentRepository())),
         BlocProvider(create: (context) => GetBookingListBloc(fetchList: GetBookingListRepository())),
         BlocProvider(create: (context) => UpdateProfileBloc(fpr: UpdateProfileRepository())),
         BlocProvider(create: (context) => GetAmenitiesBloc(getAmenitiesRepo: GetAmenitiesRepository())),
+        BlocProvider(create: (context) => HotelSearchBloc(repository: HotelSearchRepository()))
       ],
       child: Consumer<LanguageProvider>(
         builder: (context, languageProvider, child) {

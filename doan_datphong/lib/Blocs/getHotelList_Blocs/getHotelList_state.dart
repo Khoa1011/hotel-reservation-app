@@ -8,7 +8,7 @@ abstract class GetHotelListState{
 class GetHotelListInitial extends GetHotelListState{}
 class GetHotelListLoading extends GetHotelListState{}
 class GetHotelListSuccess extends GetHotelListState{
-  final List<Hotels> hotels;
+  final List<KhachSan> hotels;
   GetHotelListSuccess(this.hotels);
 
   @override

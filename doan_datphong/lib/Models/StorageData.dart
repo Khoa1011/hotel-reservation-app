@@ -5,11 +5,11 @@ import 'package:flutter/cupertino.dart';
 import 'KhachSan.dart';
 
 class HotelProvider extends ChangeNotifier {
-  Hotels? _currentHotel;
+  KhachSan? _currentHotel;
 
-  Hotels? get currentHotel => _currentHotel;
+  KhachSan? get currentHotel => _currentHotel;
 
-  void setCurrentHotel(Hotels hotel) {
+  void setCurrentHotel(KhachSan hotel) {
     _currentHotel = hotel;
     notifyListeners();
   }

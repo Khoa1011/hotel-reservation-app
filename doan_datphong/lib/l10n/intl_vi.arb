@@ -297,6 +297,8 @@
   "@pleaseFixValidationErrors":{
     "description": "Message dialog when register"
   },
+  "notOldEnough": "Bạn chưa đủ tuổi để đăng ký tài khoản!",
+  "invalidAge": "Tuổi không hợp lệ!",
   "connectionTimeout": "Hết thời gian kết nối. Vui lòng thử lại sau!",
 
 
@@ -305,7 +307,9 @@
 
 
   "pleaseTryAgain": "Vui lòng thử lại sau!",
-  "errorConnectionTimeout": "Kết nối timeout. Server có thể đang bận hoặc không phản hồi!",
+  "passwordIncorrect": "Mật khẩu không chính xác. Vui lòng thử lại!",
+  "emailNotExist": "Email không tồn tại. Nếu chưa có hãy đăng ký tài khoản!",
+  "errorConnectionTimeout": "Hết thời gian kết nối. Máy chủ có thể đang bận hoặc không phản hồi!",
   "@errorConnectionTimeout": {
     "description": "Connection timeout error message"
   },
@@ -381,6 +385,7 @@
     "description": "Recently booked section title"
   },
   "seeAll": "Xem tất cả",
+  "viewAbridged": "Xem rút gọn",
   "@seeAll": {
     "description": "See all button text"
   },
@@ -388,11 +393,8 @@
   "@perNight": {
     "description": "Per night pricing text"
   },
-  "night": "/ đêm",
-  "@night": {
-    "description": "Night pricing text"
-  },
-  "reviews": "đánh giá",
+
+  "reviews": "Đánh giá",
   "@reviews": {
     "description": "Reviews text"
   },
@@ -421,14 +423,19 @@
   "categories": "Nhóm tiện nghi",
   "totalAmenities": "Tổng tiện nghi",
 
-
-
+  "amenityGroupIsEmpty":"Không có nhóm tiện nghi nào!",
+  "hotelNotAmenityYet": "Khách sạn này chưa thiết lập các tiện nghi. Vui lòng quay lại sau.",
+  "updatingInProgress": "Đang trong quá trình cập nhật",
   "description": "Mô tả",
 
   "locationHotel": "Vị trí của khách sạn",
   "selectDatesAndTimeCheckIn":"Chọn ngày/giờ nhận phòng",
   "bookNow": "Đặt ngay",
 
+
+
+  "checkoutDateMustAfterCheckinDate": "Ngày nhận phòng và trả phòng phải khác nhau!",
+"selectDateInPast": "Không được chọn ngày trong quá khứ!",
   "@@_SELECTE_DATE-TIME": "---CHỌN NGÀY GIỜ---",
   "thu2_Monday": "Thứ 2",
   "thu3_Tuesday": "Thứ 3",
@@ -440,16 +447,214 @@
 
   "checkInDate": "Ngày nhận",
   "checkOutDate": "Ngày trả",
-  "checkInTime": "Thời gian nhận",
+  "checkInTime": "Giờ nhận",
+  "checkOutTime": "Giờ trả",
+  "checkInTimeNotSelected": "Chưa chọn thời gian nhận phòng!",
+  "checkOutTimeNotSelected": "Chưa chọn thời gian trả phòng!",
+  "checkInDateNotSelected": "Chưa chọn ngày nhận phòng!",
+  "checkOutDateNotSelected": "Chưa chọn ngày trả phòng!",
   "messageSelectDateTimeCheckIn": "Vui lòng chọn thời gian nhận trả phòng",
+  "messageSelectDateDateCheckIn": "Vui lòng chọn ngày nhận trả phòng",
+  "minimumHour": "Thuê theo giờ tối thiểu 1 giờ!",
   "optionSeletedTime": "Tùy chọn giờ",
   "guestsRooms": "Số lượng khách & phòng",
   "adults": "Người lớn",
   "children": "Trẻ em",
   "selectedTime": "Giờ đã chọn",
-  "rooms": "Phòng",
   "agesOrAbove": "Từ 13 tuổi trở lên",
   "age2_12": "Độ tuổi từ 2-12",
   "howManyRoomsNeeded": "Bạn cần bao nhiêu phòng ?",
-  "apply":"Áp dụng"
+  "apply":"Áp dụng",
+  "hourly": "Theo giờ",
+  "overnight": "Qua đêm",
+  "longDays": "Dài ngày",
+  "rentByTheHour": "Thuê theo giờ",
+  "rentByTheHourNote": "Tối thiểu 1 giờ • Linh hoạt trong ngày",
+  "rentOvernight": "Thuê qua đêm",
+"rentOvernightNote": "Mặc định sẽ là 22h/PM hôm nay đến 12h/PM ngày hôm sau",
+  "rentLongDays": "Thuê dài ngày",
+  "rentLongDaysNote": "Từ 2 ngày trở lên • Giá ưu đãi",
+  "dateOfUse": "Ngày sử dụng",
+  "selecteTime": "Chọn thời gian",
+  "hourCheckInTime": "Giờ nhận phòng",
+  "total": "Tổng cộng",
+  "day": "ngày",
+  "checkoutAfterCheckin": "Ngày trả phòng phải sau ngày nhận phòng",
+  "sameDayOnlyHourly": "Thuê theo giờ chỉ trong cùng ngày",
+  "overnightOnlyOneNight": "Thuê qua đêm từ hôm nay đến ngày mai",
+
+
+
+  "@@_REVIEWS_SECTION": "---PHẦN ĐÁNH GIÁ---",
+
+  "moreReviews": "Xem thêm",
+  "allReviews": "Tất cả đánh giá",
+  "writeReview": "Viết đánh giá",
+  "helpful": "Hữu ích",
+  "rating": "Xếp hạng",
+  "showLess": "Thu gọn",
+
+
+  "@@_LIST_ROOMTYPES_SECTION": "---Danh sách loại phòng---",
+  "lookingForRooms": "Đang tìm kiếm phòng...",
+  "notRoomTypesAvailable": "Không có phòng nào khả dụng",
+  "pleaseTryChangingTheSearchDate": "Vui lòng thử thay đổi ngày tìm kiếm",
+  "roomAvailable": "phòng có sẵn",
+  "almostOver": "Sắp hết!",
+  "available": "Có sẵn",
+  "soldOut": "Đã hết",
+  "from": "Từ",
+  "to": "đến",
+  "selectRoomType": "Chọn loại phòng",
+  "refresh": "Làm mới",
+  "roomIsCurrentlyUnavailable": "Phòng này hiện không thể đặt",
+  "singleBed": "Giường đơn",
+  "doubleBed": "Giường đôi",
+  "queenBed": "Giường Queen",
+  "kingBed": "Giường King",
+  "bed": "Giường",
+  "otherAmenities": "các tiện nghi khác",
+  "bedTypeUnknown": "Không rõ loại giường",
+  "bookingConfirm": "Xác nhận đặt phòng",
+  "pleaseCheckYourBookingInfo":"Vui lòng kiểm tra thông tin đặt phòng",
+  "notYet": "Chưa có",
+  "overNightBookingNote": "Đặt phòng qua đêm chỉ được đặt từ 21:00 tối đến 01:00 sáng hôm sau.",
+  "night": "Tối",
+  "morning": "Sáng",
+  "@@_PAYMENT_SCREEN": "=== MÀN HÌNH THANH TOÁN ===",
+  "hourlyBooking": "Đặt phòng theo giờ",
+  "overnightBooking": "Đặt phòng qua đêm",
+  "longStayBooking": "Đặt phòng dài ngày",
+
+  "@@_BOOKING_DETAILS": "--- Chi tiết đặt phòng ---",
+  "bookingDetails": "Chi tiết đặt phòng",
+  "rentalTime": "Thời gian thuê",
+  "numberOfNights": "Số đêm",
+  "numberOfDays": "Số ngày",
+
+  "@@_PRICE_BREAKDOWN": "--- Chi tiết giá ---",
+  "priceDetails": "Chi tiết giá",
+  "roomPrice": "Giá phòng",
+  "totalDuration": "Tổng thời gian",
+  "subtotalBeforeDiscount": "Tổng phụ (chưa giảm)",
+  "weekendSurcharge": "Thuế & phí cuối tuần(1.2%)",
+  "discount": "Giảm giá",
+  "totalAmount": "Tổng cộng",
+
+  "@@_PAYMENT_METHODS": "--- Phương thức thanh toán ---",
+  "paymentMethod": "Phương thức thanh toán",
+  "payAtHotel": "Trả tại khách sạn",
+  "payOnCheckIn": "Thanh toán khi nhận phòng",
+  "zaloPayWallet": "Ví ZaloPay",
+  "zaloPayDescription": "Thanh toán qua ví điện tử ZaloPay",
+  "creditCard": "Thẻ tín dụng",
+  "creditCardDescription": "Visa, Mastercard",
+  "momoWallet": "Ví MoMo",
+  "momoDescription": "Thanh toán qua ví điện tử Momo",
+  "vnPay": "VNPay",
+  "vnPayDescription": "Cổng thanh toán quốc gia",
+  "selectPaymentMethod": "Chọn phương thức thanh toán",
+
+  "@@_PAYMENT_ACTIONS": "--- Hành động thanh toán ---",
+  "waitingForResult": "CHỜ KẾT QUẢ...",
+  "payAmount": "THANH TOÁN",
+  "waitingForPayment": "Đang chờ thanh toán",
+  "completePaymentOn": "Vui lòng hoàn tất thanh toán trên app",
+  "returnToAppAfterPayment": "Sau khi thanh toán xong, vui lòng quay lại app này",
+  "checkAgain": "Kiểm tra lại",
+
+  "@@_PAYMENT_RESULTS": "--- Kết quả thanh toán ---",
+  "paymentSuccessful": "Thanh toán thành công!",
+  "paymentSuccessMessage": "Giao dịch đã thành công. Vui lòng đến nhận phòng đúng giờ!",
+  "paymentFailed": "Thanh toán thất bại",
+  "paymentFailedMessage": "Giao dịch không thành công. Vui lòng thử lại hoặc chọn phương thức thanh toán khác.",
+  "bookingSuccessful": "Đặt phòng thành công!",
+  "bookingSuccessMessage": "Đặt phòng thành công! Vui lòng thanh toán khi nhận phòng",
+  "bookingAndPaymentSuccessful": "Đã đặt phòng và thanh toán thành công!",
+
+  "@@_ERRORS": "--- Thông báo lỗi ---",
+  "errorOccurred": "Lỗi: ",
+  "cannotOpenPaymentApp": "Không thể mở ứng dụng thanh toán:",
+
+  "hours": "giờ",
+  "duration": "Thời gian",
+
+
+
+
+  "@@_BOOKING_CARD": "--- Thẻ đặt phòng ---",
+  "unknownHotel": "Khách sạn không xác định",
+  "unknownLocation": "Vị trí không xác định",
+  "checkIn": "Nhận phòng",
+  "checkOut": "Trả phòng",
+  "room": "phòng",
+  "standardRoom": "Phòng tiêu chuẩn",
+  "ongoing": "Đang diễn ra",
+  "completed": "Đã hoàn thành",
+  "canceled": "Đã hủy",
+  "cancelBooking": "Hủy đặt phòng",
+  "yeayCompleted": "Tuyệt vời, bạn đã hoàn thành!",
+  "youCanceledBooking": "Bạn đã hủy đặt phòng khách sạn này",
+
+  "@@_BOOKING_DETAIL": "--- Chi tiết đặt phòng ---",
+  "bookingInformation": "Thông tin đặt phòng",
+  "bookingId": "Mã đặt phòng",
+  "roomType": "Loại phòng",
+  "roomQuantity": "Số lượng phòng",
+  "paymentInformation": "Thông tin thanh toán",
+  "paymentStatus": "Trạng thái thanh toán",
+  "contactNumber": "Số liên hệ",
+  "specialRequests": "Yêu cầu đặc biệt",
+  "contactHotel": "Liên hệ khách sạn",
+  "downloadTicket": "Tải vé",
+  "callHotel": "Gọi khách sạn",
+  "speakDirectly": "Nói chuyện trực tiếp với nhân viên khách sạn",
+  "chatWithHotel": "Nhắn tin với khách sạn",
+  "sendMessage": "Gửi tin nhắn đến khách sạn",
+  "downloadingTicket": "Đang tải vé...",
+  "ticketDownloadedSuccess": "Tải vé thành công!",
+
+  "@@_CANCEL_BOOKING": "--- Hủy đặt phòng ---",
+  "cancelBookingTitle": "Hủy đặt phòng",
+  "cancelBookingMessage": "Bạn có chắc chắn muốn hủy đặt phòng khách sạn không?",
+  "refundPolicy": "Chỉ 80% số tiền bạn có thể hoàn lại từ khoản thanh toán theo chính sách của chúng tôi",
+  "yesContinue": "Có, tiếp tục",
+
+  "@@_BOOKING_LIST": "--- Danh sách đặt phòng ---",
+  "myBooking": "Đặt phòng của tôi",
+  "noOngoingBookings": "Không có đặt phòng đang diễn ra",
+  "ongoingBookingsWillAppear": "Các đặt phòng đang diễn ra của bạn sẽ xuất hiện ở đây",
+  "noCompletedBookings": "Không có đặt phòng đã hoàn thành",
+  "completedBookingsWillAppear": "Các đặt phòng đã hoàn thành của bạn sẽ xuất hiện ở đây",
+  "noCanceledBookings": "Không có đặt phòng đã hủy",
+  "canceledBookingsWillAppear": "Các đặt phòng đã hủy của bạn sẽ xuất hiện ở đây",
+  "errorLoadingBookings": "Lỗi tải danh sách đặt phòng",
+  "retry": "Thử lại",
+  "no": "Không",
+  "@@_PAYMENT_STATUS": "--- Trạng thái thanh toán ---",
+  "paid": "Đã thanh toán",
+  "unpaid": "Chưa thanh toán",
+  "partiallyPaid": "Thanh toán một phần",
+  "partial": "Một phần",
+  "refunded": "Đã hoàn tiền",
+  "notAvailable": "Không có",
+
+  "@@_PAYMENT_METHOD": "--- Phương thức thanh toán ---",
+  "momo": "MoMo",
+
+  "cash": "Tiền mặt",
+  "@@_NAVIGATION": "--- Điều hướng ---",
+
+  "@@_COMMON": "--- Chung ---",
+  "loading": "Đang tải...",
+  "success": "Thành công",
+  "failed": "Thất bại",
+  "share": "Chia sẻ",
+  "phone": "Điện thoại",
+  "chat": "Nhắn tin",
+  "download": "Tải về"
+
+
+
+
 }

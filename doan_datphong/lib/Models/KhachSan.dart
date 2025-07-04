@@ -1,10 +1,11 @@
 import 'dart:ffi';
 
-import 'package:doan_datphong/Data/Provider/FormatCurrency.dart';
+import 'package:doan_datphong/Helper/FormatCurrency.dart';
 import 'package:doan_datphong/Data/Provider/IP_v4_Address.dart';
+import 'package:doan_datphong/Models/ViTri.dart';
 import 'package:flutter/cupertino.dart';
 
-class Hotels {
+class KhachSan {
   String id;
   String tenKhachSan;
   String diaChi;
@@ -13,10 +14,13 @@ class Hotels {
   String moTa;
   double soSao;
   String soDienThoai;
+  String? loaiMoHinh; //
+  String? trangThai; // co hoat dong khong?
   String email;
   double giaCa;
+  ViTri? viTri;
 
-  Hotels({
+  KhachSan({
     required this.id,
     required this.tenKhachSan,
     required this.diaChi,
@@ -27,22 +31,31 @@ class Hotels {
     required this.soDienThoai,
     required this.email,
     required this.giaCa,
+    this.viTri,
+    this.loaiMoHinh,
+    this.trangThai,
+
   });
 
   // Chuyển từ JSON sang object
-  factory Hotels.fromJson(Map<String, dynamic> json) {
+  factory KhachSan.fromJson(Map<String, dynamic> json) {
     final String baseImageUrl = IPv4.IP_CURRENT;
-    return Hotels(
+    return KhachSan(
       id: json['_id'] ?? '',
       tenKhachSan: json['tenKhachSan'] ?? '',
-      diaChi: json['diaChi'] ?? '',
+      diaChi: json['diaChiDayDu'] ?? '',
       hinhAnh: baseImageUrl + (json['hinhAnh']??''),
       thanhPho: json['thanhPho'] ?? '',
       moTa: json['moTa'] ?? '',
       soSao: (json['soSao'] as num).toDouble(),
       soDienThoai: json['soDienThoai'] ?? '',
       email: json['email'] ?? '',
-      giaCa: (json['giaCa'] as num).toDouble(),
+      giaCa: (json['giaTheoNgay'] as num).toDouble(),
+      viTri: json["diaChi"] != null
+          ? ViTri.fromJson(json["diaChi"])
+          : null,
+      loaiMoHinh: json['loaiKhachSan'],
+      trangThai: json['trangThai'],
     );
   }
 
@@ -51,7 +64,7 @@ class Hotels {
     return {
       '_id': id,
       'tenKhachSan': tenKhachSan,
-      'diaChi': diaChi,
+      'diaChiDayDu': diaChi,
       'hinhAnh': hinhAnh,
       'thanhPho': thanhPho,
       'moTa': moTa,
@@ -59,6 +72,8 @@ class Hotels {
       'soDienThoai': soDienThoai,
       'email': email,
       'giaCa':giaCa,
+      'loaiKhachSan': loaiMoHinh,
+      'trangThai': trangThai,
     };
   }
 }

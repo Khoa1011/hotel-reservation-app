@@ -9,6 +9,7 @@ enum NotificationType {
   info,
 }
 
+
 class NotificationDialog {
   static void show(
       BuildContext context, {
@@ -29,6 +30,34 @@ class NotificationDialog {
           message: message,
           buttonText: buttonText,
           onButtonPressed: onButtonPressed,
+        );
+      },
+    );
+  }
+
+  // 🆕 Method mới cho booking confirmation
+  static void showBookingConfirmation(
+      BuildContext context, {
+        required String roomTypeName,
+        required String price,
+        required String dates,
+        required String guests,
+        required String rooms,
+        required VoidCallback onConfirm,
+        VoidCallback? onCancel,
+      }) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return _BookingConfirmationDialog(
+          roomTypeName: roomTypeName,
+          price: price,
+          dates: dates,
+          guests: guests,
+          rooms: rooms,
+          onConfirm: onConfirm,
+          onCancel: onCancel,
         );
       },
     );
@@ -416,6 +445,351 @@ class _FloatingDotState extends State<_FloatingDot>
           ),
         );
       },
+    );
+  }
+}
+
+// 🆕 Class mới cho booking confirmation - KHÔNG thay đổi UI cũ
+class _BookingConfirmationDialog extends StatefulWidget {
+  final String roomTypeName;
+  final String price;
+  final String dates;
+  final String guests;
+  final String rooms;
+  final VoidCallback onConfirm;
+  final VoidCallback? onCancel;
+
+  const _BookingConfirmationDialog({
+    required this.roomTypeName,
+    required this.price,
+    required this.dates,
+    required this.guests,
+    required this.rooms,
+    required this.onConfirm,
+    this.onCancel,
+  });
+
+  @override
+  _BookingConfirmationDialogState createState() => _BookingConfirmationDialogState();
+}
+
+class _BookingConfirmationDialogState extends State<_BookingConfirmationDialog>
+    with TickerProviderStateMixin {
+  late AnimationController _scaleController;
+  late AnimationController _iconController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _iconAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _scaleController = AnimationController(
+      duration: Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _iconController = AnimationController(
+      duration: Duration(milliseconds: 500),
+      vsync: this,
+    );
+
+    _scaleAnimation = CurvedAnimation(
+      parent: _scaleController,
+      curve: Curves.elasticOut,
+    );
+    _iconAnimation = CurvedAnimation(
+      parent: _iconController,
+      curve: Curves.bounceOut,
+    );
+
+    _scaleController.forward();
+    Future.delayed(Duration(milliseconds: 200), () {
+      _iconController.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    _iconController.dispose();
+    super.dispose();
+  }
+
+  List<Widget> _buildFloatingDots() {
+    final color = Color(0xFF2196F3).withOpacity(0.3); // Blue color for booking
+    return [
+      // Top left
+      Positioned(
+        top: 20,
+        left: 30,
+        child: _FloatingDot(color: color, size: 8, delay: 0),
+      ),
+      // Top right
+      Positioned(
+        top: 40,
+        right: 40,
+        child: _FloatingDot(color: color, size: 12, delay: 200),
+      ),
+      // Middle left
+      Positioned(
+        top: 120,
+        left: 20,
+        child: _FloatingDot(color: color, size: 6, delay: 400),
+      ),
+      // Middle right
+      Positioned(
+        top: 140,
+        right: 30,
+        child: _FloatingDot(color: color, size: 10, delay: 600),
+      ),
+      // Bottom left
+      Positioned(
+        bottom: 120,
+        left: 40,
+        child: _FloatingDot(color: color, size: 8, delay: 800),
+      ),
+      // Bottom right
+      Positioned(
+        bottom: 140,
+        right: 20,
+        child: _FloatingDot(color: color, size: 14, delay: 1000),
+      ),
+    ];
+  }
+
+  Widget _buildInfoRow(String label, String value, IconData icon) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: Color(0xFF2196F3).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(
+              icon,
+              size: 14,
+              color: Color(0xFF2196F3),
+            ),
+          ),
+          SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 1),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[800],
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: Container(
+          width: 360,
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Floating dots
+              ..._buildFloatingDots(),
+
+              // Main content
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(height: 20),
+
+                  // Animated icon circle
+                  ScaleTransition(
+                    scale: _iconAnimation,
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: Color(0xFF2196F3),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(0xFF2196F3).withOpacity(0.3),
+                            blurRadius: 20,
+                            offset: Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.hotel,
+                        color: Colors.white,
+                        size: 40,
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 24),
+
+                  // Title
+                  Text(
+                    S.of(context).bookingConfirm,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2196F3),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  SizedBox(height: 6),
+
+                  // Subtitle
+                  Text(
+                   S.of(context).pleaseCheckYourBookingInfo,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  SizedBox(height: 20),
+
+                  // Booking details container
+                  Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.grey[200]!),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildInfoRow('Loại phòng', widget.roomTypeName, Icons.bed),
+                        _buildInfoRow('Giá tiền', widget.price, Icons.attach_money),
+                        _buildInfoRow('Thời gian', widget.dates, Icons.calendar_today),
+                        _buildInfoRow('Số khách', widget.guests, Icons.people),
+                        _buildInfoRow('Số phòng', widget.rooms, Icons.door_front_door),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 24),
+
+                  // Buttons
+                  Row(
+                    children: [
+                      // Cancel button
+                      Expanded(
+                        child: SizedBox(
+                          height: 44,
+                          child: OutlinedButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              if (widget.onCancel != null) {
+                                widget.onCancel!();
+                              }
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.grey[600],
+                              side: BorderSide(color: Colors.grey[300]!),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(22),
+                              ),
+                            ),
+                            child: Text(
+                              S.of(context).cancel,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(width: 10),
+
+                      // Confirm button
+                      Expanded(
+                        flex: 2,
+                        child: SizedBox(
+                          height: 44,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              widget.onConfirm();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xFF2196F3),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(22),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.check, size: 16),
+                                SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    S.of(context).confirm,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

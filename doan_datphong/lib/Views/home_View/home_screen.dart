@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:doan_datphong/Views/home_View/listHotelView.dart';
+import 'package:doan_datphong/Views/home_View/listHotelView_type.dart';
 import 'package:doan_datphong/Views/home_View/searchView.dart';
 import 'package:doan_datphong/Views/listBooking_View/listBooking_screen.dart';
 import 'package:doan_datphong/Views/profile_View/profile_screen.dart';
@@ -12,7 +13,8 @@ import 'package:doan_datphong/generated/l10n.dart';
 
 class HomeScreen extends StatefulWidget {
   final NguoiDung? user;
-  const HomeScreen({super.key, required this.user});
+  const HomeScreen({super.key,
+    required this.user});
   @override
   _HomePageState createState() => _HomePageState();
 }
@@ -38,8 +40,10 @@ class _HomePageState extends State<HomeScreen> {
   Future<void> _saveUserId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString("user_id", widget.user!.id);
+    await prefs.setString("user_std", widget.user!.soDienThoai);
     print("Token current: ${prefs.getString("token")}");
     print("User ID saved: ${widget.user!.id}");
+    print("User phone number saved: ${widget.user!.soDienThoai}");
   }
 
   @override
@@ -64,7 +68,7 @@ class _HomePageState extends State<HomeScreen> {
             fontSize: 24,
             fontWeight: FontWeight.bold,
             color: Color(0xFF42A5F5),
-            fontFamily: 'Lato Semibold',
+
           ),
         ),
         centerTitle: false,
@@ -102,7 +106,6 @@ class _HomePageState extends State<HomeScreen> {
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      fontFamily: 'Lato Semibold',
                       color: Color(0xFF1565C0)
                     ),
                   ),
@@ -263,7 +266,7 @@ class _HomePageState extends State<HomeScreen> {
                 ),
 
 
-                HotelCardView(),
+                HotelViewSwitcher(),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -283,7 +286,7 @@ class _HomePageState extends State<HomeScreen> {
                           fontSize: 18,
                           color: Color(0xFF1565C0),
                           fontWeight: FontWeight.bold,
-                          fontFamily: 'Lato Semibold',
+
                         ),
                       ),
                     ),
@@ -364,7 +367,7 @@ class _HomePageState extends State<HomeScreen> {
                                               fontSize: 18,
                                                 color: Color(0xFF1565C0),
                                                 fontWeight: FontWeight.bold,
-                                                fontFamily: 'Lato Semibol',
+
 
                                               ),
                                             ),
@@ -373,7 +376,6 @@ class _HomePageState extends State<HomeScreen> {
                                               style: TextStyle(
                                                 fontSize: 16,
                                                 fontStyle: FontStyle.italic,
-                                                fontFamily: 'Lato Semibold',
 
                                               ),
                                             ),
@@ -394,11 +396,11 @@ class _HomePageState extends State<HomeScreen> {
                                           Text("\$29",
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
-                                            fontFamily:'Lato Semibold',
+
                                             fontSize: 25,
                                             color: Color(0xFF1565C0)
                                           ),),
-                                          Text("/ night",
+                                          Text("/ ${S.of(context).perNight}",
                                           style: TextStyle(
                                             fontSize: 15,
                                             fontStyle: FontStyle.italic

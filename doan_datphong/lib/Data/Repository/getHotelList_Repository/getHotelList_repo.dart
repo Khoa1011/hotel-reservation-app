@@ -5,14 +5,14 @@ import 'dart:io';
 import '../../../Models/KhachSan.dart';
 import 'package:http/http.dart' as http;
 
-import '../../Provider/ErrorCode.dart';
+import '../../../Helper/ErrorCode.dart';
 import '../../Provider/IP_v4_Address.dart';
 
 class GetHotelListRepository{
   static final String ip = IPv4.IP_CURRENT;
   final String baseURL = "$ip/api/hotels";
 
-  Future<List<Hotels>> fetchHotels() async {
+  Future<List<KhachSan>> fetchHotels() async {
     final url = Uri.parse("$baseURL/getHotelList");
     try {
       final response = await http.get(url).timeout(
@@ -28,8 +28,8 @@ class GetHotelListRepository{
           throw Exception(ErrorCodes.invalidResponse);
         }
         List<dynamic> hotelsJson = data['hotels'];
-        print(hotelsJson);
-        return hotelsJson.map((json) => Hotels.fromJson(json)).toList();
+        print("Danh sách khách sạn: $hotelsJson");
+        return hotelsJson.map((json) => KhachSan.fromJson(json)).toList();
       } else if (response.statusCode >= 500) {
         throw Exception(ErrorCodes.serverRefused);
       } else {

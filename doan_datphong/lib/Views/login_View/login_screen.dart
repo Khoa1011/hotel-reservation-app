@@ -109,6 +109,7 @@ class _LoginState extends State<LoginScreen> {
         else if (state is LoginIncomplete) {
           Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => FillProfile()));
         } else if (state is LoginFailure) {
+
           if(state.errorMessage == "ERROR_CONNECTION_TIMEOUT"){
             NotificationDialog.showError(
               context,
@@ -119,11 +120,21 @@ class _LoginState extends State<LoginScreen> {
               context,
               message: S.of(context).errorNetworkUnreachable,
             );
-          }else {
+          }else if (state.errorMessage == "ERROR_SERVER_REFUSED"){
             NotificationDialog.showError(
               context,
               message: S.of(context).errorServerRefused,
             );
+          }else if(state.errorMessage == "NOT_EXIST_EMAILS"){
+            NotificationDialog.showWarning(context,
+                message: S.of(context).emailNotExist);
+
+          }else if(state.errorMessage == "PASSWORD_IS_INCORRECT"){
+            NotificationDialog.showWarning(context,
+                message: S.of(context).passwordIncorrect);
+          }else{
+            NotificationDialog.showWarning(context,
+                message: S.of(context).maintenanceServer);
           }
         }
       },

@@ -7,7 +7,7 @@ import 'package:doan_datphong/Blocs/getAmenities_Blocs/getAmenities_bloc.dart';
 import 'package:doan_datphong/Blocs/getAmenities_Blocs/getAmenities_event.dart';
 import 'package:doan_datphong/Blocs/getAmenities_Blocs/getAmenities_state.dart';
 import '../../../Models/TienNghi.dart';
-import '../../../Models/NhomTienNghi.dart';
+import 'package:doan_datphong/generated/l10n.dart';
 import 'amenities_modal.dart';
 
 class AmenitiesSection extends StatefulWidget {
@@ -176,7 +176,7 @@ class _AmenitiesSectionState extends State<AmenitiesSection> {
                 Icon(Icons.visibility, color: Colors.blue, size: 16),
                 const SizedBox(width: 8),
                 Text(
-                  "View all amenities",
+                  S.of(context).viewAllAmenities,
                   style: TextStyle(
                     color: Colors.blue,
                     fontWeight: FontWeight.w500,

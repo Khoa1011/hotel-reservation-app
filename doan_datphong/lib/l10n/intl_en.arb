@@ -285,6 +285,8 @@
   "@tryAgain": {
     "description": "Try again button text"
   },
+  "notOldEnough": "You are not old enough to register an account!",
+  "invalidAge": "Invalid age!",
   "warning": "Warning!",
   "@warning": {
     "description": "Warning dialog title"
@@ -308,6 +310,9 @@
   "@errorConnectionTimeout": {
     "description": "Connection timeout error message"
   },
+
+  "passwordIncorrect": "Password is incorrect. Please try again!",
+  "emailNotExist": "Email does not exist. If you do not have one, please register an account!",
   "connectionTimeoutAgain": "Please check your network and try again.",
   "errorServerRefused": "Server refused connection. Server may be down!",
   "@errorServerRefused": {
@@ -318,6 +323,7 @@
   "@errorNetworkUnreachable": {
     "description": "Network unreachable error message"
   },
+
   "notNetwork": "No internet connection",
   "errorInvalidResponse": "Server returned invalid data!",
   "@errorInvalidResponse": {
@@ -387,14 +393,7 @@
   "@perNight": {
     "description": "Per night pricing text"
   },
-  "night": "/ night",
-  "@night": {
-    "description": "Night pricing text"
-  },
-  "reviews": "reviews",
-  "@reviews": {
-    "description": "Reviews text"
-  },
+
 
   "loadingHotels": "Loading hotel list...",
   "loadingData": "Loading data...",
@@ -415,6 +414,10 @@
   "categories": "Categories",
   "totalAmenities": "Total Amenities",
 
+  "amenityGroupIsEmpty":"Amenity group is empty",
+  "hotelNotAmenityYet": "This hotel has no facilities yet. Please check back later.",
+  "updatingInProgress": "Updating in progress",
+
 
 
   "description": "Description",
@@ -430,10 +433,19 @@
   "thu7_Saturday": "Sat",
   "cn_Sunday": "Su",
 
+  "checkoutDateMustAfterCheckinDate": "Check-in and check-out dates must be different",
+"checkInTimeNotSelected": "Check-in time not selected!",
+  "checkOutTimeNotSelected": "Check-out time not selected!",
+  "checkInDateNotSelected": "Check-in date not selected!",
+  "checkOutDateNotSelected": "Check-out date not selected!",
+  "selectDateInPast": "No date selected in the past!",
   "checkInDate": "Check-in date",
   "checkOutDate": "Check-Out date",
   "checkInTime": "Check-in time",
-  "messageSelectDateTimeCheckIn": "Please select check-in and check-out dates",
+  "checkOutTime": "Check-out time",
+  "messageSelectDateTimeCheckIn": "Please select check-in and check-out times",
+  "messageSelectDateDateCheckIn": "Please select check-in and check-out dates",
+  "minimumHour": "Hourly rental minimum 1 hour!",
   "optionSeletedTime": "Option",
   "guestsRooms": "Guests & Rooms",
   "selectedTime": "Selected time",
@@ -443,7 +455,200 @@
   "agesOrAbove": "Ages 13 or above",
   "age2_12": "Ages 2-12",
   "howManyRoomsNeeded": "How many rooms needed ?",
-  "apply":"Apply"
+  "apply":"Apply",
+  "hourly": "Hourly",
+  "overnight": "Overnight",
+  "longDays": "Long days",
+  "rentByTheHour": "Rent by the hour",
+  "rentByTheHourNote": "Minimum 1 hour • Flexible during the day",
+  "rentOvernight": "Rent overnight",
+  "rentOvernightNote": "Default will be 22:00 PM today to 12:00 PM tomorrow",
+  "rentLongDays": "Long term rental",
+  "rentLongDaysNote": "From 2 days or more • Special price",
+  "dateOfUse": "Date of use",
+  "selecteTime": "Select time",
+  "hourCheckInTime": "Check-in by time",
+  "total": "Total",
+  "day": "day",
+  "checkoutAfterCheckin": "Check-out date must be after check-in date",
+  "sameDayOnlyHourly": "Hourly booking must be within the same day",
+  "overnightOnlyOneNight": "Overnight stay must be from today to tomorrow",
 
 
+
+  "@@_REVIEWS_SECTION": "---REVIEWS SECTION---",
+
+  "reviews": "Review",
+  "moreReviews": "More",
+  "allReviews": "All Reviews",
+  "writeReview": "Write a Review",
+  "helpful": "Helpful",
+  "rating": "Rating",
+  "showLess": "Show less",
+
+  "@@_LIST_ROOMTYPES_SECTION": "---LIST ROOMTYPES SECTION---",
+  "lookingForRooms": "Looking for rooms...",
+  "roomAvailable": "rooms available",
+  "notRoomTypesAvailable": "No rooms available!",
+  "pleaseTryChangingTheSearchDate": "Please try changing the search date!",
+  "almostOver": "Almost over",
+  "available": "Available",
+  "soldOut": "Sold out",
+  "from": "From",
+  "to": "to",
+  "viewAbridged": "View abridged",
+  "selectRoomType": "Select room type",
+  "refresh": "Refresh",
+
+  "roomIsCurrentlyUnavailable": "This room is currently unavailable.",
+  "singleBed": "Single bed",
+  "doubleBed": "Double bed",
+  "queenBed": "Queen bed",
+  "kingBed": "King bed",
+  "bed": "Bed",
+  "otherAmenities": "other amenities",
+  "bedTypeUnknown": "Bed type unknown",
+  "bookingConfirm": "Confirm this booking",
+  "pleaseCheckYourBookingInfo":"Please check your booking information",
+  "notYet": "Not yet",
+  "overNightBookingNote": "Overnight reservations can only be made between 9:00 PM and 1:00 AM the following morning.",
+  "night": "Night",
+  "morning": "Morning",
+
+  "@@_PAYMENT_SCREEN": "=== PAYMENT SCREEN ===",
+  "hourlyBooking": "Hourly Booking",
+  "overnightBooking": "Overnight Booking",
+  "longStayBooking": "Long-Stay Booking",
+
+  "@@_BOOKING_DETAILS": "--- Booking Details ---",
+  "bookingDetails": "Booking Details",
+  "rentalTime": "Rental Time",
+  "numberOfNights": "Number of Nights",
+  "numberOfDays": "Number of Days",
+
+  "@@_PRICE_BREAKDOWN": "--- Price Breakdown ---",
+  "priceDetails": "Price Details",
+  "roomPrice": "Room Price",
+  "totalDuration": "Total Duration",
+  "subtotalBeforeDiscount": "Subtotal (before discount)",
+  "weekendSurcharge": "Weekend Tax & Fee (1.2%)",
+  "discount": "Discount",
+  "totalAmount": "Total Amount",
+
+  "@@_PAYMENT_METHODS": "--- Payment Methods ---",
+  "paymentMethod": "Payment Method",
+  "payAtHotel": "Pay at Hotel",
+  "payOnCheckIn": "Pay on Check-In",
+  "zaloPayWallet": "ZaloPay Wallet",
+  "zaloPayDescription": "Pay via ZaloPay e-wallet",
+  "creditCard": "Credit Card",
+  "creditCardDescription": "Visa, Mastercard",
+  "momoWallet": "MoMo Wallet",
+  "momoDescription": "Pay via MoMo e-wallet",
+  "vnPay": "VNPay",
+  "vnPayDescription": "National Payment Gateway",
+  "selectPaymentMethod": "Select Payment Method",
+
+  "@@_PAYMENT_ACTIONS": "--- Payment Actions ---",
+  "waitingForResult": "WAITING FOR RESULT...",
+  "payAmount": "PAY",
+  "waitingForPayment": "Waiting for Payment",
+  "completePaymentOn": "Please complete the payment in the app",
+  "returnToAppAfterPayment": "After completing payment, please return to this app",
+  "checkAgain": "Check Again",
+
+  "@@_PAYMENT_RESULTS": "--- Payment Results ---",
+  "paymentSuccessful": "Payment Successful!",
+  "paymentSuccessMessage": "The transaction was successful. Please check in on time!",
+  "paymentFailed": "Payment Failed",
+  "paymentFailedMessage": "The transaction failed. Please try again or choose another payment method.",
+  "bookingSuccessful": "Booking Successful!",
+  "bookingSuccessMessage": "Booking confirmed! Please pay on check-in",
+  "bookingAndPaymentSuccessful": "Booking and Payment Successful!",
+
+  "@@_ERRORS": "--- Error Messages ---",
+  "errorOccurred": "Error: ",
+  "cannotOpenPaymentApp": "Cannot open payment app:",
+  "hours": "hours",
+  "duration": "Time",
+
+
+
+
+
+
+  "@@_BOOKING_CARD": "--- Booking Card ---",
+  "unknownHotel": "Unknown Hotel",
+  "unknownLocation": "Unknown location",
+  "checkIn": "Check-in",
+  "checkOut": "Check-out",
+  "standardRoom": "Standard Room",
+  "ongoing": "Ongoing",
+  "completed": "Completed",
+  "canceled": "Canceled",
+  "cancelBooking": "Cancel Booking",
+  "yeayCompleted": "Yeay, you have completed it!",
+  "youCanceledBooking": "You canceled this hotel booking",
+
+  "@@_BOOKING_DETAIL": "--- Booking Detail ---",
+  "bookingInformation": "Booking Information",
+  "bookingId": "Booking ID",
+  "roomType": "Room Type",
+  "roomQuantity": "Room Quantity",
+  "paymentInformation": "Payment Information",
+  "paymentStatus": "Payment Status",
+  "contactNumber": "Contact Number",
+  "specialRequests": "Special Requests",
+  "contactHotel": "Contact Hotel",
+  "downloadTicket": "Download Ticket",
+  "callHotel": "Call Hotel",
+  "speakDirectly": "Speak directly with hotel staff",
+  "chatWithHotel": "Chat with Hotel",
+  "sendMessage": "Send a message to the hotel",
+  "downloadingTicket": "Downloading ticket...",
+  "ticketDownloadedSuccess": "Ticket downloaded successfully!",
+
+  "@@_CANCEL_BOOKING": "--- Cancel Booking ---",
+  "cancelBookingTitle": "Cancel Booking",
+  "cancelBookingMessage": "Are you sure you want to cancel your hotel booking?",
+  "refundPolicy": "Only 80% of the money you can refund from your payment according to our policy",
+  "yesContinue": "Yes, Continue",
+
+  "@@_BOOKING_LIST": "--- Booking List ---",
+  "myBooking": "My Booking",
+  "noOngoingBookings": "No ongoing bookings",
+  "ongoingBookingsWillAppear": "Your ongoing bookings will appear here",
+  "noCompletedBookings": "No completed bookings",
+  "completedBookingsWillAppear": "Your completed bookings will appear here",
+  "noCanceledBookings": "No canceled bookings",
+  "canceledBookingsWillAppear": "Your canceled bookings will appear here",
+  "errorLoadingBookings": "Error loading bookings",
+  "retry": "Retry",
+
+  "@@_PAYMENT_STATUS": "--- Payment Status ---",
+  "paid": "Paid",
+  "unpaid": "Unpaid",
+  "partiallyPaid": "Partially Paid",
+  "partial": "Partial",
+  "refunded": "Refunded",
+  "notAvailable": "N/A",
+
+  "@@_PAYMENT_METHOD": "--- Payment Method ---",
+  "vnpay": "VNPay",
+  "momo": "MoMo",
+  "zalopay": "ZaloPay",
+  "cash": "Cash",
+  "no": "No",
+
+  "@@_NAVIGATION": "--- Navigation ---",
+
+  "@@_COMMON": "--- Common ---",
+  "loading": "Loading...",
+
+  "success": "Success",
+  "failed": "Failed",
+  "share": "Share",
+  "phone": "Phone",
+  "chat": "Chat",
+  "download": "Download"
 }

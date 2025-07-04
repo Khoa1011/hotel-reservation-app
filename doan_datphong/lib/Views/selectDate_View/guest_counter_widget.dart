@@ -297,14 +297,14 @@ class GuestCounterWidget extends StatelessWidget {
       // TIẾNG VIỆT - Không cần thêm 's'
       guestText = '$adults người lớn';
       if (children > 0) {
-        guestText += ', $children trẻ em';
+        guestText += ' • $children trẻ em';
       }
       roomText = '$rooms phòng';
     } else {
       // TIẾNG ANH - Cần thêm 's' cho số nhiều
       guestText = '$adults adult${adults > 1 ? 's' : ''}';
       if (children > 0) {
-        guestText += ', $children child${children > 1 ? 'ren' : ''}';
+        guestText += ' • $children child${children > 1 ? 'ren' : ''}';
       }
       roomText = '$rooms room${rooms > 1 ? 's' : ''}';
     }

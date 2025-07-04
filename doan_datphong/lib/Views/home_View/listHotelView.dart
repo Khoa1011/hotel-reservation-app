@@ -7,9 +7,10 @@ import '../../Blocs/getHotelList_Blocs/getHotelList_event.dart';
 import '../../Blocs/getHotelList_Blocs/getHotelList_state.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:doan_datphong/generated/l10n.dart';
-import '../../Data/Provider/FormatCurrency.dart';
-import '../../Data/Provider/ErrorCode.dart';
+import '../../Helper/FormatCurrency.dart';
+import '../../Helper/ErrorCode.dart';
 import '../components/NotificationDialog.dart';
+
 
 class HotelCardView extends StatefulWidget {
   @override
@@ -217,7 +218,6 @@ class _HotelCardState extends State<HotelCardView> {
                       ),
                     ),
                   ),
-
                 if (isLoading)
                   Container(
                     child: Center(
@@ -352,7 +352,7 @@ class _HotelCardState extends State<HotelCardView> {
   }
 
 
-  Widget buildHotelCard(Hotels hotel) {
+  Widget buildHotelCard(KhachSan hotel) {
     return InkWell(
       splashColor: Colors.blue.withOpacity(0.3),
       highlightColor: Colors.blue.withOpacity(0.1),
@@ -421,7 +421,7 @@ class _HotelCardState extends State<HotelCardView> {
     );
   }
 
-  Widget hotelInfo(Hotels hotel) {
+  Widget hotelInfo(KhachSan hotel) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),

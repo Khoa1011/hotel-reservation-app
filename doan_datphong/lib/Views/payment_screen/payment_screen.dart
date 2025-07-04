@@ -1,17 +1,44 @@
 import 'package:doan_datphong/Blocs/payment_Blocs/payment_bloc.dart';
 import 'package:doan_datphong/Blocs/payment_Blocs/payment_event.dart';
 import 'package:doan_datphong/Blocs/payment_Blocs/payment_state.dart';
-import 'package:doan_datphong/Models/Bookings.dart';
-import 'package:doan_datphong/Models/Room.dart';
+import 'package:doan_datphong/Helper/FormatCurrency.dart';
+import 'package:doan_datphong/Models/DonDatPhong.dart';
+import 'package:doan_datphong/Models/LichPhongTrong.dart';
+import 'package:doan_datphong/Models/LoaiPhong.dart';
 import 'package:doan_datphong/Views/home_View/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../generated/l10n.dart';
+import '../../Helper/FormatDateTime.dart';
+import '../components/NotificationDialog.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 
 class PaymentScreen extends StatefulWidget {
-  final Room room;
-  const PaymentScreen({super.key, required this.room});
+  final LoaiPhong loaiPhong;
+  final LichPhongTrong lichPhongTrong;
+
+  // ✅ Thêm các parameters để lưu search info
+  final String? bookingType;
+  final String? checkInDate;
+  final String? checkOutDate;
+  final String? checkInTime;
+  final String? checkOutTime;
+  final int? duration;
+
+  const PaymentScreen({
+    super.key,
+    required this.lichPhongTrong,
+    required this.loaiPhong,
+    this.bookingType,
+    this.checkInDate,
+    this.checkOutDate,
+    this.checkInTime,
+    this.checkOutTime,
+    this.duration,
+  });
 
   @override
   State<PaymentScreen> createState() => _PaymentScreenState();
@@ -20,328 +47,731 @@ class PaymentScreen extends StatefulWidget {
 class _PaymentScreenState extends State<PaymentScreen> {
   bool _isProcessingPayment = false;
   bool _paymentSuccess = false;
-  Booking_PaymentMethod selectedPaymentMethod = Booking_PaymentMethod.VNPay;
-  double totalAmount = 0.0;
+  bool _isWaitingForPaymentResult = false;
+  String? _currentOrderId;
+  PhuongThucThanhToan selectedPaymentMethod = PhuongThucThanhToan.tien_mat;
 
-  final _priceFormat = NumberFormat.currency(locale: 'en_US', symbol: '\$');
-  final _taxRate = 0.10;
-  DateTime? checkInDate = DateTime.now(), checkOutDate = DateTime.now();
-  TimeOfDay? checkInTime, checkOutTime= TimeOfDay(hour: 12,minute: 00);
+  late String checkInDate = widget.lichPhongTrong.ngayNhanPhong;
+  late String? checkOutDate = widget.lichPhongTrong.ngayTraPhong;
+  late String formattedCheckInTime = widget.lichPhongTrong.gioNhanPhong;
+  late String formattedCheckOutTime;
 
-  // Định dạng thời gian thành HH:mm
-  late String formattedCheckInTime;
-  late String formattedCheckOutTime ;
-
-  // Thêm danh sách phương thức thanh toán
-  final List<Map<String, dynamic>> _paymentMethods = [
-    {'id': Booking_PaymentMethod.CreditCard, 'name': 'Credit Card', 'icon': Image.asset("assets/icons/master_card.png")},
-    {'id': Booking_PaymentMethod.Momo, 'name': 'Momo', 'icon': Image.asset("assets/icons/logo_momo2.jpg")},
-    {'id': Booking_PaymentMethod.VNPay, 'name': 'VNPay', 'icon': Image.asset("assets/icons/Icon-VNPAY-QR.jpg")},
-  ];
-
-  double get _basePrice => widget.room.price;
-  double get _taxAmount => _basePrice * _taxRate;
-  double get _totalPrice => _basePrice + _taxAmount;
-  String address = '';
-
-  Future<void> getValueDataTime() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      checkInDate = DateTime.parse(prefs.getString("checkInDate") ?? DateTime.now().toString());
-      checkOutDate = DateTime.parse(prefs.getString("checkOutDate") ?? DateTime.now().toString());
-
-      // Lấy giờ check-in và check-out từ SharedPreferences, nếu có
-      String? checkInTimeString = prefs.getString("checkInTime");
-      String? checkOutTimeString = prefs.getString("checkOutTime");
-
-      // Chuyển đổi chuỗi giờ thành đối tượng TimeOfDay
-      if (checkInTimeString != null) {
-        final parts = checkInTimeString.split(":");
-        checkInTime = TimeOfDay(
-          hour: int.parse(parts[0]),
-          minute: int.parse(parts[1]),
-        );
-      }
-      checkOutTime = TimeOfDay(
-        hour: 12,
-        minute: 00,
-      );
-    });
+  String getDatetime(){
+    if(widget.lichPhongTrong.loaiDatPhong=="qua_dem"){
+      formattedCheckOutTime = "12:00";
+    }else if(widget.lichPhongTrong.loaiDatPhong=="theo_gio"){
+      formattedCheckOutTime= widget.lichPhongTrong.gioTraPhong ?? "00:00";
+    }else{
+      formattedCheckOutTime="";
+    }
+    return formattedCheckOutTime;
   }
 
-  //Thanh toán đơn đặt phòng
-  void eventPaymentBooking()async{
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? userID = prefs.getString("user_id");
-    String? hotelID =prefs.getString("hotel_id");
-    String? roomID = widget.room.id;
-    Booking booking = Booking.short(
-        booking_RoomId: roomID,
-        booking_HotelId: hotelID,
-        booking_UserId: userID,
-        booking_CheckInDate: DateFormat('dd/MM/yyyy').format(checkInDate!).toString(),
-        booking_CheckOutDate: DateFormat('dd/MM/yyyy').format(checkOutDate!).toString(),
-        booking_CheckInTime: formattedCheckInTime,
-        booking_CheckOutTime: formattedCheckOutTime,
-        booking_totalAmount: totalAmount,
-        booking_Status: BookingStatus.confirmed,
-        booking_PaymentMethod: selectedPaymentMethod,
-    );
-    print("$booking");
-    context.read<PaymentBloc>().add(
-      PaymentSubmitted(booking)
-    );
+  // ✅ Payment methods list
+  // final List<Map<String, dynamic>> _paymentMethods = [
+  //   {
+  //     'id': PhuongThucThanhToan.tien_mat,
+  //     'name': S.of(context).payAtHotel,
+  //     'icon': Icons.hotel_outlined,
+  //     'color': Colors.teal,
+  //     'description': 'Thanh toán khi nhận phòng'
+  //   },
+  //   {
+  //     'id': PhuongThucThanhToan.ZaloPay,
+  //     'name': 'Ví ZaloPay',
+  //     'image': 'assets/icons/logo_zalopay.png',
+  //     'color': Colors.teal,
+  //     'description': 'Thanh toán qua ví điện tử ZaloPay'
+  //   },
+  //   {
+  //     'id': PhuongThucThanhToan.the_tin_dung,
+  //     'name': 'Thẻ tín dụng',
+  //     'image': 'assets/icons/logo_mastercard.png',
+  //     'color': Colors.blue,
+  //     'description': 'Visa, Mastercard'
+  //   },
+  //   {
+  //     'id': PhuongThucThanhToan.Momo,
+  //     'name': 'Ví MoMo',
+  //     'image': 'assets/icons/logo_momo2.jpg',
+  //     'color': Colors.pink,
+  //     'description': 'Thanh toán qua ví điện tử Momo'
+  //   },
+  //   {
+  //     'id': PhuongThucThanhToan.VNPay,
+  //     'name': 'VNPay',
+  //     'image': 'assets/icons/Icon-VNPAY-QR.jpg',
+  //     'color': Colors.orange,
+  //     'description': 'Cổng thanh toán quốc gia'
+  //   },
+  // ];
 
+
+  List<Map<String, dynamic>> getPaymentMethods(BuildContext context) {
+    return [
+      {
+        'id': PhuongThucThanhToan.tien_mat,
+        'name': S.of(context).payAtHotel,
+        'icon': Icons.hotel_outlined,
+        'color': Colors.teal,
+        'description': S.of(context).payOnCheckIn,
+      },
+      {
+        'id': PhuongThucThanhToan.ZaloPay,
+        'name': S.of(context).zaloPayWallet,
+        'image': 'assets/icons/logo_zalopay.png',
+        'color': Colors.teal,
+        'description': S.of(context).zaloPayDescription,
+      },
+      {
+        'id': PhuongThucThanhToan.the_tin_dung,
+        'name': S.of(context).creditCard,
+        'image': 'assets/icons/logo_mastercard.png',
+        'color': Colors.blue,
+        'description': S.of(context).creditCardDescription,
+      },
+      {
+        'id': PhuongThucThanhToan.Momo,
+        'name': S.of(context).momoWallet,
+        'image': 'assets/icons/logo_momo2.jpg',
+        'color': Colors.pink,
+        'description': S.of(context).momoDescription,
+      },
+      {
+        'id': PhuongThucThanhToan.VNPay,
+        'name': 'VNPay',
+        'image': 'assets/icons/Icon-VNPAY-QR.jpg',
+        'color': Colors.orange,
+        'description': S.of(context).vnPayDescription,
+      },
+    ];
+  }
+
+  String address = '';
+
+
+
+  // ✅ MAIN PAYMENT HANDLER - Updated với native payment
+  void eventPaymentBooking() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String userID = prefs.getString("user_id") ?? '';
+      String? hotelID = prefs.getString("hotel_id");
+      String? userStd = prefs.getString("user_std")?? '';
+
+      // ✅ Tạo booking object
+      DonDatPhong booking = DonDatPhong.short(
+        maLoaiPhong: widget.loaiPhong.id,
+        maKhachSan: hotelID,
+        maNguoiDung: userID,
+        ngayNhanPhong: widget.lichPhongTrong.ngayNhanPhong,
+        ngayTraPhong: widget.lichPhongTrong.ngayTraPhong ?? "",
+        gioNhanPhong: formattedCheckInTime,
+        gioTraPhong: formattedCheckOutTime,
+        tongDonDat: widget.loaiPhong.giaCuoiCung,
+        trangThaiThanhToan: TrangThaiThanhToan.chua_thanh_toan,
+        phuongThucThanhToan: selectedPaymentMethod,
+        loaiDatPhong: _getLoaiDatPhongFromString(widget.lichPhongTrong.loaiDatPhong),
+        donGia: widget.loaiPhong.giaLoaiPhong?.giaCoBan ?? 0.0,
+        donVi: _getDonViFromBookingType(widget.lichPhongTrong.loaiDatPhong),
+        soLuongDonVi: widget.loaiPhong.giaLoaiPhong?.khoangThoiGian ?? 1,
+        tongTienPhong: widget.loaiPhong.giaCuoiCung,
+        soLuongPhong: widget.lichPhongTrong.soLuongPhong,
+        phuPhiCuoiTuan: widget.loaiPhong.giaLoaiPhong!.phanTichGia.phuThuCuoiTuan,
+        soDienThoai:userStd
+      );
+
+      // ✅ Dispatch event theo payment method
+      if (selectedPaymentMethod == PhuongThucThanhToan.tien_mat) {
+        // Cash payment
+        context.read<PaymentBloc>().add(PaymentSubmitted(booking));
+      } else {
+        // Native payment
+        final bloc = context.read<PaymentBloc>();
+        _currentOrderId = bloc.generateOrderId(widget.loaiPhong.id);
+        final amount = widget.loaiPhong.giaCuoiCung.toInt();
+        final orderInfo = "Thanh toan phong ${widget.loaiPhong.tenLoaiPhong}";
+
+        String paymentMethod;
+        switch (selectedPaymentMethod) {
+          case PhuongThucThanhToan.Momo:
+            paymentMethod = 'MoMo';
+            break;
+          case PhuongThucThanhToan.VNPay:
+            paymentMethod = 'VNPay';
+            break;
+          case PhuongThucThanhToan.ZaloPay:
+            paymentMethod = 'ZaloPay';
+            break;
+          default:
+            paymentMethod = 'Unknown';
+        }
+
+        context.read<PaymentBloc>().add(
+          NativePaymentRequested(
+            booking: booking,
+            paymentMethod: paymentMethod,
+            orderId: _currentOrderId!,
+            amount: amount,
+            orderInfo: orderInfo,
+          ),
+        );
+      }
+    } catch (e) {
+      NotificationDialog.showError(
+        context,
+        message: 'Lỗi: ${e.toString()}',
+      );
+    }
+  }
+  // ✅ HOTEL PAYMENT
+  Future<void> _processHotelPayment(DonDatPhong booking) async {
+    context.read<PaymentBloc>().add(PaymentSubmitted(booking));
+
+    setState(() {
+      _isProcessingPayment = false;
+    });
+
+    NotificationDialog.showSuccess(
+      context,
+      title: S.of(context).bookingSuccessful,
+      message: S.of(context).bookingSuccessMessage,
+      onButtonPressed: () {
+        Navigator.popUntil(context, ModalRoute.withName('/'));
+      },
+    );
+  }
+
+  // ========== XỬ LÝ MỞ APP THANH TOÁN ==========
+// Method này được gọi khi nhận state NativePaymentUrlGenerated
+  Future<void> _handlePaymentUrl(Map<String, dynamic> paymentData, String paymentMethod) async {
+    try {
+      print('🚀 Opening payment app for: $paymentMethod');
+      print('📊 Available payment data: ${paymentData.keys.toList()}');
+
+      // Route đến method xử lý tương ứng
+      switch (paymentMethod.toLowerCase()) {
+        case 'momo':
+          await _openMoMoPayment(paymentData);
+          break;
+        case 'vnpay':
+          await _openVNPayPayment(paymentData);
+          break;
+        case 'zalopay':
+          await _openZaloPayPayment(paymentData);
+          break;
+        default:
+          throw Exception('Unsupported payment method: $paymentMethod');
+      }
+
+      // Hiển thị dialog chờ kết quả thanh toán
+      _showPaymentWaitingDialog(paymentMethod);
+
+    } catch (e) {
+      print('💥 Error opening payment app: $e');
+      setState(() {
+        _isWaitingForPaymentResult = false;
+      });
+      NotificationDialog.showError(
+        context,
+        message: '${S.of(context).cannotOpenPaymentApp} $e',
+      );
+    }
+  }
+
+// ========== MỞ MOMO PAYMENT ==========
+  Future<void> _openMoMoPayment(Map<String, dynamic> momoData) async {
+    final payUrl = momoData['payUrl'];
+
+    print('💖 Opening MoMo payment...');
+    print('🌐 Pay URL: $payUrl');
+
+    if (payUrl != null && payUrl.isNotEmpty) {
+      final payUri = Uri.parse(payUrl);
+
+      // ✅ Chỉ thử 1 cách: external application
+      final launched = await launchUrl(
+          payUri,
+          mode: LaunchMode.externalApplication
+      );
+
+      if (launched) {
+        print('✅ Opened MoMo payment successfully');
+      } else {
+        print('❌ Failed to launch MoMo URL');
+        throw 'Could not launch MoMo payment URL';
+      }
+    } else {
+      throw 'No payment URL found in MoMo response';
+    }
+  }
+// ========== MỞ VNPAY PAYMENT ==========
+  Future<void> _openVNPayPayment(Map<String, dynamic> vnpayData) async {
+    final paymentUrl = vnpayData['paymentUrl']; // VNPay payment URL
+
+    print('🏦 Opening VNPay payment...');
+    print('🌐 Payment URL: $paymentUrl');
+
+    if (paymentUrl != null && paymentUrl.isNotEmpty) {
+      // ===== STRATEGY 1: THỬ MỞ APP VNPAY =====
+      // Tạo VNPay app deeplink
+      final vnpayAppUrl = Uri.parse('vnpay://pay?url=${Uri.encodeComponent(paymentUrl)}');
+
+      if (await canLaunchUrl(vnpayAppUrl)) {
+        await launchUrl(vnpayAppUrl, mode: LaunchMode.externalApplication);
+        print('✅ Opened VNPay app');
+      } else {
+        print('⚠️ VNPay app not installed, opening web...');
+
+        // ===== STRATEGY 2: FALLBACK VỀ WEB =====
+        final payUri = Uri.parse(paymentUrl);
+        if (await canLaunchUrl(payUri)) {
+          await launchUrl(payUri, mode: LaunchMode.externalApplication);
+          print('✅ Opened VNPay web payment');
+        } else {
+          throw 'Could not launch VNPay payment URL';
+        }
+      }
+    } else {
+      throw 'No payment URL found in VNPay response';
+    }
+  }
+
+// ========== MỞ ZALOPAY PAYMENT ==========
+  Future<void> _openZaloPayPayment(Map<String, dynamic> zaloData) async {
+    // ZaloPay có nhiều loại URL/token
+    final orderUrl = zaloData['order_url'];           // URL thanh toán web
+    final zpTransToken = zaloData['zp_trans_token'];  // Token cho app
+
+    print('💙 Opening ZaloPay payment...');
+    print('🌐 Order URL: $orderUrl');
+    print('🎫 ZP Trans Token: ${zpTransToken ?? 'Not available'}');
+
+    // ===== STRATEGY 1: THỬ APP ZALOPAY VỚI TOKEN =====
+    if (zpTransToken != null && zpTransToken.isNotEmpty) {
+      final zaloTokenUrl = Uri.parse('zalopay://pay?zp_trans_token=$zpTransToken');
+
+      if (await canLaunchUrl(zaloTokenUrl)) {
+        await launchUrl(zaloTokenUrl, mode: LaunchMode.externalApplication);
+        print('✅ Opened ZaloPay app with token');
+        return; // Thành công, thoát method
+      } else {
+        print('⚠️ Cannot open ZaloPay with token, trying order URL...');
+      }
+    }
+
+    // ===== STRATEGY 2: THỬ APP ZALOPAY VỚI ORDER URL =====
+    if (orderUrl != null && orderUrl.isNotEmpty) {
+      final zaloOrderUrl = Uri.parse('zalopay://app?order_url=${Uri.encodeComponent(orderUrl)}');
+
+      if (await canLaunchUrl(zaloOrderUrl)) {
+        await launchUrl(zaloOrderUrl, mode: LaunchMode.externalApplication);
+        print('✅ Opened ZaloPay app with order URL');
+        return; // Thành công, thoát method
+      } else {
+        print('⚠️ ZaloPay app not installed, opening web...');
+      }
+
+      // ===== STRATEGY 3: FALLBACK VỀ WEB =====
+      final orderUri = Uri.parse(orderUrl);
+      if (await canLaunchUrl(orderUri)) {
+        await launchUrl(orderUri, mode: LaunchMode.externalApplication);
+        print('✅ Opened ZaloPay web payment');
+      } else {
+        throw 'Could not launch ZaloPay payment URL';
+      }
+    } else {
+      throw 'No order URL found in ZaloPay response';
+    }
+  }
+
+// ========== DIALOG CHỜ KẾT QUẢ THANH TOÁN ==========
+// Hiển thị sau khi mở app thanh toán
+  void _showPaymentWaitingDialog(String paymentMethod) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // User không thể đóng bằng cách tap outside
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: Text(S.of(context).waitingForPayment),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(), // Loading indicator
+            SizedBox(height: 16),
+            Text('${S.of(context).completePaymentOn} $paymentMethod'),
+            SizedBox(height: 8),
+            Text(
+              S.of(context).returnToAppAfterPayment,
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
+
+            // ✅ Widget lắng nghe app lifecycle và check payment status
+            _PaymentStatusListener(
+              orderId: _currentOrderId!, // Order ID để track
+              onResult: (success, transactionId) {
+                Navigator.of(dialogContext).pop(); // Đóng dialog
+
+                // Xử lý kết quả
+                if (success) {
+                  _handlePaymentSuccess(transactionId!);
+                } else {
+                  _handlePaymentFailure();
+                }
+              },
+            ),
+          ],
+        ),
+        actions: [
+          // Button kiểm tra thủ công
+          TextButton(
+            onPressed: () {
+              print('🔄 Manual payment status check requested');
+              if (_currentOrderId != null) {
+                // Dispatch event kiểm tra status
+                context.read<PaymentBloc>().add(PaymentStatusChecked(_currentOrderId!));
+              }
+            },
+            child: Text(S.of(context).checkAgain),
+          ),
+          // Button hủy
+          TextButton(
+            onPressed: () {
+              print('❌ User cancelled payment wait');
+              Navigator.of(dialogContext).pop();
+              setState(() {
+                _isWaitingForPaymentResult = false;
+              });
+            },
+            child: Text(S.of(context).cancel),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+
+  // ✅ PAYMENT SUCCESS HANDLER
+  void _handlePaymentSuccess(String transactionId) {
+    NotificationDialog.showSuccess(
+      context,
+      title: S.of(context).paymentSuccessful,
+      message: S.of(context).paymentSuccessMessage,
+      onButtonPressed: () {
+        Navigator.popUntil(context, ModalRoute.withName('/'));
+      },
+    );
+  }
+
+  // ✅ PAYMENT FAILURE HANDLER
+  void _handlePaymentFailure() {
+    NotificationDialog.showError(
+      context,
+      title: 'Thanh toán thất bại',
+      message: 'Giao dịch không thành công. Vui lòng thử lại hoặc chọn phương thức thanh toán khác.',
+    );
+  }
+
+  // ✅ UTILITY METHODS
+  String _generateOrderId() {
+    return 'ORDER_${DateTime.now().millisecondsSinceEpoch}_${widget.loaiPhong.id}';
+  }
+
+  LoaiDatPhong _getLoaiDatPhongFromString(String? type) {
+    switch (type) {
+      case 'theo_gio': return LoaiDatPhong.theo_gio;
+      case 'qua_dem': return LoaiDatPhong.qua_dem;
+      case 'dai_ngay': return LoaiDatPhong.dai_ngay;
+      default: return LoaiDatPhong.qua_dem;
+    }
+  }
+
+  String _getDonViFromBookingType(String? type) {
+    switch (type) {
+      case 'theo_gio': return 'gio';
+      case 'qua_dem': return 'dem';
+      case 'dai_ngay': return 'ngay';
+      default: return 'dem';
+    }
   }
 
   @override
   void initState() {
     super.initState();
     getValueSharedPre();
-    getValueDataTime();
   }
 
   Future<void> getValueSharedPre() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      address = prefs.getString("hotel_address")!;
+      address = prefs.getString("hotel_address") ?? "Địa chỉ khách sạn";
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final currencyFormat = NumberFormat.currency(locale: 'en_US', symbol: '\$');
-    return BlocListener<PaymentBloc,PaymentState>(
-      listener: (context,state){
-        if(state is PaymentSuccess){
-          showDialog(
-              context: context,
-              builder: (context)=> AlertDialog(
-                title: Text("Successful",style:
-                  TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                      color: Color(0xFF14D9E1)
-                  ),),
-                content: Text("Successful booking!",
-                style: TextStyle(
-                  fontStyle: FontStyle.italic,
-                  fontSize: 15,
-                ),),
-                actions: [
-                  TextButton(
-                      onPressed: () {
-                        Navigator.pop(context); // Đóng dialog
-                        Navigator.popUntil(context, ModalRoute.withName('/'));
-                      }, child: Text("Ok"))
-                ],
-              ));
+    return BlocListener<PaymentBloc, PaymentState>(
+      listener: (context, state) {
+        print('🔄 PaymentBloc state changed: ${state.runtimeType}');
 
-        }else if (state is PaymentFailure){
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.errorMessage)),
+        // ===== XỬ LÝ CASH PAYMENT THÀNH CÔNG =====
+        if (state is PaymentSuccess) {
+          setState(() {
+            _isProcessingPayment = false;      // Tắt loading button
+            _isWaitingForPaymentResult = false; // Tắt waiting state
+          });
+
+          // Hiển thị thông báo thành công và quay về home
+          NotificationDialog.showSuccess(
+            context,
+            message: S.of(context).bookingSuccessMessage,
+            onButtonPressed: () {
+              Navigator.popUntil(context, ModalRoute.withName('/'));
+            },
           );
+// ===== XỬ LÝ PAYMENT REDIRECT (LEGACY) =====
+        }else if(state is PaymentRedirectSuccess){
+          setState(() {
+            _isProcessingPayment = false;
+            _isWaitingForPaymentResult = false;
+          });
+          NotificationDialog.showSuccess(
+            context,
+            message: S.of(context).bookingAndPaymentSuccessful,
+            onButtonPressed: () {
+              Navigator.popUntil(context, ModalRoute.withName('/'));
+            },
+          );
+
+          // ===== XỬ LÝ LỖI CHUNG =====
+        }else if (state is PaymentFailure) {
+          setState(() {
+            _isProcessingPayment = false;
+            _isWaitingForPaymentResult = false;
+          });
+          NotificationDialog.showError(
+            context,
+            message: state.errorMessage,
+          );
+        }
+        // ===== XỬ LÝ PAYMENT URL ĐƯỢC TẠO =====
+        // State này được emit khi backend tạo thành công payment URL
+        else if (state is NativePaymentUrlGenerated) {
+          print('📱 Payment URL generated for: ${state.paymentMethod}');
+          print('🔗 Payment data keys: ${state.paymentData.keys.toList()}');
+
+          setState(() {
+            _isProcessingPayment = false;       // Tắt loading tạo payment
+            _isWaitingForPaymentResult = true;  // Bật waiting cho result
+          });
+
+          // Mở app thanh toán tương ứng
+          _handlePaymentUrl(state.paymentData, state.paymentMethod);
+        }
+        // ===== XỬ LÝ THANH TOÁN ONLINE THÀNH CÔNG =====
+        else if (state is NativePaymentSuccess) {
+          print('🎉 Native payment successful: ${state.transactionId}');
+          setState(() {
+            _isWaitingForPaymentResult = false;
+          });
+          _handlePaymentSuccess(state.transactionId);
+        }
+        // ===== XỬ LÝ THANH TOÁN ONLINE THẤT BẠI =====
+        else if (state is NativePaymentFailure) {
+          print('💔 Native payment failed: ${state.errorMessage}');
+          setState(() {
+            _isWaitingForPaymentResult = false;
+          });
+          _handlePaymentFailure();
         }
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text(
-            'Payment',
+          title: Text(
+            S.of(context).payment,
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           centerTitle: true,
           elevation: 0,
+          backgroundColor: Colors.transparent,
         ),
         body: Stack(
           children: [
             Padding(
-                padding: const EdgeInsets.only(bottom:180),
+              padding: const EdgeInsets.only(bottom: 200),
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Hotel Info Card (giữ nguyên)
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                      padding: EdgeInsets.all(16),
-                      margin: const EdgeInsets.only(bottom: 24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.2),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
+                    _buildBookingTypeHeader(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Room image on left
-                          Hero(
-                            tag: 'room-${widget.room.id}',
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.network(
-                                widget.room.image,
-                                width: 100,
-                                height: 90,
-                                fit: BoxFit.cover,
-                                loadingBuilder: (context, child, loadingProgress) {
-                                  if (loadingProgress == null) return child;
-                                  return Container(
-                                    width: 100,
-                                    height: 100,
-                                    color: Colors.grey.shade200,
-                                    child: Center(
-                                      child: CircularProgressIndicator(
-                                        value:
-                                        loadingProgress.expectedTotalBytes != null
-                                            ? loadingProgress
-                                            .cumulativeBytesLoaded /
-                                            loadingProgress.expectedTotalBytes!
-                                            : null,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    width: 100,
-                                    height: 100,
-                                    color: Colors.grey.shade200,
-                                    child: const Icon(Icons.hotel, size: 40),
-                                  );
-                                },
+                          _buildRoomTypeCard(),
+                          const SizedBox(height: 24),
+                          const Divider(thickness: 1),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Icon(Icons.receipt_long, color: Colors.blue),
+                              SizedBox(width: 8),
+                              Text(
+                                S.of(context).bookingDetails,
+                                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                               ),
-                            ),
+                            ],
                           ),
-                          const SizedBox(width: 8),
-
-                          // Room information
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  widget.room.roomType,
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  address,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      currencyFormat.format(widget.room.price),
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.cyanAccent.shade400,
-                                          fontSize: 20
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
+                          const SizedBox(height: 16),
+                          _buildBookingDetailsCard(),
+                          const SizedBox(height: 24),
+                          _buildPriceBreakdownCard(),
+                          const SizedBox(height: 24),
                         ],
                       ),
                     ),
-
-                    // Rest of payment form
-                    const Divider(thickness: 1),
-                    const SizedBox(height: 16),
-
-                    const Text(
-                      'Booking Details',
-                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Payment information table (thêm giờ check-in/out)
-                    _buildPaymentDetailsTable(),
-                    const SizedBox(height: 24),
-
-                    // Thêm phần chọn phương thức thanh toán
                   ],
                 ),
               ),
             ),
-            // PHẦN GHIM DƯỚI CÙNG MÀN HÌNH
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
+            _buildBottomPaymentSection(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ✅ Existing UI building methods remain the same...
+  Widget _buildBookingTypeHeader() {
+    return Padding(
+      padding: EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Icon(
+            _getBookingTypeIcon(),
+            color: _getBookingTypeColor(),
+            size: 24,
+          ),
+          SizedBox(width: 12),
+          Text(
+            _getBookingTypeTitle(),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getBookingTypeColor() {
+    switch (widget.lichPhongTrong.loaiDatPhong) {
+      case 'theo_gio': return Colors.orange[600]!;
+      case 'qua_dem': return Colors.indigo[600]!;
+      case 'dai_ngay': return Colors.green[600]!;
+      default: return Colors.blue[600]!;
+    }
+  }
+
+  IconData _getBookingTypeIcon() {
+    switch (widget.lichPhongTrong.loaiDatPhong) {
+      case 'theo_gio': return Icons.access_time;
+      case 'qua_dem': return Icons.nights_stay;
+      case 'dai_ngay': return Icons.calendar_month;
+      default: return Icons.hotel;
+    }
+  }
+
+  String _getBookingTypeTitle() {
+    switch (widget.lichPhongTrong.loaiDatPhong) {
+      case 'theo_gio': return S.of(context).hourlyBooking;
+      case 'qua_dem': return S.of(context).overnightBooking;
+      case 'dai_ngay': return S.of(context).longStayBooking;
+      default: return S.of(context).booking;
+    }
+  }
+
+  // ✅ Room Type Card
+  Widget _buildRoomTypeCard() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Hero(
+              tag: 'room-${widget.loaiPhong.id}',
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                width: 100,
+                height: 90,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 10,
-                      offset: Offset(0, -2),
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
                     ),
                   ],
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Payment Method',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: widget.loaiPhong.layAnhDauTien() != null &&
+                      widget.loaiPhong.layAnhDauTien()!.isNotEmpty
+                      ? Image.network(
+                    widget.loaiPhong.layAnhDauTien() ?? '',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => _buildFallbackContainer(),
+                  )
+                      : _buildFallbackContainer(),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.loaiPhong.tenLoaiPhong,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(height: 12),
-                    _buildPaymentMethod(),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: eventPaymentBooking,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).primaryColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: _isProcessingPayment
-                            ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                            : const Text(
-                          'CONFIRM PAYMENT',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    address,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade900,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildGuestAndRoomInfo(),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.blue.shade200),
+                    ),
+                    child: Text(
+                      CurrencyHelper.formatVND(widget.loaiPhong.giaCa),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue.shade700,
+                        fontSize: 16,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -350,200 +780,517 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  Widget _buildPaymentDetailsTable() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildGuestAndRoomInfo() {
+    return Wrap(
+      spacing: 16,
       children: [
-        Table(
-          columnWidths: const {0: FlexColumnWidth(2), 1: FlexColumnWidth(3)},
+        Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            _buildTableRow(
-              'Check-in Date',
-              DateFormat('dd/MM/yyyy').format(checkInDate!),
-            ),
-            _buildTableRow(
-              'Check-in Time',
-              formattedCheckInTime ='${checkInTime?.hour.toString().padLeft(2, '0')}:${checkInTime?.minute.toString().padLeft(2, '0')}',
-            ),
-            _buildTableRow(
-              'Check-out Date',
-              DateFormat('dd/MM/yyyy').format(checkOutDate!),
-            ),
-            _buildTableRow(
-              'Check-out Time',
-              formattedCheckOutTime = '${checkOutTime?.hour.toString().padLeft(2, '0')}:${checkOutTime?.minute.toString().padLeft(2, '0')}',
-            ),
-            _buildTableRow(
-              'Nights',
-              '${checkOutDate?.difference(checkInDate!).inDays} nights',
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 8),
-        const Divider(thickness: 1), // 🔸 Gạch sau Nights
-        const SizedBox(height: 8),
-
-        Table(
-          columnWidths: const {0: FlexColumnWidth(2), 1: FlexColumnWidth(3)},
-          children: [
-            _buildTableRow('Room Price', _priceFormat.format(_basePrice)),
-            _buildTableRow('Tax & Fees (10%)', _priceFormat.format(_taxAmount)),
-          ],
-        ),
-
-        const SizedBox(height: 8),
-        const Divider(thickness: 1), // 🔸 Gạch sau Tax & Fees
-        const SizedBox(height: 8),
-
-        Table(
-          columnWidths: const {0: FlexColumnWidth(2), 1: FlexColumnWidth(3)},
-          children: [
-            _buildTableRow(
-              'Total',
-              _priceFormat.format(
-                totalAmount = _totalPrice * checkOutDate!.difference(checkInDate!).inDays,
+            Icon(Icons.person, size: 20, color: Color(0xFF525150)),
+            SizedBox(width: 4),
+            Text(
+              _buildSummaryTextTotalGuest(context),
+              style: TextStyle(
+                  fontSize: 17,
+                  color: Color(0xFF525150),
+                  fontWeight: FontWeight.bold
               ),
-              isBold: true,
+            ),
+          ],
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.door_front_door, size: 20, color: Color(0xFF525150)),
+            SizedBox(width: 4),
+            Text(
+              _buildSummaryTextTotalRooms(context),
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF525150)),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  String _buildSummaryTextTotalGuest(BuildContext context) {
+    final locale = Localizations.localeOf(context);
+    final isVietnamese = locale.languageCode == 'vi';
+
+    String guestText;
+    if (isVietnamese) {
+      guestText = '${widget.lichPhongTrong.soLuongKhach.soNguoiLon} người lớn';
+      if (widget.lichPhongTrong.soLuongKhach.soTreEm! > 0) {
+        guestText += ' • ${widget.lichPhongTrong.soLuongKhach.soTreEm} trẻ em';
+      }
+    } else {
+      guestText = '${widget.lichPhongTrong.soLuongKhach.soNguoiLon} '
+          'adult${widget.lichPhongTrong.soLuongKhach.soNguoiLon > 1 ? 's' : ''}';
+      if (widget.lichPhongTrong.soLuongKhach.soTreEm! > 0) {
+        guestText += ' • ${widget.lichPhongTrong.soLuongKhach.soTreEm} '
+            'child${widget.lichPhongTrong.soLuongKhach.soTreEm! > 1 ? 'ren' : ''}';
+      }
+    }
+    return guestText;
+  }
+
+  String _buildSummaryTextTotalRooms(BuildContext context) {
+    final locale = Localizations.localeOf(context);
+    final isVietnamese = locale.languageCode == 'vi';
+
+    String roomText;
+    if (isVietnamese) {
+      roomText = '${widget.lichPhongTrong.soLuongPhong} phòng';
+    } else {
+      roomText = '${widget.lichPhongTrong.soLuongPhong} '
+          'room${widget.lichPhongTrong.soLuongPhong > 1 ? 's' : ''}';
+    }
+    return roomText;
+  }
+
+  Widget _buildBookingDetailsCard() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            _buildDetailRow(Icons.login, S.of(context).checkInDate, DateTimeHelper.formatDate(checkInDate)),
+            _buildDetailRow(Icons.access_time, S.of(context).checkInTime, formattedCheckInTime),
+            _buildDetailRow(Icons.logout, S.of(context).checkOutDate, DateTimeHelper.formatDate(checkOutDate!)),
+            _buildDetailRow(Icons.schedule, S.of(context).checkOutTime, getDatetime()),
+            Divider(height: 24),
+            _buildDetailRow(
+              _getBookingTypeIcon(),
+              _getBookingTypeText(),
+              '${widget.loaiPhong.giaLoaiPhong?.khoangThoiGian} ${widget.loaiPhong.giaLoaiPhong?.donVi}',
+              isHighlight: true,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPriceBreakdownCard() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.receipt, color: Colors.green),
+                SizedBox(width: 8),
+                Text(
+                  S.of(context).priceDetails,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            SizedBox(height: 12),
+            _buildPriceRow(S.of(context).roomPrice, CurrencyHelper.formatVND(widget.loaiPhong.giaLoaiPhong?.giaCoBan ?? 0.0)),
+            _buildPriceRow(S.of(context).totalDuration,'${widget.loaiPhong.giaLoaiPhong?.khoangThoiGian} ${widget.loaiPhong.giaLoaiPhong?.donVi}' ),
+            _buildPriceRow(S.of(context).subtotalBeforeDiscount, CurrencyHelper.formatVND(widget.loaiPhong.giaLoaiPhong!.phanTichGia.tongPhu)),
+            _buildPriceRow(S.of(context).weekendSurcharge, CurrencyHelper.formatVND(widget.loaiPhong.giaLoaiPhong!.phanTichGia.phuThuCuoiTuan)),
+            _buildPriceRow(S.of(context).discount, CurrencyHelper.formatVND(widget.loaiPhong.giaLoaiPhong!.phanTichGia.giamGiaTheoNgay)),
+            Divider(height: 24),
+            _buildPriceRow(
+              S.of(context).totalAmount,
+              CurrencyHelper.formatVND(widget.loaiPhong.giaCuoiCung),
               isTotal: true,
             ),
           ],
         ),
-      ],
+      ),
     );
   }
 
-
-  // Hàm hiển thị dialog chọn phương thức thanh toán
-  Future<void> _showPaymentMethodDialog() async {
-    await showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: '',
-      transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (context, anim1, anim2) {
-        return ScaleTransition(
-          scale: CurvedAnimation(parent: anim1, curve: Curves.easeOut),
-          child: AlertDialog(
-            titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 4),
-            title: Text(
-              'Select Payment Method',
-              style: TextStyle(fontWeight: FontWeight.bold,
-              fontSize: 20),
+  Widget _buildBottomPaymentSection() {
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 10,
+              offset: Offset(0, -2),
             ),
-            content: SizedBox(
-              width: double.maxFinite,
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: _paymentMethods.length,
-                itemBuilder: (context, index) {
-                  final method = _paymentMethods[index];
-                  return ListTile(
-                    leading: _buildPaymentMethodIcon(method['id']),
-                    title: Text(method['name']),
-                    onTap: () {
-                      setState(() {
-                        selectedPaymentMethod = method['id'] as Booking_PaymentMethod;
-                      });
-                      Navigator.pop(context);
-                    },
-                  );
-                },
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.payment, color: Colors.orange),
+                SizedBox(width: 8),
+                Text(
+                  S.of(context).paymentMethod,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildPaymentMethodSelector(),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: (_isProcessingPayment || _isWaitingForPaymentResult) ? null : eventPaymentBooking,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue.shade600,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 3,
+                ),
+                child: (_isProcessingPayment || _isWaitingForPaymentResult)
+                    ? Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Text(_isWaitingForPaymentResult ? S.of(context).waitingForResult : S.of(context).processing.toUpperCase()),
+                  ],
+                )
+                    : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.lock, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      '${S.of(context).payAmount} ${CurrencyHelper.formatVND(widget.loaiPhong.giaCuoiCung)}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        );
-      },
-      transitionBuilder: (context, anim1, anim2, child) {
-        return ScaleTransition(
-          scale: CurvedAnimation(parent: anim1, curve: Curves.fastOutSlowIn),
-          child: child,
-        );
-      },
-    );
-  }
-
-
-// Widget hiển thị icon phương thức thanh toán
-  Widget _buildPaymentMethodIcon(Booking_PaymentMethod methodId) {
-    switch (methodId) {
-      case Booking_PaymentMethod.CreditCard:
-        return Image.asset(
-          "assets/icons/master_card.png",
-          width: 50,
-          height: 50,
-          errorBuilder: (context, error, stackTrace) => Icon(Icons.credit_card),
-        );
-      case Booking_PaymentMethod.Momo:
-        return Image.asset(
-          "assets/icons/logo_momo2.jpg",
-          width: 50,
-          height: 50,
-          errorBuilder: (context, error, stackTrace) => Icon(Icons.payment),
-        );
-      case Booking_PaymentMethod.VNPay:
-        return Image.asset(
-          "assets/icons/Icon-VNPAY-QR.jpg",
-          width: 50,
-          height: 50,
-          errorBuilder: (context, error, stackTrace) => Icon(Icons.account_balance_wallet),
-        );
-      default:
-        return Icon(Icons.payment);
-    }
-  }
-
-  Widget _buildPaymentMethod() {
-    final selectedMethod = _paymentMethods.firstWhere(
-          (method) => method['id'] == selectedPaymentMethod,
-      orElse: () => {'id': 'unknown', 'name': 'Unknown', 'icon': 'credit_card'},
-    );
-
-    return Card(
-      color: Color(0xFFB4B4B4),
-      margin: const EdgeInsets.only(bottom: 4),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
-        child: ListTile(
-          leading: _buildPaymentMethodIcon(selectedMethod['id']),
-          title: Text(selectedMethod['name']),
-          trailing: const Icon(Icons.arrow_drop_down),
-          onTap: _showPaymentMethodDialog,
+          ],
         ),
       ),
     );
   }
 
-
-
-  TableRow _buildTableRow(String label, String value, {bool isBold = false, bool isTotal = false}) {
-    return TableRow(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-              fontSize: isTotal ? 16 : 14,
-              color: isTotal ? Colors.black : Colors.grey[800],
+  // ✅ Helper UI methods
+  Widget _buildDetailRow(IconData icon, String label, String value, {bool isHighlight = false}) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: isHighlight ? Colors.blue : Colors.grey),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[700],
+                fontWeight: isHighlight ? FontWeight.w600 : FontWeight.normal,
+              ),
             ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Text(
+          Text(
             value,
-            textAlign: TextAlign.right,
             style: TextStyle(
+              fontSize: 14,
               fontWeight: FontWeight.bold,
-              fontSize: isTotal ? 18 : 14,
-              color: isTotal ? Colors.teal.shade700 : Colors.black,
+              color: isHighlight ? Colors.blue : Colors.black,
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
+  Widget _buildPriceRow(String label, String value, {bool isTotal = false}) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: isTotal ? 16 : 14,
+              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+              color: isTotal ? Colors.black : Colors.grey[700],
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: isTotal ? 18 : 14,
+              fontWeight: FontWeight.bold,
+              color: isTotal ? Colors.green.shade700 : Colors.black,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethodSelector() {
+    final selectedMethod = getPaymentMethods(context).firstWhere(
+          (method) => method['id'] == selectedPaymentMethod,
+      orElse: () => getPaymentMethods(context).first,
+    );
+
+    return GestureDetector(
+      onTap: _showPaymentMethodDialog,
+      child: Container(
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.grey.shade50,
+        ),
+        child: Row(
+          children: [
+            selectedMethod['image'] != null
+                ? Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: Image.asset(
+                  selectedMethod['image'],
+                  width: 36,
+                  height: 36,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            )
+                : Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: selectedMethod['color'],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                selectedMethod['icon'],
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    selectedMethod['name'],
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    selectedMethod['description'],
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showPaymentMethodDialog() async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            SizedBox(height: 20),
+            Text(
+              S.of(context).selectPaymentMethod,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 20),
+            ...(getPaymentMethods(context).map((method) => Container(
+              margin: EdgeInsets.only(bottom: 12),
+              child: ListTile(
+                leading: method['image'] != null
+                    ? Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.asset(
+                      method['image'],
+                      width: 40,
+                      height: 40,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                )
+                    : Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: method['color'],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    method['icon'],
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+                title: Text(method['name']),
+                subtitle: Text(method['description']),
+                trailing: selectedPaymentMethod == method['id']
+                    ? Icon(Icons.check_circle, color: Colors.green)
+                    : null,
+                onTap: () {
+                  setState(() {
+                    selectedPaymentMethod = method['id'] as PhuongThucThanhToan;
+                  });
+                  Navigator.pop(context);
+                },
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                tileColor: selectedPaymentMethod == method['id']
+                    ? Colors.green.shade50
+                    : Colors.grey.shade50,
+              ),
+            )).toList()),
+            SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFallbackContainer() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.blue.shade200, Colors.blue.shade400],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.hotel, size: 32, color: Colors.white),
+          SizedBox(height: 4),
+          Text(
+            'Room',
+            style: TextStyle(color: Colors.white, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getBookingTypeText() {
+    switch (widget.lichPhongTrong.loaiDatPhong) {
+      case 'theo_gio': return S.of(context).rentalTime;
+      case 'qua_dem': return S.of(context).numberOfNights;
+      case 'dai_ngay': return S.of(context).numberOfDays;
+      default: return S.of(context).duration;
+    }
+  }
+}
+// ✅ ADD THIS WIDGET INSIDE PaymentScreen class
+
+class _PaymentStatusListener extends StatefulWidget {
+  final String orderId;
+  final Function(bool success, String? transactionId) onResult;
+
+  const _PaymentStatusListener({
+    required this.orderId,
+    required this.onResult,
+  });
+
+  @override
+  State<_PaymentStatusListener> createState() => _PaymentStatusListenerState();
+}
+
+class _PaymentStatusListenerState extends State<_PaymentStatusListener>
+    with WidgetsBindingObserver {
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // App resumed from payment app - check status
+      print('📱 App resumed, checking payment status...');
+      context.read<PaymentBloc>().add(PaymentStatusChecked(widget.orderId));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<PaymentBloc, PaymentState>(
+      listener: (context, state) {
+        if (state is NativePaymentSuccess) {
+          widget.onResult(true, state.transactionId);
+        } else if (state is NativePaymentFailure) {
+          widget.onResult(false, null);
+        }
+      },
+      child: Container(), // Invisible widget
+    );
+  }
 }

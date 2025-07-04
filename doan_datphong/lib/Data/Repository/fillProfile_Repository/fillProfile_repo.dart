@@ -17,13 +17,15 @@ class FillProfileRepository{
         body: jsonEncode({
           "maNguoiDung": user.id,
           "tenNguoiDung": user.tenNguoiDung,
-          "ngaySinh":user.ngaySinh,
+          "ngaySinh":user.ngaySinh?.toIso8601String(),
           "gioiTinh":user.gioiTinh,
           "soDienThoai": user.soDienThoai,
-          "hinhDaiDien":user.hinhDaiDien}),
-        headers: {"Content-Type":"application/json"},
+          "hinhDaiDien":user.hinhDaiDien,
+          "viTri":user.viTri?.toJson()
+        }),
+        headers: {
+            "Content-Type":"application/json"},
       );
-
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
         return ApiResponse(success: true, message: "Cập nhật tài khoản thành công!", data: NguoiDung.fromJson(jsonData['user']));

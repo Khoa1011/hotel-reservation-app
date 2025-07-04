@@ -664,6 +664,21 @@ class S {
     );
   }
 
+  /// `You are not old enough to register an account!`
+  String get notOldEnough {
+    return Intl.message(
+      'You are not old enough to register an account!',
+      name: 'notOldEnough',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Invalid age!`
+  String get invalidAge {
+    return Intl.message('Invalid age!', name: 'invalidAge', desc: '', args: []);
+  }
+
   /// `Warning!`
   String get warning {
     return Intl.message(
@@ -720,6 +735,26 @@ class S {
       'Connection timeout. Server may be busy or not responding!',
       name: 'errorConnectionTimeout',
       desc: 'Connection timeout error message',
+      args: [],
+    );
+  }
+
+  /// `Password is incorrect. Please try again!`
+  String get passwordIncorrect {
+    return Intl.message(
+      'Password is incorrect. Please try again!',
+      name: 'passwordIncorrect',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Email does not exist. If you do not have one, please register an account!`
+  String get emailNotExist {
+    return Intl.message(
+      'Email does not exist. If you do not have one, please register an account!',
+      name: 'emailNotExist',
+      desc: '',
       args: [],
     );
   }
@@ -934,26 +969,6 @@ class S {
     );
   }
 
-  /// `/ night`
-  String get night {
-    return Intl.message(
-      '/ night',
-      name: 'night',
-      desc: 'Night pricing text',
-      args: [],
-    );
-  }
-
-  /// `reviews`
-  String get reviews {
-    return Intl.message(
-      'reviews',
-      name: 'reviews',
-      desc: 'Reviews text',
-      args: [],
-    );
-  }
-
   /// `Loading hotel list...`
   String get loadingHotels {
     return Intl.message(
@@ -1084,6 +1099,36 @@ class S {
     );
   }
 
+  /// `Amenity group is empty`
+  String get amenityGroupIsEmpty {
+    return Intl.message(
+      'Amenity group is empty',
+      name: 'amenityGroupIsEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This hotel has no facilities yet. Please check back later.`
+  String get hotelNotAmenityYet {
+    return Intl.message(
+      'This hotel has no facilities yet. Please check back later.',
+      name: 'hotelNotAmenityYet',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Updating in progress`
+  String get updatingInProgress {
+    return Intl.message(
+      'Updating in progress',
+      name: 'updatingInProgress',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Description`
   String get description {
     return Intl.message('Description', name: 'description', desc: '', args: []);
@@ -1144,6 +1189,66 @@ class S {
     return Intl.message('Su', name: 'cn_Sunday', desc: '', args: []);
   }
 
+  /// `Check-in and check-out dates must be different`
+  String get checkoutDateMustAfterCheckinDate {
+    return Intl.message(
+      'Check-in and check-out dates must be different',
+      name: 'checkoutDateMustAfterCheckinDate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Check-in time not selected!`
+  String get checkInTimeNotSelected {
+    return Intl.message(
+      'Check-in time not selected!',
+      name: 'checkInTimeNotSelected',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Check-out time not selected!`
+  String get checkOutTimeNotSelected {
+    return Intl.message(
+      'Check-out time not selected!',
+      name: 'checkOutTimeNotSelected',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Check-in date not selected!`
+  String get checkInDateNotSelected {
+    return Intl.message(
+      'Check-in date not selected!',
+      name: 'checkInDateNotSelected',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Check-out date not selected!`
+  String get checkOutDateNotSelected {
+    return Intl.message(
+      'Check-out date not selected!',
+      name: 'checkOutDateNotSelected',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No date selected in the past!`
+  String get selectDateInPast {
+    return Intl.message(
+      'No date selected in the past!',
+      name: 'selectDateInPast',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Check-in date`
   String get checkInDate {
     return Intl.message(
@@ -1174,11 +1279,41 @@ class S {
     );
   }
 
-  /// `Please select check-in and check-out dates`
+  /// `Check-out time`
+  String get checkOutTime {
+    return Intl.message(
+      'Check-out time',
+      name: 'checkOutTime',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Please select check-in and check-out times`
   String get messageSelectDateTimeCheckIn {
     return Intl.message(
-      'Please select check-in and check-out dates',
+      'Please select check-in and check-out times',
       name: 'messageSelectDateTimeCheckIn',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Please select check-in and check-out dates`
+  String get messageSelectDateDateCheckIn {
+    return Intl.message(
+      'Please select check-in and check-out dates',
+      name: 'messageSelectDateDateCheckIn',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Hourly rental minimum 1 hour!`
+  String get minimumHour {
+    return Intl.message(
+      'Hourly rental minimum 1 hour!',
+      name: 'minimumHour',
       desc: '',
       args: [],
     );
@@ -1257,6 +1392,1186 @@ class S {
   /// `Apply`
   String get apply {
     return Intl.message('Apply', name: 'apply', desc: '', args: []);
+  }
+
+  /// `Hourly`
+  String get hourly {
+    return Intl.message('Hourly', name: 'hourly', desc: '', args: []);
+  }
+
+  /// `Overnight`
+  String get overnight {
+    return Intl.message('Overnight', name: 'overnight', desc: '', args: []);
+  }
+
+  /// `Long days`
+  String get longDays {
+    return Intl.message('Long days', name: 'longDays', desc: '', args: []);
+  }
+
+  /// `Rent by the hour`
+  String get rentByTheHour {
+    return Intl.message(
+      'Rent by the hour',
+      name: 'rentByTheHour',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Minimum 1 hour • Flexible during the day`
+  String get rentByTheHourNote {
+    return Intl.message(
+      'Minimum 1 hour • Flexible during the day',
+      name: 'rentByTheHourNote',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rent overnight`
+  String get rentOvernight {
+    return Intl.message(
+      'Rent overnight',
+      name: 'rentOvernight',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Default will be 22:00 PM today to 12:00 PM tomorrow`
+  String get rentOvernightNote {
+    return Intl.message(
+      'Default will be 22:00 PM today to 12:00 PM tomorrow',
+      name: 'rentOvernightNote',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Long term rental`
+  String get rentLongDays {
+    return Intl.message(
+      'Long term rental',
+      name: 'rentLongDays',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `From 2 days or more • Special price`
+  String get rentLongDaysNote {
+    return Intl.message(
+      'From 2 days or more • Special price',
+      name: 'rentLongDaysNote',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Date of use`
+  String get dateOfUse {
+    return Intl.message('Date of use', name: 'dateOfUse', desc: '', args: []);
+  }
+
+  /// `Select time`
+  String get selecteTime {
+    return Intl.message('Select time', name: 'selecteTime', desc: '', args: []);
+  }
+
+  /// `Check-in by time`
+  String get hourCheckInTime {
+    return Intl.message(
+      'Check-in by time',
+      name: 'hourCheckInTime',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Total`
+  String get total {
+    return Intl.message('Total', name: 'total', desc: '', args: []);
+  }
+
+  /// `day`
+  String get day {
+    return Intl.message('day', name: 'day', desc: '', args: []);
+  }
+
+  /// `Check-out date must be after check-in date`
+  String get checkoutAfterCheckin {
+    return Intl.message(
+      'Check-out date must be after check-in date',
+      name: 'checkoutAfterCheckin',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Hourly booking must be within the same day`
+  String get sameDayOnlyHourly {
+    return Intl.message(
+      'Hourly booking must be within the same day',
+      name: 'sameDayOnlyHourly',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Overnight stay must be from today to tomorrow`
+  String get overnightOnlyOneNight {
+    return Intl.message(
+      'Overnight stay must be from today to tomorrow',
+      name: 'overnightOnlyOneNight',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Review`
+  String get reviews {
+    return Intl.message('Review', name: 'reviews', desc: '', args: []);
+  }
+
+  /// `More`
+  String get moreReviews {
+    return Intl.message('More', name: 'moreReviews', desc: '', args: []);
+  }
+
+  /// `All Reviews`
+  String get allReviews {
+    return Intl.message('All Reviews', name: 'allReviews', desc: '', args: []);
+  }
+
+  /// `Write a Review`
+  String get writeReview {
+    return Intl.message(
+      'Write a Review',
+      name: 'writeReview',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Helpful`
+  String get helpful {
+    return Intl.message('Helpful', name: 'helpful', desc: '', args: []);
+  }
+
+  /// `Rating`
+  String get rating {
+    return Intl.message('Rating', name: 'rating', desc: '', args: []);
+  }
+
+  /// `Show less`
+  String get showLess {
+    return Intl.message('Show less', name: 'showLess', desc: '', args: []);
+  }
+
+  /// `Looking for rooms...`
+  String get lookingForRooms {
+    return Intl.message(
+      'Looking for rooms...',
+      name: 'lookingForRooms',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `rooms available`
+  String get roomAvailable {
+    return Intl.message(
+      'rooms available',
+      name: 'roomAvailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No rooms available!`
+  String get notRoomTypesAvailable {
+    return Intl.message(
+      'No rooms available!',
+      name: 'notRoomTypesAvailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Please try changing the search date!`
+  String get pleaseTryChangingTheSearchDate {
+    return Intl.message(
+      'Please try changing the search date!',
+      name: 'pleaseTryChangingTheSearchDate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Almost over`
+  String get almostOver {
+    return Intl.message('Almost over', name: 'almostOver', desc: '', args: []);
+  }
+
+  /// `Available`
+  String get available {
+    return Intl.message('Available', name: 'available', desc: '', args: []);
+  }
+
+  /// `Sold out`
+  String get soldOut {
+    return Intl.message('Sold out', name: 'soldOut', desc: '', args: []);
+  }
+
+  /// `From`
+  String get from {
+    return Intl.message('From', name: 'from', desc: '', args: []);
+  }
+
+  /// `to`
+  String get to {
+    return Intl.message('to', name: 'to', desc: '', args: []);
+  }
+
+  /// `View abridged`
+  String get viewAbridged {
+    return Intl.message(
+      'View abridged',
+      name: 'viewAbridged',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Select room type`
+  String get selectRoomType {
+    return Intl.message(
+      'Select room type',
+      name: 'selectRoomType',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Refresh`
+  String get refresh {
+    return Intl.message('Refresh', name: 'refresh', desc: '', args: []);
+  }
+
+  /// `This room is currently unavailable.`
+  String get roomIsCurrentlyUnavailable {
+    return Intl.message(
+      'This room is currently unavailable.',
+      name: 'roomIsCurrentlyUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Single bed`
+  String get singleBed {
+    return Intl.message('Single bed', name: 'singleBed', desc: '', args: []);
+  }
+
+  /// `Double bed`
+  String get doubleBed {
+    return Intl.message('Double bed', name: 'doubleBed', desc: '', args: []);
+  }
+
+  /// `Queen bed`
+  String get queenBed {
+    return Intl.message('Queen bed', name: 'queenBed', desc: '', args: []);
+  }
+
+  /// `King bed`
+  String get kingBed {
+    return Intl.message('King bed', name: 'kingBed', desc: '', args: []);
+  }
+
+  /// `Bed`
+  String get bed {
+    return Intl.message('Bed', name: 'bed', desc: '', args: []);
+  }
+
+  /// `other amenities`
+  String get otherAmenities {
+    return Intl.message(
+      'other amenities',
+      name: 'otherAmenities',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Bed type unknown`
+  String get bedTypeUnknown {
+    return Intl.message(
+      'Bed type unknown',
+      name: 'bedTypeUnknown',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Confirm this booking`
+  String get bookingConfirm {
+    return Intl.message(
+      'Confirm this booking',
+      name: 'bookingConfirm',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Please check your booking information`
+  String get pleaseCheckYourBookingInfo {
+    return Intl.message(
+      'Please check your booking information',
+      name: 'pleaseCheckYourBookingInfo',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Not yet`
+  String get notYet {
+    return Intl.message('Not yet', name: 'notYet', desc: '', args: []);
+  }
+
+  /// `Overnight reservations can only be made between 9:00 PM and 1:00 AM the following morning.`
+  String get overNightBookingNote {
+    return Intl.message(
+      'Overnight reservations can only be made between 9:00 PM and 1:00 AM the following morning.',
+      name: 'overNightBookingNote',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Night`
+  String get night {
+    return Intl.message('Night', name: 'night', desc: '', args: []);
+  }
+
+  /// `Morning`
+  String get morning {
+    return Intl.message('Morning', name: 'morning', desc: '', args: []);
+  }
+
+  /// `Hourly Booking`
+  String get hourlyBooking {
+    return Intl.message(
+      'Hourly Booking',
+      name: 'hourlyBooking',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Overnight Booking`
+  String get overnightBooking {
+    return Intl.message(
+      'Overnight Booking',
+      name: 'overnightBooking',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Long-Stay Booking`
+  String get longStayBooking {
+    return Intl.message(
+      'Long-Stay Booking',
+      name: 'longStayBooking',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Booking Details`
+  String get bookingDetails {
+    return Intl.message(
+      'Booking Details',
+      name: 'bookingDetails',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rental Time`
+  String get rentalTime {
+    return Intl.message('Rental Time', name: 'rentalTime', desc: '', args: []);
+  }
+
+  /// `Number of Nights`
+  String get numberOfNights {
+    return Intl.message(
+      'Number of Nights',
+      name: 'numberOfNights',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Number of Days`
+  String get numberOfDays {
+    return Intl.message(
+      'Number of Days',
+      name: 'numberOfDays',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Price Details`
+  String get priceDetails {
+    return Intl.message(
+      'Price Details',
+      name: 'priceDetails',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Room Price`
+  String get roomPrice {
+    return Intl.message('Room Price', name: 'roomPrice', desc: '', args: []);
+  }
+
+  /// `Total Duration`
+  String get totalDuration {
+    return Intl.message(
+      'Total Duration',
+      name: 'totalDuration',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Subtotal (before discount)`
+  String get subtotalBeforeDiscount {
+    return Intl.message(
+      'Subtotal (before discount)',
+      name: 'subtotalBeforeDiscount',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Weekend Tax & Fee (1.2%)`
+  String get weekendSurcharge {
+    return Intl.message(
+      'Weekend Tax & Fee (1.2%)',
+      name: 'weekendSurcharge',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Discount`
+  String get discount {
+    return Intl.message('Discount', name: 'discount', desc: '', args: []);
+  }
+
+  /// `Total Amount`
+  String get totalAmount {
+    return Intl.message(
+      'Total Amount',
+      name: 'totalAmount',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Payment Method`
+  String get paymentMethod {
+    return Intl.message(
+      'Payment Method',
+      name: 'paymentMethod',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Pay at Hotel`
+  String get payAtHotel {
+    return Intl.message('Pay at Hotel', name: 'payAtHotel', desc: '', args: []);
+  }
+
+  /// `Pay on Check-In`
+  String get payOnCheckIn {
+    return Intl.message(
+      'Pay on Check-In',
+      name: 'payOnCheckIn',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `ZaloPay Wallet`
+  String get zaloPayWallet {
+    return Intl.message(
+      'ZaloPay Wallet',
+      name: 'zaloPayWallet',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Pay via ZaloPay e-wallet`
+  String get zaloPayDescription {
+    return Intl.message(
+      'Pay via ZaloPay e-wallet',
+      name: 'zaloPayDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Credit Card`
+  String get creditCard {
+    return Intl.message('Credit Card', name: 'creditCard', desc: '', args: []);
+  }
+
+  /// `Visa, Mastercard`
+  String get creditCardDescription {
+    return Intl.message(
+      'Visa, Mastercard',
+      name: 'creditCardDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `MoMo Wallet`
+  String get momoWallet {
+    return Intl.message('MoMo Wallet', name: 'momoWallet', desc: '', args: []);
+  }
+
+  /// `Pay via MoMo e-wallet`
+  String get momoDescription {
+    return Intl.message(
+      'Pay via MoMo e-wallet',
+      name: 'momoDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `VNPay`
+  String get vnPay {
+    return Intl.message('VNPay', name: 'vnPay', desc: '', args: []);
+  }
+
+  /// `National Payment Gateway`
+  String get vnPayDescription {
+    return Intl.message(
+      'National Payment Gateway',
+      name: 'vnPayDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Select Payment Method`
+  String get selectPaymentMethod {
+    return Intl.message(
+      'Select Payment Method',
+      name: 'selectPaymentMethod',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `WAITING FOR RESULT...`
+  String get waitingForResult {
+    return Intl.message(
+      'WAITING FOR RESULT...',
+      name: 'waitingForResult',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `PAY`
+  String get payAmount {
+    return Intl.message('PAY', name: 'payAmount', desc: '', args: []);
+  }
+
+  /// `Waiting for Payment`
+  String get waitingForPayment {
+    return Intl.message(
+      'Waiting for Payment',
+      name: 'waitingForPayment',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Please complete the payment in the app`
+  String get completePaymentOn {
+    return Intl.message(
+      'Please complete the payment in the app',
+      name: 'completePaymentOn',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `After completing payment, please return to this app`
+  String get returnToAppAfterPayment {
+    return Intl.message(
+      'After completing payment, please return to this app',
+      name: 'returnToAppAfterPayment',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Check Again`
+  String get checkAgain {
+    return Intl.message('Check Again', name: 'checkAgain', desc: '', args: []);
+  }
+
+  /// `Payment Successful!`
+  String get paymentSuccessful {
+    return Intl.message(
+      'Payment Successful!',
+      name: 'paymentSuccessful',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The transaction was successful. Please check in on time!`
+  String get paymentSuccessMessage {
+    return Intl.message(
+      'The transaction was successful. Please check in on time!',
+      name: 'paymentSuccessMessage',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Payment Failed`
+  String get paymentFailed {
+    return Intl.message(
+      'Payment Failed',
+      name: 'paymentFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The transaction failed. Please try again or choose another payment method.`
+  String get paymentFailedMessage {
+    return Intl.message(
+      'The transaction failed. Please try again or choose another payment method.',
+      name: 'paymentFailedMessage',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Booking Successful!`
+  String get bookingSuccessful {
+    return Intl.message(
+      'Booking Successful!',
+      name: 'bookingSuccessful',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Booking confirmed! Please pay on check-in`
+  String get bookingSuccessMessage {
+    return Intl.message(
+      'Booking confirmed! Please pay on check-in',
+      name: 'bookingSuccessMessage',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Booking and Payment Successful!`
+  String get bookingAndPaymentSuccessful {
+    return Intl.message(
+      'Booking and Payment Successful!',
+      name: 'bookingAndPaymentSuccessful',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Error: `
+  String get errorOccurred {
+    return Intl.message('Error: ', name: 'errorOccurred', desc: '', args: []);
+  }
+
+  /// `Cannot open payment app:`
+  String get cannotOpenPaymentApp {
+    return Intl.message(
+      'Cannot open payment app:',
+      name: 'cannotOpenPaymentApp',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `hours`
+  String get hours {
+    return Intl.message('hours', name: 'hours', desc: '', args: []);
+  }
+
+  /// `Time`
+  String get duration {
+    return Intl.message('Time', name: 'duration', desc: '', args: []);
+  }
+
+  /// `Unknown Hotel`
+  String get unknownHotel {
+    return Intl.message(
+      'Unknown Hotel',
+      name: 'unknownHotel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unknown location`
+  String get unknownLocation {
+    return Intl.message(
+      'Unknown location',
+      name: 'unknownLocation',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Check-in`
+  String get checkIn {
+    return Intl.message('Check-in', name: 'checkIn', desc: '', args: []);
+  }
+
+  /// `Check-out`
+  String get checkOut {
+    return Intl.message('Check-out', name: 'checkOut', desc: '', args: []);
+  }
+
+  /// `Standard Room`
+  String get standardRoom {
+    return Intl.message(
+      'Standard Room',
+      name: 'standardRoom',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Ongoing`
+  String get ongoing {
+    return Intl.message('Ongoing', name: 'ongoing', desc: '', args: []);
+  }
+
+  /// `Completed`
+  String get completed {
+    return Intl.message('Completed', name: 'completed', desc: '', args: []);
+  }
+
+  /// `Canceled`
+  String get canceled {
+    return Intl.message('Canceled', name: 'canceled', desc: '', args: []);
+  }
+
+  /// `Cancel Booking`
+  String get cancelBooking {
+    return Intl.message(
+      'Cancel Booking',
+      name: 'cancelBooking',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Yeay, you have completed it!`
+  String get yeayCompleted {
+    return Intl.message(
+      'Yeay, you have completed it!',
+      name: 'yeayCompleted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `You canceled this hotel booking`
+  String get youCanceledBooking {
+    return Intl.message(
+      'You canceled this hotel booking',
+      name: 'youCanceledBooking',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Booking Information`
+  String get bookingInformation {
+    return Intl.message(
+      'Booking Information',
+      name: 'bookingInformation',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Booking ID`
+  String get bookingId {
+    return Intl.message('Booking ID', name: 'bookingId', desc: '', args: []);
+  }
+
+  /// `Room Type`
+  String get roomType {
+    return Intl.message('Room Type', name: 'roomType', desc: '', args: []);
+  }
+
+  /// `Room Quantity`
+  String get roomQuantity {
+    return Intl.message(
+      'Room Quantity',
+      name: 'roomQuantity',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Payment Information`
+  String get paymentInformation {
+    return Intl.message(
+      'Payment Information',
+      name: 'paymentInformation',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Payment Status`
+  String get paymentStatus {
+    return Intl.message(
+      'Payment Status',
+      name: 'paymentStatus',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Contact Number`
+  String get contactNumber {
+    return Intl.message(
+      'Contact Number',
+      name: 'contactNumber',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Special Requests`
+  String get specialRequests {
+    return Intl.message(
+      'Special Requests',
+      name: 'specialRequests',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Contact Hotel`
+  String get contactHotel {
+    return Intl.message(
+      'Contact Hotel',
+      name: 'contactHotel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Download Ticket`
+  String get downloadTicket {
+    return Intl.message(
+      'Download Ticket',
+      name: 'downloadTicket',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Call Hotel`
+  String get callHotel {
+    return Intl.message('Call Hotel', name: 'callHotel', desc: '', args: []);
+  }
+
+  /// `Speak directly with hotel staff`
+  String get speakDirectly {
+    return Intl.message(
+      'Speak directly with hotel staff',
+      name: 'speakDirectly',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Chat with Hotel`
+  String get chatWithHotel {
+    return Intl.message(
+      'Chat with Hotel',
+      name: 'chatWithHotel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Send a message to the hotel`
+  String get sendMessage {
+    return Intl.message(
+      'Send a message to the hotel',
+      name: 'sendMessage',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Downloading ticket...`
+  String get downloadingTicket {
+    return Intl.message(
+      'Downloading ticket...',
+      name: 'downloadingTicket',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Ticket downloaded successfully!`
+  String get ticketDownloadedSuccess {
+    return Intl.message(
+      'Ticket downloaded successfully!',
+      name: 'ticketDownloadedSuccess',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Cancel Booking`
+  String get cancelBookingTitle {
+    return Intl.message(
+      'Cancel Booking',
+      name: 'cancelBookingTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Are you sure you want to cancel your hotel booking?`
+  String get cancelBookingMessage {
+    return Intl.message(
+      'Are you sure you want to cancel your hotel booking?',
+      name: 'cancelBookingMessage',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Only 80% of the money you can refund from your payment according to our policy`
+  String get refundPolicy {
+    return Intl.message(
+      'Only 80% of the money you can refund from your payment according to our policy',
+      name: 'refundPolicy',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Yes, Continue`
+  String get yesContinue {
+    return Intl.message(
+      'Yes, Continue',
+      name: 'yesContinue',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `My Booking`
+  String get myBooking {
+    return Intl.message('My Booking', name: 'myBooking', desc: '', args: []);
+  }
+
+  /// `No ongoing bookings`
+  String get noOngoingBookings {
+    return Intl.message(
+      'No ongoing bookings',
+      name: 'noOngoingBookings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Your ongoing bookings will appear here`
+  String get ongoingBookingsWillAppear {
+    return Intl.message(
+      'Your ongoing bookings will appear here',
+      name: 'ongoingBookingsWillAppear',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No completed bookings`
+  String get noCompletedBookings {
+    return Intl.message(
+      'No completed bookings',
+      name: 'noCompletedBookings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Your completed bookings will appear here`
+  String get completedBookingsWillAppear {
+    return Intl.message(
+      'Your completed bookings will appear here',
+      name: 'completedBookingsWillAppear',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No canceled bookings`
+  String get noCanceledBookings {
+    return Intl.message(
+      'No canceled bookings',
+      name: 'noCanceledBookings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Your canceled bookings will appear here`
+  String get canceledBookingsWillAppear {
+    return Intl.message(
+      'Your canceled bookings will appear here',
+      name: 'canceledBookingsWillAppear',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Error loading bookings`
+  String get errorLoadingBookings {
+    return Intl.message(
+      'Error loading bookings',
+      name: 'errorLoadingBookings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Retry`
+  String get retry {
+    return Intl.message('Retry', name: 'retry', desc: '', args: []);
+  }
+
+  /// `Paid`
+  String get paid {
+    return Intl.message('Paid', name: 'paid', desc: '', args: []);
+  }
+
+  /// `Unpaid`
+  String get unpaid {
+    return Intl.message('Unpaid', name: 'unpaid', desc: '', args: []);
+  }
+
+  /// `Partially Paid`
+  String get partiallyPaid {
+    return Intl.message(
+      'Partially Paid',
+      name: 'partiallyPaid',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Partial`
+  String get partial {
+    return Intl.message('Partial', name: 'partial', desc: '', args: []);
+  }
+
+  /// `Refunded`
+  String get refunded {
+    return Intl.message('Refunded', name: 'refunded', desc: '', args: []);
+  }
+
+  /// `N/A`
+  String get notAvailable {
+    return Intl.message('N/A', name: 'notAvailable', desc: '', args: []);
+  }
+
+  /// `VNPay`
+  String get vnpay {
+    return Intl.message('VNPay', name: 'vnpay', desc: '', args: []);
+  }
+
+  /// `MoMo`
+  String get momo {
+    return Intl.message('MoMo', name: 'momo', desc: '', args: []);
+  }
+
+  /// `ZaloPay`
+  String get zalopay {
+    return Intl.message('ZaloPay', name: 'zalopay', desc: '', args: []);
+  }
+
+  /// `Cash`
+  String get cash {
+    return Intl.message('Cash', name: 'cash', desc: '', args: []);
+  }
+
+  /// `No`
+  String get no {
+    return Intl.message('No', name: 'no', desc: '', args: []);
+  }
+
+  /// `Loading...`
+  String get loading {
+    return Intl.message('Loading...', name: 'loading', desc: '', args: []);
+  }
+
+  /// `Success`
+  String get success {
+    return Intl.message('Success', name: 'success', desc: '', args: []);
+  }
+
+  /// `Failed`
+  String get failed {
+    return Intl.message('Failed', name: 'failed', desc: '', args: []);
+  }
+
+  /// `Share`
+  String get share {
+    return Intl.message('Share', name: 'share', desc: '', args: []);
+  }
+
+  /// `Phone`
+  String get phone {
+    return Intl.message('Phone', name: 'phone', desc: '', args: []);
+  }
+
+  /// `Chat`
+  String get chat {
+    return Intl.message('Chat', name: 'chat', desc: '', args: []);
+  }
+
+  /// `Download`
+  String get download {
+    return Intl.message('Download', name: 'download', desc: '', args: []);
   }
 }
 

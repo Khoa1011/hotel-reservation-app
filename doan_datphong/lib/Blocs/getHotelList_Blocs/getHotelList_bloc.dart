@@ -13,7 +13,7 @@ class GetHotelListBloc extends Bloc<GetHotelListEvent,GetHotelListState>{
   void _onFetchHotelList(FetchHotelList event, Emitter<GetHotelListState> emit) async{
     emit(GetHotelListLoading());
     try {
-      List<Hotels> hotels = await fetchList.fetchHotels();
+      List<KhachSan> hotels = await fetchList.fetchHotels();
       emit(GetHotelListSuccess(hotels));
     } catch (error) {
       emit(GetHotelListFailure(error.toString()));

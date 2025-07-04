@@ -1,18 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:doan_datphong/Models/KhachSan.dart';
 
+import 'package:flutter/material.dart';
+import 'package:doan_datphong/Models/KhachSan.dart';
+import 'package:doan_datphong/Helper/FormatCurrency.dart';
+
 class HotelListWidget extends StatelessWidget {
-  final List<Hotels> hotels;
+  final List<KhachSan> hotels;
   final int totalResults;
+  final ScrollController? scrollController;
 
   const HotelListWidget({
     super.key,
     required this.hotels,
     required this.totalResults,
+    this.scrollController,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (hotels.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.hotel_outlined,
+              size: 80,
+              color: Colors.grey[400],
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Không tìm thấy khách sạn',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: Colors.black54,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Hãy thử tìm kiếm với từ khóa khác',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -24,7 +62,7 @@ class HotelListWidget extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Filtered ($totalResults)',
+                  'Tìm thấy ($totalResults)',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -53,6 +91,7 @@ class HotelListWidget extends StatelessWidget {
           // Hotel list
           Expanded(
             child: ListView.builder(
+              controller: scrollController,
               itemCount: hotels.length,
               itemBuilder: (context, index) {
                 return _buildHotelCard(hotels[index]);
@@ -64,7 +103,7 @@ class HotelListWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildHotelCard(Hotels hotel) {
+  Widget _buildHotelCard(KhachSan hotel) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -125,7 +164,7 @@ class HotelListWidget extends StatelessWidget {
                         if (loadingProgress == null) return child;
                         return const Center(
                           child: CircularProgressIndicator(
-                            color: Color(0xFF14D9E1),
+                            color: Color(0xFF1565C0),
                           ),
                         );
                       },
@@ -265,15 +304,15 @@ class HotelListWidget extends StatelessWidget {
                       text: TextSpan(
                         children: [
                           TextSpan(
-                            text: '\$${hotel.giaCa}',
+                            text: CurrencyHelper.formatVND(hotel.giaCa),
                             style: const TextStyle(
-                              fontSize: 20,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF14D9E1),
+                              color: Color(0xFF1565C0),
                             ),
                           ),
                           TextSpan(
-                            text: ' / night',
+                            text: ' / đêm',
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey[600],
@@ -283,19 +322,19 @@ class HotelListWidget extends StatelessWidget {
                       ),
                     ),
 
-                    // Book now button (optional)
+                    // View details button
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF14D9E1).withOpacity(0.1),
+                        color: const Color(0xFF1565C0).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Text(
-                        'View Details',
+                        'Xem chi tiết',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF14D9E1),
+                          color: Color(0xFF1565C0),
                         ),
                       ),
                     ),

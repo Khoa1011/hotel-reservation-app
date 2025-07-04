@@ -39,10 +39,24 @@ class _EditProfileState extends State<EditProfileScreen> {
     _nameController = TextEditingController(text: widget.user?.tenNguoiDung ?? '');
     _emailController = TextEditingController(text: widget.user?.email ?? '');
     _phoneController = TextEditingController(text: widget.user?.soDienThoai ?? '');
-    _dobController = TextEditingController(text: widget.user?.ngaySinh ?? '');
+    _dobController = TextEditingController(text: _formatDateForDisplay(widget.user?.ngaySinh));
     _newPasswordController = TextEditingController();
     _confirmPasswordController = TextEditingController();
   }
+
+  String _formatDateForDisplay(DateTime? date) {
+  if (date == null) return '';
+  return DateFormat('dd/MM/yyyy').format(date);
+}
+  DateTime? _parseDate(String dateString) {
+    if (dateString.isEmpty) return null;
+    try {
+      return DateFormat('dd/MM/yyyy').parse(dateString);
+    } catch (e) {
+      return null;
+    }
+  }
+
 
   @override
   void initState() {
@@ -179,7 +193,7 @@ class _EditProfileState extends State<EditProfileScreen> {
           id: widget.user!.id,
           tenNguoiDung: _nameController.text,
           soDienThoai: _phoneController.text,
-          ngaySinh: _dobController.text,
+          ngaySinh: _parseDate(_dobController.text)!,
           hinhDaiDien: _image!.path,
           matKhau: _newPasswordController.text
       );

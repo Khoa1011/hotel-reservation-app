@@ -15,14 +15,14 @@ class GetAmenitiesRepository{
   
   Future<List<TienNghi>> fetchAmenities(String hotelId) async{
     final url = Uri.parse("$keyAmenitiesURL/$hotelId");
-    try{
+    try {
       final response = await http.get(url);
 
-      if(response.statusCode == 200){
+      if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         List<dynamic>amenitiesJson = data['keyAmenities'];
-        return amenitiesJson.map((json)=>TienNghi.fromJson(json)).toList();
-      }else{
+        return amenitiesJson.map((json) => TienNghi.fromJson(json)).toList();
+    }else{
         final errorData = jsonDecode(response.body);
         throw Exception("Lỗi khi lấy tiện nghi cho khách sạn: "
             "${response.statusCode} "
@@ -57,7 +57,12 @@ class GetAmenitiesRepository{
         List<dynamic> amenitiesJson = data['groupedAmenities'];
         return amenitiesJson.map((json) => NhomTienNghi.fromJson(json)).toList();
 
-      } else {
+      }else if (response.statusCode == 404) {
+        final errorData = jsonDecode(response.body);
+        throw Exception("${errorData['msgBody']}");
+      }
+
+      else {
         final errorData = jsonDecode(response.body);
         throw Exception("Lỗi API: ${response.statusCode} - ${errorData['msgBody'] ?? 'Unknown error'}");
       }

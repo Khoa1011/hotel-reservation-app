@@ -55,7 +55,7 @@ const BookingSchema = new mongoose.Schema({
 
 
   trangThai: { type: String, enum: ["dang_cho", "da_xac_nhan", "da_nhan_phong", "dang_su_dung",
-      "qua_gio", "da_tra_phong", "da_huy"], default: "Đang chờ" },
+      "qua_gio", "da_tra_phong", "da_huy", "khong_nhan_phong"], default: "dang_cho" },
 
   phuongThucThanhToan: 
   { type: String, 

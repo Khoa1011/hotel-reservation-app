@@ -206,6 +206,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "fillYourProfile": MessageLookupByLibrary.simpleMessage(
       "Điền Hồ Sơ Của Bạn",
     ),
+    "filterHotel": MessageLookupByLibrary.simpleMessage(
+      "Lọc tìm kiếm khách sạn",
+    ),
     "forgotPassword": MessageLookupByLibrary.simpleMessage("Quên mật khẩu?"),
     "from": MessageLookupByLibrary.simpleMessage("Từ"),
     "fullName": MessageLookupByLibrary.simpleMessage("Họ và Tên"),
@@ -214,6 +217,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "help": MessageLookupByLibrary.simpleMessage("Trợ giúp"),
     "helpful": MessageLookupByLibrary.simpleMessage("Hữu ích"),
+    "highestPopularity": MessageLookupByLibrary.simpleMessage(
+      "Mức độ phổ biến cao nhất",
+    ),
+    "highestPrice": MessageLookupByLibrary.simpleMessage("Giá cao nhất"),
     "home": MessageLookupByLibrary.simpleMessage("Trang chủ"),
     "hotelNotAmenityYet": MessageLookupByLibrary.simpleMessage(
       "Khách sạn này chưa thiết lập các tiện nghi. Vui lòng quay lại sau.",
@@ -254,6 +261,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "lookingForRooms": MessageLookupByLibrary.simpleMessage(
       "Đang tìm kiếm phòng...",
     ),
+    "lowestPrice": MessageLookupByLibrary.simpleMessage("Giá thấp nhất"),
     "maintenanceServer": MessageLookupByLibrary.simpleMessage(
       "Máy chủ đang bảo trì",
     ),
@@ -287,6 +295,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "noCanceledBookings": MessageLookupByLibrary.simpleMessage(
       "Không có đặt phòng đã hủy",
     ),
+    "noCheckIn": MessageLookupByLibrary.simpleMessage("Không nhận phòng"),
     "noCompletedBookings": MessageLookupByLibrary.simpleMessage(
       "Không có đặt phòng đã hoàn thành",
     ),
@@ -405,6 +414,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "pleaseWait": MessageLookupByLibrary.simpleMessage("Vui lòng chờ..."),
     "popular": MessageLookupByLibrary.simpleMessage("Phổ biến"),
     "priceDetails": MessageLookupByLibrary.simpleMessage("Chi tiết giá"),
+    "priceRange": MessageLookupByLibrary.simpleMessage("Khoảng giá"),
     "processing": MessageLookupByLibrary.simpleMessage("Đang xử lý..."),
     "processingRegistration": MessageLookupByLibrary.simpleMessage(
       "Đang xử lý đăng ký...",
@@ -448,6 +458,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "roomPrice": MessageLookupByLibrary.simpleMessage("Giá phòng"),
     "roomQuantity": MessageLookupByLibrary.simpleMessage("Số lượng phòng"),
     "roomType": MessageLookupByLibrary.simpleMessage("Loại phòng"),
+    "rooms": MessageLookupByLibrary.simpleMessage("Phòng"),
     "sameDayOnlyHourly": MessageLookupByLibrary.simpleMessage(
       "Thuê theo giờ chỉ trong cùng ngày",
     ),
@@ -467,6 +478,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Chọn phương thức thanh toán",
     ),
     "selectRoomType": MessageLookupByLibrary.simpleMessage("Chọn loại phòng"),
+    "selectTravelDate": MessageLookupByLibrary.simpleMessage("Chọn ngày đi"),
+    "selectYourArrivalDate": MessageLookupByLibrary.simpleMessage(
+      "Chọn ngày đến",
+    ),
     "selecteTime": MessageLookupByLibrary.simpleMessage("Chọn thời gian"),
     "selectedTime": MessageLookupByLibrary.simpleMessage("Giờ đã chọn"),
     "sendMessage": MessageLookupByLibrary.simpleMessage(
@@ -479,6 +494,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "signUp": MessageLookupByLibrary.simpleMessage("Đăng ký"),
     "singleBed": MessageLookupByLibrary.simpleMessage("Giường đơn"),
     "soldOut": MessageLookupByLibrary.simpleMessage("Đã hết"),
+    "sortResults": MessageLookupByLibrary.simpleMessage("Sắp xếp kết quả"),
     "speakDirectly": MessageLookupByLibrary.simpleMessage(
       "Nói chuyện trực tiếp với nhân viên khách sạn",
     ),
@@ -526,6 +542,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "vnPayDescription": MessageLookupByLibrary.simpleMessage(
       "Cổng thanh toán quốc gia",
     ),
+    "vnpay": MessageLookupByLibrary.simpleMessage("VNPay"),
     "waitingForPayment": MessageLookupByLibrary.simpleMessage(
       "Đang chờ thanh toán",
     ),
@@ -544,9 +561,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "youCanceledBooking": MessageLookupByLibrary.simpleMessage(
       "Bạn đã hủy đặt phòng khách sạn này",
     ),
+    "youNoCheckInBooking": MessageLookupByLibrary.simpleMessage(
+      "Bạn không nhận phòng này",
+    ),
     "zaloPayDescription": MessageLookupByLibrary.simpleMessage(
       "Thanh toán qua ví điện tử ZaloPay",
     ),
     "zaloPayWallet": MessageLookupByLibrary.simpleMessage("Ví ZaloPay"),
+    "zalopay": MessageLookupByLibrary.simpleMessage("ZaloPay"),
   };
 }

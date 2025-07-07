@@ -1,3 +1,4 @@
+import 'package:doan_datphong/Helper/FormatCurrency.dart';
 import 'package:doan_datphong/Helper/FormatDateTime.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -317,10 +318,7 @@ class BookingDetailScreen extends StatelessWidget {
   }
 
   Widget _buildPaymentInfo(BuildContext context) {
-    final formattedPrice = NumberFormat.currency(
-      symbol: '\$',
-      decimalDigits: 0,
-    ).format(booking.totalAmount ?? 0);
+   String formattedPrice = CurrencyHelper.formatVND(booking.totalAmount ?? 0);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),

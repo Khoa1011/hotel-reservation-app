@@ -204,6 +204,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "fillYourProfile": MessageLookupByLibrary.simpleMessage(
       "Fill Your Profile",
     ),
+    "filterHotel": MessageLookupByLibrary.simpleMessage("Filter Hotel"),
     "forgotPassword": MessageLookupByLibrary.simpleMessage(
       "Forgot the password?",
     ),
@@ -212,6 +213,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "guestsRooms": MessageLookupByLibrary.simpleMessage("Guests & Rooms"),
     "help": MessageLookupByLibrary.simpleMessage("Help"),
     "helpful": MessageLookupByLibrary.simpleMessage("Helpful"),
+    "highestPopularity": MessageLookupByLibrary.simpleMessage(
+      "Highest popularity",
+    ),
+    "highestPrice": MessageLookupByLibrary.simpleMessage("Highest price"),
     "home": MessageLookupByLibrary.simpleMessage("Home"),
     "hotelNotAmenityYet": MessageLookupByLibrary.simpleMessage(
       "This hotel has no facilities yet. Please check back later.",
@@ -252,6 +257,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "lookingForRooms": MessageLookupByLibrary.simpleMessage(
       "Looking for rooms...",
     ),
+    "lowestPrice": MessageLookupByLibrary.simpleMessage("Lowest price"),
     "maintenanceServer": MessageLookupByLibrary.simpleMessage(
       "Maintenance server",
     ),
@@ -285,6 +291,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "noCanceledBookings": MessageLookupByLibrary.simpleMessage(
       "No canceled bookings",
     ),
+    "noCheckIn": MessageLookupByLibrary.simpleMessage("No check-in"),
     "noCompletedBookings": MessageLookupByLibrary.simpleMessage(
       "No completed bookings",
     ),
@@ -387,6 +394,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "pleaseWait": MessageLookupByLibrary.simpleMessage("Please wait..."),
     "popular": MessageLookupByLibrary.simpleMessage("Popular"),
     "priceDetails": MessageLookupByLibrary.simpleMessage("Price Details"),
+    "priceRange": MessageLookupByLibrary.simpleMessage("Price Range"),
     "processing": MessageLookupByLibrary.simpleMessage("Processing..."),
     "processingRegistration": MessageLookupByLibrary.simpleMessage(
       "Processing registration...",
@@ -450,6 +458,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Select Payment Method",
     ),
     "selectRoomType": MessageLookupByLibrary.simpleMessage("Select room type"),
+    "selectTravelDate": MessageLookupByLibrary.simpleMessage(
+      "Select travel date",
+    ),
+    "selectYourArrivalDate": MessageLookupByLibrary.simpleMessage(
+      "Select arrival date",
+    ),
     "selecteTime": MessageLookupByLibrary.simpleMessage("Select time"),
     "selectedTime": MessageLookupByLibrary.simpleMessage("Selected time"),
     "sendMessage": MessageLookupByLibrary.simpleMessage(
@@ -462,6 +476,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "signUp": MessageLookupByLibrary.simpleMessage("Sign up"),
     "singleBed": MessageLookupByLibrary.simpleMessage("Single bed"),
     "soldOut": MessageLookupByLibrary.simpleMessage("Sold out"),
+    "sortResults": MessageLookupByLibrary.simpleMessage("Sort Results"),
     "speakDirectly": MessageLookupByLibrary.simpleMessage(
       "Speak directly with hotel staff",
     ),
@@ -527,6 +542,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "yesContinue": MessageLookupByLibrary.simpleMessage("Yes, Continue"),
     "youCanceledBooking": MessageLookupByLibrary.simpleMessage(
       "You canceled this hotel booking",
+    ),
+    "youNoCheckInBooking": MessageLookupByLibrary.simpleMessage(
+      "You do not have this room",
     ),
     "zaloPayDescription": MessageLookupByLibrary.simpleMessage(
       "Pay via ZaloPay e-wallet",

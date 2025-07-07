@@ -1,4 +1,5 @@
 import 'package:doan_datphong/Blocs/User_Blocs/user_bloc.dart';
+import 'package:doan_datphong/Blocs/bookingCheckUser_Blocs/bookingCheckUser_bloc.dart';
 import 'package:doan_datphong/Blocs/fillProfile_Blocs/fillProfile_bloc.dart';
 import 'package:doan_datphong/Blocs/getHotelList_Blocs/getHotelList_bloc.dart';
 import 'package:doan_datphong/Blocs/getListBooking_Blocs/getBookingList_bloc.dart';
@@ -8,6 +9,7 @@ import 'package:doan_datphong/Blocs/logout_bloc/logout_bloc.dart';
 import 'package:doan_datphong/Blocs/payment_Blocs/payment_bloc.dart';
 import 'package:doan_datphong/Blocs/register_Blocs/register_bloc.dart';
 import 'package:doan_datphong/Blocs/updateProfile/updateProfile_bloc.dart';
+import 'package:doan_datphong/Data/Repository/bookingCheckUser_Repository/bookingCheckUser_repo.dart';
 import 'package:doan_datphong/Data/Repository/getBookingList_Repository/getBookingList_repo.dart';
 import 'package:doan_datphong/Data/Repository/getHotelList_Repository/getHotelList_repo.dart';
 import 'package:doan_datphong/Data/Repository/getListOfRoomTypes_Repository/getListOfRoom_repo.dart';
@@ -27,6 +29,7 @@ import 'Blocs/checkLogin_Blocs/checkLogin_bloc.dart';
 import 'Blocs/getAmenities_Blocs/getAmenities_bloc.dart';
 import 'Blocs/logout_bloc/logout_event.dart';
 import 'Blocs/searchHotels_Blocs/searchHotels_bloc.dart';
+import 'Data/Provider/auth_provider.dart';
 import 'Data/Repository/fillProfile_Repository/fillProfile_repo.dart';
 import 'Data/Repository/getAmenities_Repository/getAmenities_repo.dart';
 import 'Data/Repository/searchHotels_Repository/searchHotels_repo.dart';
@@ -52,11 +55,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return MultiProvider(
 
       providers: [
-        // LanguageProvider phải được khởi tạo đầu tiên
+        ChangeNotifierProvider<UserAuthProvider>(
+          create: (context) => UserAuthProvider(),
+        ),
+
         ChangeNotifierProvider<LanguageProvider>(
           create: (context) => LanguageProvider(),
         ),
@@ -75,7 +80,8 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (context) => GetBookingListBloc(fetchList: GetBookingListRepository())),
         BlocProvider(create: (context) => UpdateProfileBloc(fpr: UpdateProfileRepository())),
         BlocProvider(create: (context) => GetAmenitiesBloc(getAmenitiesRepo: GetAmenitiesRepository())),
-        BlocProvider(create: (context) => HotelSearchBloc(repository: HotelSearchRepository()))
+        BlocProvider(create: (context) => HotelSearchBloc(repository: HotelSearchRepository())),
+        BlocProvider(create: (context) => BookingCheckBloc(repository: BookingCheckRepository()))
       ],
       child: Consumer<LanguageProvider>(
         builder: (context, languageProvider, child) {
@@ -121,6 +127,7 @@ class MyApp extends StatelessWidget {
               }
               return const Locale('vi');
             },
+
 
             home: SplashScreen(),
           );

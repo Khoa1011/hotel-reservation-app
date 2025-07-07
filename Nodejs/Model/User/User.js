@@ -7,17 +7,17 @@ const UserSchema = new mongoose.Schema({
     tenNguoiDung: {
         type: String,
         default: "",
-        maxlength:[100,"Tên không được nhập quá 100 ký tự"]
+        maxlength: [100, "Tên không được nhập quá 100 ký tự"]
     },
     ngaySinh: {
         type: Date,
-        default:null,
-        validate:{
-            validator: function(v) {
+        default: null,
+        validate: {
+            validator: function (v) {
                 if (!v) return true; // Allow null
                 const today = new Date();
                 const age = today.getFullYear() - v.getFullYear();
-                return age >= 16 && age <= 100; 
+                return age >= 16 && age <= 100;
             },
             message: 'Tuổi phải từ 16-100'
         }
@@ -42,7 +42,7 @@ const UserSchema = new mongoose.Schema({
     },
     vaiTro: {
         type: String,
-        enum: ["nguoiDung", "chuKhachSan", "admin","nhanVienKhachSan"],
+        enum: ["nguoiDung", "chuKhachSan", "admin", "nhanVienKhachSan"],
         default: "nguoiDung"
     },
     ngayTao: {
@@ -58,12 +58,40 @@ const UserSchema = new mongoose.Schema({
         unique: true,
         sparse: true,
         validate: {
-            validator: function(v) {
+            validator: function (v) {
                 if (!v) return true; // Allow null/undefined
                 return /^[0-9]{12}$/.test(v); // 12 digits for Vietnamese CCCD
             },
             message: 'CCCD phải có 12 chữ số'
         }
+    },
+    camTienMat: {
+        type: Boolean,
+        default: false
+    },
+
+    soLanKhongNhanPhong: {
+        type: Number,
+        default: 0,
+        max: 10
+    },
+    lichSuKhongNhanPhong: [{
+        maDonDatPhong: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "donDatPhong"
+        },
+        thoiGianQuaHan: {
+            type: Date,
+            default: Date.now
+        },
+        lyDo: {
+            type: String,
+            default: "Không nhận phòng đúng giờ"
+        }
+    }],
+    ngayCamDatPhong: {
+        type: Date,
+        default: null
     },
     trangThaiTaiKhoan: {
         type: String,
@@ -93,10 +121,10 @@ const UserSchema = new mongoose.Schema({
         quan: String,
         phuong: String,
         // tenDuong:String,
-        soNha:String,
+        soNha: String,
         quocGia: {
-            type:String,
-            default:"Việt Nam"
+            type: String,
+            default: "Việt Nam"
         }
     },
 
@@ -104,12 +132,12 @@ const UserSchema = new mongoose.Schema({
         type: String,
         default: null
     },
-    
+
     resetPasswordExpires: {
         type: Date,
         default: null
     },
-    
+
     lanCuoiDangNhap: {
         type: Date,
         default: null

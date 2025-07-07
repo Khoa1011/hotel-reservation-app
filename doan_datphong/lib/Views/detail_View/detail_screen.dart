@@ -17,6 +17,7 @@ import 'widgets/amenities_section.dart';
 class DetailScreen extends StatefulWidget {
   final KhachSan hotel;
 
+
   const DetailScreen({Key? key, required this.hotel}) : super(key: key);
 
   @override

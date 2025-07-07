@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 class FillProfileBloc extends Bloc<FillProfileEvent,FillProfileState>{
   late final FillProfileRepository fpr;
+
   FillProfileBloc({required this.fpr}):super(FillProfileInitial()){
     on<FillProfileSubmiited>(_onFillProfileSumiited);
   }

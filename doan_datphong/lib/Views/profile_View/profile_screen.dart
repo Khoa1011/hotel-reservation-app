@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:doan_datphong/Data/Provider/auth_provider.dart';
+import 'package:doan_datphong/Views/components/bottom_navigation_bar.dart';
 import 'package:doan_datphong/Views/login_View/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:doan_datphong/Models/NguoiDung.dart';
@@ -17,9 +19,9 @@ import 'editProfile_screen.dart';
 import '../../LanguageProvider.dart';
 
 class ProfileScreen extends StatefulWidget {
-  final NguoiDung? user;
 
-  const ProfileScreen({super.key, required this.user});
+
+  const ProfileScreen({super.key});
 
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
@@ -162,244 +164,202 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           child: SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Profile header
-                  Center(
-                    child: Column(
-                      children: [
-                        CircleAvatar(
-                          radius: 70,
-                          backgroundColor: Colors.transparent,
-                          child: _buildAvatarImage(),
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          widget.user!.tenNguoiDung,
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          widget.user!.email,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 24),
-                  Divider(thickness: 1),
-                  SizedBox(height: 16),
-
-                  // Edit Profile button
-                  _buildProfileButton(
-                    icon: Icons.edit,
-                    text: S.of(context).editProfile, // Sử dụng đa ngôn ngữ
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => EditProfileScreen(user: widget.user),
+              child: Consumer<UserAuthProvider>(
+                  builder: (context, authProvider, child){
+                    if(!authProvider.isLoggedIn || authProvider.user == null){
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.person_off, size: 80, color: Colors.grey,),
+                            SizedBox(height: 16),
+                            Text(
+                              'Chưa đăng nhập',
+                              style: TextStyle(fontSize: 18, color: Colors.grey),
+                            ),
+                            SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: _navigateToLogin,
+                              child: Text('Đăng nhập'),
+                            ),
+                          ],
                         ),
                       );
-                    },
-                  ),
-                  SizedBox(height: 16),
-
-                  // Settings section
-                  Text(
-                    S.of(context).settings, // Sử dụng đa ngôn ngữ
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  SizedBox(height: 16),
-
-                  // Settings options với đa ngôn ngữ
-                  _buildSettingOption(
-                    icon: Icons.payment,
-                    text: S.of(context).payment,
-                    onTap: () {
-                      // Handle payment
-                    },
-                  ),
-                  _buildSettingOption(
-                    icon: Icons.notifications,
-                    text: S.of(context).notifications,
-                    onTap: () {
-                      // Handle notifications
-                    },
-                  ),
-                  _buildSettingOption(
-                    icon: Icons.security,
-                    text: S.of(context).security,
-                    onTap: () {
-                      // Handle security
-                    },
-                  ),
-                  _buildSettingOption(
-                    icon: Icons.help,
-                    text: S.of(context).help,
-                    onTap: () {
-                      // Handle help
-                    },
-                  ),
-                  _buildSettingOption(
-                    icon: Icons.dark_mode,
-                    text: S.of(context).darkTheme,
-                    trailing: Switch(
-                      value: _darkTheme,
-                      onChanged: (value) {
-                        setState(() {
-                          _darkTheme = value;
-                        });
-                        // Handle theme change
-                      },
-                      activeColor: Color(0xFF14D9E1),
-                    ),
-                  ),
-
-                  // Tùy chọn đổi ngôn ngữ đã cập nhật
-                  _buildSettingOption(
-                    icon: Icons.language,
-                    text: S.of(context).language,
-                    trailing: Consumer<LanguageProvider>(
-                      builder: (context, languageProvider, child) {
-                        return Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Color(0xFF14D9E1).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Color(0xFF14D9E1).withOpacity(0.3)),
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Profile header
+                        Center(
+                          child: Column(
+                            children: [
+                              CircleAvatar(
+                                radius: 70,
+                                backgroundColor: Colors.transparent,
+                                child: _buildAvatarImage(),
                               ),
-                              child: Text(
-                                languageProvider.isVietnamese() ? '🇻🇳 VI' : '🇺🇸 EN',
+                              SizedBox(height: 16),
+                              Text(
+                                authProvider.userName ?? "Nguoi Dung",
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 24,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF14D9E1),
                                 ),
                               ),
-                            ),
-                            SizedBox(width: 8),
-                            Icon(Icons.chevron_right, color: Colors.grey),
-                          ],
-                        );
-                      },
-                    ),
-                    onTap: _showLanguageDialog,
-                  ),
+                              SizedBox(height: 4),
+                              Text(
+                                authProvider.userEmail ?? "example@gmail.com",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 24),
+                        Divider(thickness: 1),
+                        SizedBox(height: 16),
 
-                  SizedBox(height: 16),
-                  _buildSettingOption(
-                    icon: Icons.logout,
-                    text: S.of(context).logout, // Sử dụng đa ngôn ngữ
-                    textColor: Colors.red,
-                    onTap: () {
-                      _showLogoutDialog();
-                    },
-                  ),
-                ],
-              ),
+                        // Edit Profile button
+                        _buildProfileButton(
+                          icon: Icons.edit,
+                          text: S.of(context).editProfile, // Sử dụng đa ngôn ngữ
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => EditProfileScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        SizedBox(height: 16),
+
+                        // Settings section
+                        Text(
+                          S.of(context).settings, // Sử dụng đa ngôn ngữ
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        SizedBox(height: 16),
+
+                        // Settings options với đa ngôn ngữ
+                        _buildSettingOption(
+                          icon: Icons.payment,
+                          text: S.of(context).payment,
+                          onTap: () {
+                            // Handle payment
+                          },
+                        ),
+                        _buildSettingOption(
+                          icon: Icons.notifications,
+                          text: S.of(context).notifications,
+                          onTap: () {
+                            // Handle notifications
+                          },
+                        ),
+                        _buildSettingOption(
+                          icon: Icons.security,
+                          text: S.of(context).security,
+                          onTap: () {
+                            // Handle security
+                          },
+                        ),
+                        _buildSettingOption(
+                          icon: Icons.help,
+                          text: S.of(context).help,
+                          onTap: () {
+                            // Handle help
+                          },
+                        ),
+                        _buildSettingOption(
+                          icon: Icons.dark_mode,
+                          text: S.of(context).darkTheme,
+                          trailing: Switch(
+                            value: _darkTheme,
+                            onChanged: (value) {
+                              setState(() {
+                                _darkTheme = value;
+                              });
+                              // Handle theme change
+                            },
+                            activeColor: Color(0xFF14D9E1),
+                          ),
+                        ),
+
+                        // Tùy chọn đổi ngôn ngữ đã cập nhật
+                        _buildSettingOption(
+                          icon: Icons.language,
+                          text: S.of(context).language,
+                          trailing: Consumer<LanguageProvider>(
+                            builder: (context, languageProvider, child) {
+                              return Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Color(0xFF14D9E1).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: Color(0xFF14D9E1).withOpacity(0.3)),
+                                    ),
+                                    child: Text(
+                                      languageProvider.isVietnamese() ? '🇻🇳 VI' : '🇺🇸 EN',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF14D9E1),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Icon(Icons.chevron_right, color: Colors.grey),
+                                ],
+                              );
+                            },
+                          ),
+                          onTap: _showLanguageDialog,
+                        ),
+
+                        SizedBox(height: 16),
+                        _buildSettingOption(
+                          icon: Icons.logout,
+                          text: S.of(context).logout, // Sử dụng đa ngôn ngữ
+                          textColor: Colors.red,
+                          onTap: () {
+                            _showLogoutDialog();
+                          },
+                        ),
+                      ],
+                    );
+                  }
+                  )
+
             ),
           ),
         ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: currentIndex,
-          onTap: (index) {
-            if (index == currentIndex) return;
-
-            setState(() {
-              currentIndex = index;
-            });
-
-            if (index == 0) {
-              Navigator.pushReplacement(
-                context,
-                PageRouteBuilder(
-                  pageBuilder: (context, animation1, animation2) => HomeScreen(user: widget.user),
-                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: child,
-                    );
-                  },
-                  transitionDuration: Duration(milliseconds: 300),
-                ),
-              );
-            } else if (index == 1) {
-              Navigator.pushReplacement(
-                context,
-                PageRouteBuilder(
-                  pageBuilder: (context, animation1, animation2) => SearchView(user: widget.user),
-                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: child,
-                    );
-                  },
-                  transitionDuration: Duration(milliseconds: 300),
-                ),
-              );
-            } else if (index == 2) {
-              Navigator.pushReplacement(
-                context,
-                PageRouteBuilder(
-                  pageBuilder: (context, animation1, animation2) => ListBookingScreen(user: widget.user),
-                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: child,
-                    );
-                  },
-                  transitionDuration: Duration(milliseconds: 300),
-                ),
-              );
-            }
-          },
-          selectedItemColor: Color(0xFF14D9E1),
-          unselectedItemColor: Color(0xff9A9EAB),
-          items: [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: S.of(context).home, // Sử dụng đa ngôn ngữ
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.search),
-              label: S.of(context).search, // Sử dụng đa ngôn ngữ
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.view_list_outlined),
-              label: S.of(context).booking, // Sử dụng đa ngôn ngữ
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: S.of(context).profile, // Sử dụng đa ngôn ngữ
-            ),
-          ],
-        ),
+        bottomNavigationBar: CustomBottomNavigation(currentPage: BottomNavPages.profile)
       ),
     );
   }
 
   // Separate widget for better error handling
   Widget _buildAvatarImage() {
-    final avatar = widget.user!.hinhDaiDien;
+    final authProvider = context.read<UserAuthProvider>();
+
+    // Kiểm tra user có tồn tại không
+    if (!authProvider.isLoggedIn || authProvider.user == null) {
+      return _buildDefaultAvatar();
+    }
+    final avatar = authProvider.user?.hinhDaiDien;
 
     try {
       // Handle network images
-      if (avatar.startsWith('http')) {
+      if (avatar!.startsWith('http')) {
         return Image.network(
           avatar,
           fit: BoxFit.cover,

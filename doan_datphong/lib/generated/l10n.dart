@@ -2174,6 +2174,11 @@ class S {
     return Intl.message('Ongoing', name: 'ongoing', desc: '', args: []);
   }
 
+  /// `No check-in`
+  String get noCheckIn {
+    return Intl.message('No check-in', name: 'noCheckIn', desc: '', args: []);
+  }
+
   /// `Completed`
   String get completed {
     return Intl.message('Completed', name: 'completed', desc: '', args: []);
@@ -2209,6 +2214,16 @@ class S {
     return Intl.message(
       'You canceled this hotel booking',
       name: 'youCanceledBooking',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `You do not have this room`
+  String get youNoCheckInBooking {
+    return Intl.message(
+      'You do not have this room',
+      name: 'youNoCheckInBooking',
       desc: '',
       args: [],
     );
@@ -2572,6 +2587,81 @@ class S {
   /// `Download`
   String get download {
     return Intl.message('Download', name: 'download', desc: '', args: []);
+  }
+
+  /// `Price Range`
+  String get priceRange {
+    return Intl.message('Price Range', name: 'priceRange', desc: '', args: []);
+  }
+
+  /// `Highest popularity`
+  String get highestPopularity {
+    return Intl.message(
+      'Highest popularity',
+      name: 'highestPopularity',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Highest price`
+  String get highestPrice {
+    return Intl.message(
+      'Highest price',
+      name: 'highestPrice',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Lowest price`
+  String get lowestPrice {
+    return Intl.message(
+      'Lowest price',
+      name: 'lowestPrice',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Select arrival date`
+  String get selectYourArrivalDate {
+    return Intl.message(
+      'Select arrival date',
+      name: 'selectYourArrivalDate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Select travel date`
+  String get selectTravelDate {
+    return Intl.message(
+      'Select travel date',
+      name: 'selectTravelDate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Sort Results`
+  String get sortResults {
+    return Intl.message(
+      'Sort Results',
+      name: 'sortResults',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Filter Hotel`
+  String get filterHotel {
+    return Intl.message(
+      'Filter Hotel',
+      name: 'filterHotel',
+      desc: '',
+      args: [],
+    );
   }
 }
 

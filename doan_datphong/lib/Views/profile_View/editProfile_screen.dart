@@ -6,11 +6,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../Models/NguoiDung.dart';
+import 'package:doan_datphong/Data/Provider/auth_provider.dart';
+import 'package:provider/provider.dart';
 
 class EditProfileScreen extends StatefulWidget {
-  final NguoiDung? user;
 
-  const EditProfileScreen({super.key, required this.user});
+
+  const EditProfileScreen({super.key});
 
   @override
   _EditProfileState createState() => _EditProfileState();
@@ -35,13 +37,50 @@ class _EditProfileState extends State<EditProfileScreen> {
   String? errorConfirmPassWord;
   String? errorDob;
 
-  void initControllers() {
-    _nameController = TextEditingController(text: widget.user?.tenNguoiDung ?? '');
-    _emailController = TextEditingController(text: widget.user?.email ?? '');
-    _phoneController = TextEditingController(text: widget.user?.soDienThoai ?? '');
-    _dobController = TextEditingController(text: _formatDateForDisplay(widget.user?.ngaySinh));
+  void _loadUserData() {
+    final authProvider = context.read<UserAuthProvider>();
+
+    if (authProvider.isLoggedIn && authProvider.user != null) {
+      final user = authProvider.user!;
+
+      _nameController.text = user.tenNguoiDung;
+      _emailController.text = user.email;
+      _phoneController.text = user.soDienThoai;
+      _dobController.text = _formatDateForDisplay(user.ngaySinh);
+
+      // Password fields giữ nguyên rỗng
+      _newPasswordController.text = '';
+      _confirmPasswordController.text = '';
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // ✅ Bây giờ context đã sẵn sàng, có thể gọi AuthProvider
+    _loadUserData();
+  }
+  @override
+  void initState() {
+    super.initState();
+    // ✅ Khởi tạo controllers với giá trị rỗng trước
+    _nameController = TextEditingController();
+    _emailController = TextEditingController();
+    _phoneController = TextEditingController();
+    _dobController = TextEditingController();
     _newPasswordController = TextEditingController();
     _confirmPasswordController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _dobController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
   }
 
   String _formatDateForDisplay(DateTime? date) {
@@ -58,22 +97,7 @@ class _EditProfileState extends State<EditProfileScreen> {
   }
 
 
-  @override
-  void initState() {
-    super.initState();
-    initControllers();
-  }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _dobController.dispose();
-    _newPasswordController.dispose();
-    _confirmPasswordController.dispose();
-    super.dispose();
-  }
 
   void updateProfile ()async{
     // Lấy giá trị từ các TextEditingController
@@ -182,6 +206,15 @@ class _EditProfileState extends State<EditProfileScreen> {
   }
 
   void _saveProfile() {
+
+    final authProvider = context.read<UserAuthProvider>();
+
+    if (!authProvider.isLoggedIn || authProvider.user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not found. Please login again.')),
+      );
+      return;
+    }
     validateDob(_dobController.text);
     if (_formKey.currentState!.validate()
         && errorDob == null
@@ -190,7 +223,7 @@ class _EditProfileState extends State<EditProfileScreen> {
         && errorPassword == null) {
 
       NguoiDung user = NguoiDung.shortUpdateProfile(
-          id: widget.user!.id,
+          id: authProvider.user!.id,
           tenNguoiDung: _nameController.text,
           soDienThoai: _phoneController.text,
           ngaySinh: _parseDate(_dobController.text)!,
@@ -228,41 +261,45 @@ class _EditProfileState extends State<EditProfileScreen> {
   }
 
   Widget _buildProfilePicture() {
-    return Center(
-      child: GestureDetector(
-        onTap: pickImage, // Hàm pickImage sẽ được gọi khi người dùng click vào ảnh
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            CircleAvatar(
-              radius: 50,
-              backgroundColor: Colors.transparent,
-              backgroundImage: _image != null
-                  ? FileImage(File(_image!.path)) // Nếu có ảnh mới, hiển thị ảnh từ file
-                  : (widget.user?.hinhDaiDien != null && widget.user!.hinhDaiDien.isNotEmpty
-                  ? NetworkImage(widget.user!.hinhDaiDien) // Nếu có ảnh cũ, hiển thị ảnh từ URL
-                  : const AssetImage('assets/default_profile.png')) as ImageProvider, // Ảnh mặc định
-            ),
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFF14D9E1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                padding: const EdgeInsets.all(5),
-                child: const Icon(
-                  Icons.edit,
-                  color: Colors.white,
-                  size: 20,
-                ),
+    return Consumer<UserAuthProvider>(
+        builder: (context, authProvider, child){
+          return Center(
+            child: GestureDetector(
+              onTap: pickImage, // Hàm pickImage sẽ được gọi khi người dùng click vào ảnh
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.transparent,
+                    backgroundImage: _image != null
+                        ? FileImage(File(_image!.path)) // Nếu có ảnh mới, hiển thị ảnh từ file
+                        : (authProvider.user?.hinhDaiDien != null && authProvider.user!.hinhDaiDien.isNotEmpty
+                        ? NetworkImage(authProvider.user!.hinhDaiDien) // Nếu có ảnh cũ, hiển thị ảnh từ URL
+                        : const AssetImage('assets/default_profile.png')) as ImageProvider, // Ảnh mặc định
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF14D9E1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      padding: const EdgeInsets.all(5),
+                      child: const Icon(
+                        Icons.edit,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
+          );
+        });
+
   }
 
   Widget _buildTextField(

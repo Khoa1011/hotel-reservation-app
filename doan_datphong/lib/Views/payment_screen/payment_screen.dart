@@ -5,11 +5,15 @@ import 'package:doan_datphong/Helper/FormatCurrency.dart';
 import 'package:doan_datphong/Models/DonDatPhong.dart';
 import 'package:doan_datphong/Models/LichPhongTrong.dart';
 import 'package:doan_datphong/Models/LoaiPhong.dart';
+import 'package:doan_datphong/Models/NguoiDung.dart';
 import 'package:doan_datphong/Views/home_View/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../Blocs/bookingCheckUser_Blocs/bookingCheckUser_bloc.dart';
+import '../../Blocs/bookingCheckUser_Blocs/bookingCheckUser_event.dart';
+import '../../Blocs/bookingCheckUser_Blocs/bookingCheckUser_state.dart';
 import '../../generated/l10n.dart';
 import '../../Helper/FormatDateTime.dart';
 import '../components/NotificationDialog.dart';
@@ -19,6 +23,7 @@ import 'package:url_launcher/url_launcher.dart';
 class PaymentScreen extends StatefulWidget {
   final LoaiPhong loaiPhong;
   final LichPhongTrong lichPhongTrong;
+  final NguoiDung? nguoiDung;
 
   // ✅ Thêm các parameters để lưu search info
   final String? bookingType;
@@ -30,6 +35,7 @@ class PaymentScreen extends StatefulWidget {
 
   const PaymentScreen({
     super.key,
+    this.nguoiDung,
     required this.lichPhongTrong,
     required this.loaiPhong,
     this.bookingType,
@@ -56,129 +62,153 @@ class _PaymentScreenState extends State<PaymentScreen> {
   late String formattedCheckInTime = widget.lichPhongTrong.gioNhanPhong;
   late String formattedCheckOutTime;
 
-  String getDatetime(){
-    if(widget.lichPhongTrong.loaiDatPhong=="qua_dem"){
+  bool _isCheckingUserBan = true;
+  bool _isUserBannedFromCash = false;
+  int _userNoShowCount = 0;
+
+
+  String getDatetime() {
+    if (widget.lichPhongTrong.loaiDatPhong == "qua_dem") {
       formattedCheckOutTime = "12:00";
-    }else if(widget.lichPhongTrong.loaiDatPhong=="theo_gio"){
-      formattedCheckOutTime= widget.lichPhongTrong.gioTraPhong ?? "00:00";
-    }else{
-      formattedCheckOutTime="";
+    } else if (widget.lichPhongTrong.loaiDatPhong == "theo_gio") {
+      formattedCheckOutTime = widget.lichPhongTrong.gioTraPhong ?? "00:00";
+    } else {
+      formattedCheckOutTime = "";
     }
     return formattedCheckOutTime;
   }
 
-  // ✅ Payment methods list
-  // final List<Map<String, dynamic>> _paymentMethods = [
-  //   {
-  //     'id': PhuongThucThanhToan.tien_mat,
-  //     'name': S.of(context).payAtHotel,
-  //     'icon': Icons.hotel_outlined,
-  //     'color': Colors.teal,
-  //     'description': 'Thanh toán khi nhận phòng'
-  //   },
-  //   {
-  //     'id': PhuongThucThanhToan.ZaloPay,
-  //     'name': 'Ví ZaloPay',
-  //     'image': 'assets/icons/logo_zalopay.png',
-  //     'color': Colors.teal,
-  //     'description': 'Thanh toán qua ví điện tử ZaloPay'
-  //   },
-  //   {
-  //     'id': PhuongThucThanhToan.the_tin_dung,
-  //     'name': 'Thẻ tín dụng',
-  //     'image': 'assets/icons/logo_mastercard.png',
-  //     'color': Colors.blue,
-  //     'description': 'Visa, Mastercard'
-  //   },
-  //   {
-  //     'id': PhuongThucThanhToan.Momo,
-  //     'name': 'Ví MoMo',
-  //     'image': 'assets/icons/logo_momo2.jpg',
-  //     'color': Colors.pink,
-  //     'description': 'Thanh toán qua ví điện tử Momo'
-  //   },
-  //   {
-  //     'id': PhuongThucThanhToan.VNPay,
-  //     'name': 'VNPay',
-  //     'image': 'assets/icons/Icon-VNPAY-QR.jpg',
-  //     'color': Colors.orange,
-  //     'description': 'Cổng thanh toán quốc gia'
-  //   },
-  // ];
+  // ✅ HÀM MỚI - Kiểm tra user có bị cấm tiền mặt không
+  Future<void> _checkUserBanStatus() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String userID = prefs.getString("user_id") ?? '';
 
+      if (userID.isNotEmpty) {
+        context.read<BookingCheckBloc>().add(CheckUserBanStatus(userID));
+      } else {
+        setState(() {
+          _isCheckingUserBan = false;
+          _isUserBannedFromCash = false;
+        });
+      }
+    } catch (e) {
+      print('❌ Error checking user ban status: $e');
+      setState(() {
+        _isCheckingUserBan = false;
+        _isUserBannedFromCash = false;
+      });
+    }
+  }
 
   List<Map<String, dynamic>> getPaymentMethods(BuildContext context) {
-    return [
-      {
-        'id': PhuongThucThanhToan.tien_mat,
-        'name': S.of(context).payAtHotel,
-        'icon': Icons.hotel_outlined,
-        'color': Colors.teal,
-        'description': S.of(context).payOnCheckIn,
-      },
+    List<Map<String, dynamic>> methods = [
       {
         'id': PhuongThucThanhToan.ZaloPay,
-        'name': S.of(context).zaloPayWallet,
+        'name': S
+            .of(context)
+            .zaloPayWallet,
         'image': 'assets/icons/logo_zalopay.png',
         'color': Colors.teal,
-        'description': S.of(context).zaloPayDescription,
+        'description': S
+            .of(context)
+            .zaloPayDescription,
       },
       {
         'id': PhuongThucThanhToan.the_tin_dung,
-        'name': S.of(context).creditCard,
+        'name': S
+            .of(context)
+            .creditCard,
         'image': 'assets/icons/logo_mastercard.png',
         'color': Colors.blue,
-        'description': S.of(context).creditCardDescription,
+        'description': S
+            .of(context)
+            .creditCardDescription,
       },
       {
         'id': PhuongThucThanhToan.Momo,
-        'name': S.of(context).momoWallet,
+        'name': S
+            .of(context)
+            .momoWallet,
         'image': 'assets/icons/logo_momo2.jpg',
         'color': Colors.pink,
-        'description': S.of(context).momoDescription,
+        'description': S
+            .of(context)
+            .momoDescription,
       },
       {
         'id': PhuongThucThanhToan.VNPay,
         'name': 'VNPay',
         'image': 'assets/icons/Icon-VNPAY-QR.jpg',
         'color': Colors.orange,
-        'description': S.of(context).vnPayDescription,
+        'description': S
+            .of(context)
+            .vnPayDescription,
       },
     ];
+
+    // ✅ Chỉ thêm tiền mặt nếu user KHÔNG bị cấm
+    if (!_isUserBannedFromCash) {
+      methods.insert(0, {
+        'id': PhuongThucThanhToan.tien_mat,
+        'name': S
+            .of(context)
+            .payAtHotel,
+        'icon': Icons.hotel_outlined,
+        'color': Colors.teal,
+        'description': S
+            .of(context)
+            .payOnCheckIn,
+      });
+    }
+
+    return methods;
   }
 
-  String address = '';
 
+  String address = '';
 
 
   // ✅ MAIN PAYMENT HANDLER - Updated với native payment
   void eventPaymentBooking() async {
     try {
+      // ✅ Kiểm tra lại lần cuối trước khi thanh toán
+      if (selectedPaymentMethod == PhuongThucThanhToan.tien_mat && _isUserBannedFromCash) {
+        NotificationDialog.showError(
+          context,
+          title: 'Không thể thanh toán tiền mặt',
+          message: 'Tài khoản của bạn đã bị hạn chế thanh toán tiền mặt do không nhận phòng $_userNoShowCount lần.',
+        );
+        return;
+      }
+
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String userID = prefs.getString("user_id") ?? '';
       String? hotelID = prefs.getString("hotel_id");
-      String? userStd = prefs.getString("user_std")?? '';
+      String? userStd = prefs.getString("user_std") ?? '';
 
       // ✅ Tạo booking object
       DonDatPhong booking = DonDatPhong.short(
-        maLoaiPhong: widget.loaiPhong.id,
-        maKhachSan: hotelID,
-        maNguoiDung: userID,
-        ngayNhanPhong: widget.lichPhongTrong.ngayNhanPhong,
-        ngayTraPhong: widget.lichPhongTrong.ngayTraPhong ?? "",
-        gioNhanPhong: formattedCheckInTime,
-        gioTraPhong: formattedCheckOutTime,
-        tongDonDat: widget.loaiPhong.giaCuoiCung,
-        trangThaiThanhToan: TrangThaiThanhToan.chua_thanh_toan,
-        phuongThucThanhToan: selectedPaymentMethod,
-        loaiDatPhong: _getLoaiDatPhongFromString(widget.lichPhongTrong.loaiDatPhong),
-        donGia: widget.loaiPhong.giaLoaiPhong?.giaCoBan ?? 0.0,
-        donVi: _getDonViFromBookingType(widget.lichPhongTrong.loaiDatPhong),
-        soLuongDonVi: widget.loaiPhong.giaLoaiPhong?.khoangThoiGian ?? 1,
-        tongTienPhong: widget.loaiPhong.giaCuoiCung,
-        soLuongPhong: widget.lichPhongTrong.soLuongPhong,
-        phuPhiCuoiTuan: widget.loaiPhong.giaLoaiPhong!.phanTichGia.phuThuCuoiTuan,
-        soDienThoai:userStd
+          maLoaiPhong: widget.loaiPhong.id,
+          maKhachSan: hotelID,
+          maNguoiDung: userID,
+          ngayNhanPhong: widget.lichPhongTrong.ngayNhanPhong,
+          ngayTraPhong: widget.lichPhongTrong.ngayTraPhong ?? "",
+          gioNhanPhong: formattedCheckInTime,
+          gioTraPhong: formattedCheckOutTime,
+          tongDonDat: widget.loaiPhong.giaCuoiCung,
+          trangThaiThanhToan: TrangThaiThanhToan.chua_thanh_toan,
+          phuongThucThanhToan: selectedPaymentMethod,
+          loaiDatPhong: _getLoaiDatPhongFromString(
+              widget.lichPhongTrong.loaiDatPhong),
+          donGia: widget.loaiPhong.giaLoaiPhong?.giaCoBan ?? 0.0,
+          donVi: _getDonViFromBookingType(widget.lichPhongTrong.loaiDatPhong),
+          soLuongDonVi: widget.loaiPhong.giaLoaiPhong?.khoangThoiGian ?? 1,
+          tongTienPhong: widget.loaiPhong.giaCuoiCung,
+          soLuongPhong: widget.lichPhongTrong.soLuongPhong,
+          phuPhiCuoiTuan: widget.loaiPhong.giaLoaiPhong!.phanTichGia
+              .phuThuCuoiTuan,
+          soDienThoai: userStd
       );
 
       // ✅ Dispatch event theo payment method
@@ -224,27 +254,29 @@ class _PaymentScreenState extends State<PaymentScreen> {
       );
     }
   }
+
   // ✅ HOTEL PAYMENT
-  Future<void> _processHotelPayment(DonDatPhong booking) async {
-    context.read<PaymentBloc>().add(PaymentSubmitted(booking));
-
-    setState(() {
-      _isProcessingPayment = false;
-    });
-
-    NotificationDialog.showSuccess(
-      context,
-      title: S.of(context).bookingSuccessful,
-      message: S.of(context).bookingSuccessMessage,
-      onButtonPressed: () {
-        Navigator.popUntil(context, ModalRoute.withName('/'));
-      },
-    );
-  }
+  // Future<void> _processHotelPayment(DonDatPhong booking) async {
+  //   context.read<PaymentBloc>().add(PaymentSubmitted(booking));
+  //
+  //   setState(() {
+  //     _isProcessingPayment = false;
+  //   });
+  //
+  //   NotificationDialog.showSuccess(
+  //     context,
+  //     title: S.of(context).bookingSuccessful,
+  //     message: S.of(context).bookingSuccessMessage,
+  //     onButtonPressed: () {
+  //       Navigator.popUntil(context, ModalRoute.withName('/'));
+  //     },
+  //   );
+  // }
 
   // ========== XỬ LÝ MỞ APP THANH TOÁN ==========
 // Method này được gọi khi nhận state NativePaymentUrlGenerated
-  Future<void> _handlePaymentUrl(Map<String, dynamic> paymentData, String paymentMethod) async {
+  Future<void> _handlePaymentUrl(Map<String, dynamic> paymentData,
+      String paymentMethod) async {
     try {
       print('🚀 Opening payment app for: $paymentMethod');
       print('📊 Available payment data: ${paymentData.keys.toList()}');
@@ -266,7 +298,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
       // Hiển thị dialog chờ kết quả thanh toán
       _showPaymentWaitingDialog(paymentMethod);
-
     } catch (e) {
       print('💥 Error opening payment app: $e');
       setState(() {
@@ -274,7 +305,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
       });
       NotificationDialog.showError(
         context,
-        message: '${S.of(context).cannotOpenPaymentApp} $e',
+        message: '${S
+            .of(context)
+            .cannotOpenPaymentApp} $e',
       );
     }
   }
@@ -305,6 +338,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       throw 'No payment URL found in MoMo response';
     }
   }
+
 // ========== MỞ VNPAY PAYMENT ==========
   Future<void> _openVNPayPayment(Map<String, dynamic> vnpayData) async {
     final paymentUrl = vnpayData['paymentUrl']; // VNPay payment URL
@@ -315,7 +349,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
     if (paymentUrl != null && paymentUrl.isNotEmpty) {
       // ===== STRATEGY 1: THỬ MỞ APP VNPAY =====
       // Tạo VNPay app deeplink
-      final vnpayAppUrl = Uri.parse('vnpay://pay?url=${Uri.encodeComponent(paymentUrl)}');
+      final vnpayAppUrl = Uri.parse(
+          'vnpay://pay?url=${Uri.encodeComponent(paymentUrl)}');
 
       if (await canLaunchUrl(vnpayAppUrl)) {
         await launchUrl(vnpayAppUrl, mode: LaunchMode.externalApplication);
@@ -340,8 +375,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
 // ========== MỞ ZALOPAY PAYMENT ==========
   Future<void> _openZaloPayPayment(Map<String, dynamic> zaloData) async {
     // ZaloPay có nhiều loại URL/token
-    final orderUrl = zaloData['order_url'];           // URL thanh toán web
-    final zpTransToken = zaloData['zp_trans_token'];  // Token cho app
+    final orderUrl = zaloData['order_url']; // URL thanh toán web
+    final zpTransToken = zaloData['zp_trans_token']; // Token cho app
 
     print('💙 Opening ZaloPay payment...');
     print('🌐 Order URL: $orderUrl');
@@ -349,7 +384,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     // ===== STRATEGY 1: THỬ APP ZALOPAY VỚI TOKEN =====
     if (zpTransToken != null && zpTransToken.isNotEmpty) {
-      final zaloTokenUrl = Uri.parse('zalopay://pay?zp_trans_token=$zpTransToken');
+      final zaloTokenUrl = Uri.parse(
+          'zalopay://pay?zp_trans_token=$zpTransToken');
 
       if (await canLaunchUrl(zaloTokenUrl)) {
         await launchUrl(zaloTokenUrl, mode: LaunchMode.externalApplication);
@@ -362,7 +398,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     // ===== STRATEGY 2: THỬ APP ZALOPAY VỚI ORDER URL =====
     if (orderUrl != null && orderUrl.isNotEmpty) {
-      final zaloOrderUrl = Uri.parse('zalopay://app?order_url=${Uri.encodeComponent(orderUrl)}');
+      final zaloOrderUrl = Uri.parse(
+          'zalopay://app?order_url=${Uri.encodeComponent(orderUrl)}');
 
       if (await canLaunchUrl(zaloOrderUrl)) {
         await launchUrl(zaloOrderUrl, mode: LaunchMode.externalApplication);
@@ -391,78 +428,107 @@ class _PaymentScreenState extends State<PaymentScreen> {
     showDialog(
       context: context,
       barrierDismissible: false, // User không thể đóng bằng cách tap outside
-      builder: (BuildContext dialogContext) => AlertDialog(
-        title: Text(S.of(context).waitingForPayment),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(), // Loading indicator
-            SizedBox(height: 16),
-            Text('${S.of(context).completePaymentOn} $paymentMethod'),
-            SizedBox(height: 8),
-            Text(
-              S.of(context).returnToAppAfterPayment,
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-            ),
+      builder: (BuildContext dialogContext) =>
+          AlertDialog(
+            title: Text(S
+                .of(context)
+                .waitingForPayment),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(), // Loading indicator
+                SizedBox(height: 16),
+                Text('${S
+                    .of(context)
+                    .completePaymentOn} $paymentMethod'),
+                SizedBox(height: 8),
+                Text(
+                  S
+                      .of(context)
+                      .returnToAppAfterPayment,
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
 
-            // ✅ Widget lắng nghe app lifecycle và check payment status
-            _PaymentStatusListener(
-              orderId: _currentOrderId!, // Order ID để track
-              onResult: (success, transactionId) {
-                Navigator.of(dialogContext).pop(); // Đóng dialog
+                // ✅ Widget lắng nghe app lifecycle và check payment status
+                _PaymentStatusListener(
+                  orderId: _currentOrderId!, // Order ID để track
+                  onResult: (success, transactionId) {
+                    Navigator.of(dialogContext).pop(); // Đóng dialog
 
-                // Xử lý kết quả
-                if (success) {
-                  _handlePaymentSuccess(transactionId!);
-                } else {
-                  _handlePaymentFailure();
-                }
-              },
+                    // Xử lý kết quả
+                    if (success) {
+                      _handlePaymentSuccess(transactionId!);
+                    } else {
+                      _handlePaymentFailure();
+                    }
+                  },
+                ),
+              ],
             ),
-          ],
-        ),
-        actions: [
-          // Button kiểm tra thủ công
-          TextButton(
-            onPressed: () {
-              print('🔄 Manual payment status check requested');
-              if (_currentOrderId != null) {
-                // Dispatch event kiểm tra status
-                context.read<PaymentBloc>().add(PaymentStatusChecked(_currentOrderId!));
-              }
-            },
-            child: Text(S.of(context).checkAgain),
+            actions: [
+              // Button kiểm tra thủ công
+              TextButton(
+                onPressed: () {
+                  print('🔄 Manual payment status check requested');
+                  if (_currentOrderId != null) {
+                    // Dispatch event kiểm tra status
+                    context.read<PaymentBloc>().add(
+                        PaymentStatusChecked(_currentOrderId!));
+                  }
+                },
+                child: Text(S
+                    .of(context)
+                    .checkAgain),
+              ),
+              // Button hủy
+              TextButton(
+                onPressed: () {
+                  print('❌ User cancelled payment wait');
+                  Navigator.of(dialogContext).pop();
+                  setState(() {
+                    _isWaitingForPaymentResult = false;
+                  });
+                },
+                child: Text(S
+                    .of(context)
+                    .cancel),
+              ),
+            ],
           ),
-          // Button hủy
-          TextButton(
-            onPressed: () {
-              print('❌ User cancelled payment wait');
-              Navigator.of(dialogContext).pop();
-              setState(() {
-                _isWaitingForPaymentResult = false;
-              });
-            },
-            child: Text(S.of(context).cancel),
-          ),
-        ],
-      ),
     );
   }
 
 
-
   // ✅ PAYMENT SUCCESS HANDLER
+  // void _handlePaymentSuccess(String transactionId) {
+  //   NotificationDialog.showSuccess(
+  //     context,
+  //     title: S
+  //         .of(context)
+  //         .paymentSuccessful,
+  //     message: S
+  //         .of(context)
+  //         .paymentSuccessMessage,
+  //     onButtonPressed: () {
+  //       Navigator.popUntil(context, ModalRoute.withName('/home_screen'));
+  //     },
+  //   );
+  // }
   void _handlePaymentSuccess(String transactionId) {
     NotificationDialog.showSuccess(
       context,
       title: S.of(context).paymentSuccessful,
       message: S.of(context).paymentSuccessMessage,
       onButtonPressed: () {
-        Navigator.popUntil(context, ModalRoute.withName('/'));
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => HomeScreen(),
+          ),
+              (route) => false,
+        );
       },
     );
   }
-
   // ✅ PAYMENT FAILURE HANDLER
   void _handlePaymentFailure() {
     NotificationDialog.showError(
@@ -474,24 +540,34 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   // ✅ UTILITY METHODS
   String _generateOrderId() {
-    return 'ORDER_${DateTime.now().millisecondsSinceEpoch}_${widget.loaiPhong.id}';
+    return 'ORDER_${DateTime
+        .now()
+        .millisecondsSinceEpoch}_${widget.loaiPhong.id}';
   }
 
   LoaiDatPhong _getLoaiDatPhongFromString(String? type) {
     switch (type) {
-      case 'theo_gio': return LoaiDatPhong.theo_gio;
-      case 'qua_dem': return LoaiDatPhong.qua_dem;
-      case 'dai_ngay': return LoaiDatPhong.dai_ngay;
-      default: return LoaiDatPhong.qua_dem;
+      case 'theo_gio':
+        return LoaiDatPhong.theo_gio;
+      case 'qua_dem':
+        return LoaiDatPhong.qua_dem;
+      case 'dai_ngay':
+        return LoaiDatPhong.dai_ngay;
+      default:
+        return LoaiDatPhong.qua_dem;
     }
   }
 
   String _getDonViFromBookingType(String? type) {
     switch (type) {
-      case 'theo_gio': return 'gio';
-      case 'qua_dem': return 'dem';
-      case 'dai_ngay': return 'ngay';
-      default: return 'dem';
+      case 'theo_gio':
+        return 'gio';
+      case 'qua_dem':
+        return 'dem';
+      case 'dai_ngay':
+        return 'ngay';
+      default:
+        return 'dem';
     }
   }
 
@@ -499,6 +575,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   void initState() {
     super.initState();
     getValueSharedPre();
+    _checkUserBanStatus();
   }
 
   Future<void> getValueSharedPre() async {
@@ -510,85 +587,141 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<PaymentBloc, PaymentState>(
-      listener: (context, state) {
-        print('🔄 PaymentBloc state changed: ${state.runtimeType}');
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<PaymentBloc, PaymentState>(
+            listener: (context, state) {
+              print('🔄 PaymentBloc state changed: ${state.runtimeType}');
 
-        // ===== XỬ LÝ CASH PAYMENT THÀNH CÔNG =====
-        if (state is PaymentSuccess) {
-          setState(() {
-            _isProcessingPayment = false;      // Tắt loading button
-            _isWaitingForPaymentResult = false; // Tắt waiting state
-          });
+              // ===== XỬ LÝ CASH PAYMENT THÀNH CÔNG =====
+              if (state is PaymentSuccess) {
+                setState(() {
+                  _isProcessingPayment = false; // Tắt loading button
+                  _isWaitingForPaymentResult = false; // Tắt waiting state
+                });
 
-          // Hiển thị thông báo thành công và quay về home
-          NotificationDialog.showSuccess(
-            context,
-            message: S.of(context).bookingSuccessMessage,
-            onButtonPressed: () {
-              Navigator.popUntil(context, ModalRoute.withName('/'));
-            },
-          );
-// ===== XỬ LÝ PAYMENT REDIRECT (LEGACY) =====
-        }else if(state is PaymentRedirectSuccess){
-          setState(() {
-            _isProcessingPayment = false;
-            _isWaitingForPaymentResult = false;
-          });
-          NotificationDialog.showSuccess(
-            context,
-            message: S.of(context).bookingAndPaymentSuccessful,
-            onButtonPressed: () {
-              Navigator.popUntil(context, ModalRoute.withName('/'));
-            },
-          );
+                // Hiển thị thông báo thành công và quay về home
+                NotificationDialog.showSuccess(
+                  context,
+                  message: S.of(context).bookingSuccessMessage,
+                  onButtonPressed: () {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomeScreen()),
+                          (Route<dynamic> route) => false,
+                    );
+                  },
+                );
 
-          // ===== XỬ LÝ LỖI CHUNG =====
-        }else if (state is PaymentFailure) {
-          setState(() {
-            _isProcessingPayment = false;
-            _isWaitingForPaymentResult = false;
-          });
-          NotificationDialog.showError(
-            context,
-            message: state.errorMessage,
-          );
-        }
-        // ===== XỬ LÝ PAYMENT URL ĐƯỢC TẠO =====
-        // State này được emit khi backend tạo thành công payment URL
-        else if (state is NativePaymentUrlGenerated) {
-          print('📱 Payment URL generated for: ${state.paymentMethod}');
-          print('🔗 Payment data keys: ${state.paymentData.keys.toList()}');
+                // ===== XỬ LÝ PAYMENT REDIRECT (LEGACY) =====
+              } else if (state is PaymentRedirectSuccess) {
+                setState(() {
+                  _isProcessingPayment = false;
+                  _isWaitingForPaymentResult = false;
+                });
+                NotificationDialog.showSuccess(
+                  context,
+                  message: S.of(context).bookingAndPaymentSuccessful,
+                  onButtonPressed: () {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomeScreen()),
+                          (Route<dynamic> route) => false,
+                    );
+                  },
+                );
 
-          setState(() {
-            _isProcessingPayment = false;       // Tắt loading tạo payment
-            _isWaitingForPaymentResult = true;  // Bật waiting cho result
-          });
+                // ===== XỬ LÝ LỖI CHUNG =====
+              } else if (state is PaymentFailure) {
+                setState(() {
+                  _isProcessingPayment = false;
+                  _isWaitingForPaymentResult = false;
+                });
+                NotificationDialog.showError(
+                  context,
+                  message: state.errorMessage,
+                );
+              }
+              // ===== XỬ LÝ PAYMENT URL ĐƯỢC TẠO =====
+              // State này được emit khi backend tạo thành công payment URL
+              else if (state is NativePaymentUrlGenerated) {
+                print('📱 Payment URL generated for: ${state.paymentMethod}');
+                print(
+                    '🔗 Payment data keys: ${state.paymentData.keys.toList()}');
 
-          // Mở app thanh toán tương ứng
-          _handlePaymentUrl(state.paymentData, state.paymentMethod);
-        }
-        // ===== XỬ LÝ THANH TOÁN ONLINE THÀNH CÔNG =====
-        else if (state is NativePaymentSuccess) {
-          print('🎉 Native payment successful: ${state.transactionId}');
-          setState(() {
-            _isWaitingForPaymentResult = false;
-          });
-          _handlePaymentSuccess(state.transactionId);
-        }
-        // ===== XỬ LÝ THANH TOÁN ONLINE THẤT BẠI =====
-        else if (state is NativePaymentFailure) {
-          print('💔 Native payment failed: ${state.errorMessage}');
-          setState(() {
-            _isWaitingForPaymentResult = false;
-          });
-          _handlePaymentFailure();
-        }
-      },
+                setState(() {
+                  _isProcessingPayment = false; // Tắt loading tạo payment
+                  _isWaitingForPaymentResult = true; // Bật waiting cho result
+                });
+
+                // Mở app thanh toán tương ứng
+                _handlePaymentUrl(state.paymentData, state.paymentMethod);
+              }
+              // ===== XỬ LÝ THANH TOÁN ONLINE THÀNH CÔNG =====
+              else if (state is NativePaymentSuccess) {
+                print('🎉 Native payment successful: ${state.transactionId}');
+                setState(() {
+                  _isWaitingForPaymentResult = false;
+                });
+                _handlePaymentSuccess(state.transactionId);
+              }
+              // ===== XỬ LÝ THANH TOÁN ONLINE THẤT BẠI =====
+              else if (state is NativePaymentFailure) {
+                print('💔 Native payment failed: ${state.errorMessage}');
+                setState(() {
+                  _isWaitingForPaymentResult = false;
+                });
+                _handlePaymentFailure();
+              }
+            }),
+        BlocListener<BookingCheckBloc, BookingCheckState>(
+          listener: (context, state) {
+            print('🔄 BookingCheckBloc state changed: ${state.runtimeType}');
+
+            // ✅ SỬA: Cast state về đúng kiểu UserBanStatusLoaded
+            // if (state is UserBanStatusLoaded) {
+            //   setState(() {
+            //     _isCheckingUserBan = false;
+            //     _isUserBannedFromCash = state.isBannedFromCash; // ✅ Đã cast sang UserBanStatusLoaded
+            //     _userNoShowCount = state.noShowCount; // ✅ Đã cast sang UserBanStatusLoaded
+            //   });
+            //
+            //   // ✅ Nếu user bị cấm và đang chọn tiền mặt → chuyển sang phương thức khác
+            //   if (_isUserBannedFromCash && selectedPaymentMethod == PhuongThucThanhToan.tien_mat) {
+            //     setState(() {
+            //       selectedPaymentMethod = PhuongThucThanhToan.ZaloPay; // Default sang ZaloPay
+            //     });
+            //
+            //     // Hiển thị thông báo
+            //     NotificationDialog.showError(
+            //       context,
+            //       title: 'Tài khoản bị hạn chế',
+            //       message: 'Bạn đã không nhận phòng $_userNoShowCount lần. Vui lòng thanh toán online.',
+            //     );
+            //   }
+            // }
+            // // ✅ SỬA: Xử lý lỗi check user ban
+            // else if (state is BookingCheckError) {
+            //   setState(() {
+            //     _isCheckingUserBan = false;
+            //     _isUserBannedFromCash = false; // Default cho phép thanh toán tiền mặt nếu lỗi
+            //   });
+            //   print('❌ Booking check error: ${state.errorMessage}');
+            // }
+            // // ✅ SỬA: Xử lý trigger overdue check completed (nếu cần)
+            // else if (state is OverdueCheckCompleted) {
+            //   // Handle overdue check completed if needed
+            //   print('✅ Overdue check completed: ${state.message}');
+            // }
+          },
+        ),
+      ],
       child: Scaffold(
         appBar: AppBar(
           title: Text(
-            S.of(context).payment,
+            S
+                .of(context)
+                .payment,
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           centerTitle: true,
@@ -613,13 +746,20 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           const SizedBox(height: 24),
                           const Divider(thickness: 1),
                           const SizedBox(height: 16),
+
+
+                          if (_isUserBannedFromCash) _buildBanNotification(),
+
                           Row(
                             children: [
                               Icon(Icons.receipt_long, color: Colors.blue),
                               SizedBox(width: 8),
                               Text(
-                                S.of(context).bookingDetails,
-                                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                                S
+                                    .of(context)
+                                    .bookingDetails,
+                                style: TextStyle(
+                                    fontSize: 20, fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
@@ -639,8 +779,54 @@ class _PaymentScreenState extends State<PaymentScreen> {
           ],
         ),
       ),
+
+
+
     );
   }
+
+  // ✅ THÊM Widget hiển thị thông báo user bị cấm
+  Widget _buildBanNotification() {
+    return Container(
+      margin: EdgeInsets.only(bottom: 16),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.warning_amber, color: Colors.orange.shade600, size: 24),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Tài khoản bị hạn chế',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange.shade800,
+                    fontSize: 16,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Bạn đã không nhận phòng $_userNoShowCount lần. Vui lòng thanh toán online để tiếp tục đặt phòng.',
+                  style: TextStyle(
+                    color: Colors.orange.shade700,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   // ✅ Existing UI building methods remain the same...
   Widget _buildBookingTypeHeader() {
@@ -669,28 +855,48 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   Color _getBookingTypeColor() {
     switch (widget.lichPhongTrong.loaiDatPhong) {
-      case 'theo_gio': return Colors.orange[600]!;
-      case 'qua_dem': return Colors.indigo[600]!;
-      case 'dai_ngay': return Colors.green[600]!;
-      default: return Colors.blue[600]!;
+      case 'theo_gio':
+        return Colors.orange[600]!;
+      case 'qua_dem':
+        return Colors.indigo[600]!;
+      case 'dai_ngay':
+        return Colors.green[600]!;
+      default:
+        return Colors.blue[600]!;
     }
   }
 
   IconData _getBookingTypeIcon() {
     switch (widget.lichPhongTrong.loaiDatPhong) {
-      case 'theo_gio': return Icons.access_time;
-      case 'qua_dem': return Icons.nights_stay;
-      case 'dai_ngay': return Icons.calendar_month;
-      default: return Icons.hotel;
+      case 'theo_gio':
+        return Icons.access_time;
+      case 'qua_dem':
+        return Icons.nights_stay;
+      case 'dai_ngay':
+        return Icons.calendar_month;
+      default:
+        return Icons.hotel;
     }
   }
 
   String _getBookingTypeTitle() {
     switch (widget.lichPhongTrong.loaiDatPhong) {
-      case 'theo_gio': return S.of(context).hourlyBooking;
-      case 'qua_dem': return S.of(context).overnightBooking;
-      case 'dai_ngay': return S.of(context).longStayBooking;
-      default: return S.of(context).booking;
+      case 'theo_gio':
+        return S
+            .of(context)
+            .hourlyBooking;
+      case 'qua_dem':
+        return S
+            .of(context)
+            .overnightBooking;
+      case 'dai_ngay':
+        return S
+            .of(context)
+            .longStayBooking;
+      default:
+        return S
+            .of(context)
+            .booking;
     }
   }
 
@@ -726,7 +932,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       ? Image.network(
                     widget.loaiPhong.layAnhDauTien() ?? '',
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => _buildFallbackContainer(),
+                    errorBuilder: (context, error, stackTrace) =>
+                        _buildFallbackContainer(),
                   )
                       : _buildFallbackContainer(),
                 ),
@@ -806,7 +1013,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
             SizedBox(width: 4),
             Text(
               _buildSummaryTextTotalRooms(context),
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF525150)),
+              style: TextStyle(fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF525150)),
             ),
           ],
         ),
@@ -826,10 +1035,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
       }
     } else {
       guestText = '${widget.lichPhongTrong.soLuongKhach.soNguoiLon} '
-          'adult${widget.lichPhongTrong.soLuongKhach.soNguoiLon > 1 ? 's' : ''}';
+          'adult${widget.lichPhongTrong.soLuongKhach.soNguoiLon > 1
+          ? 's'
+          : ''}';
       if (widget.lichPhongTrong.soLuongKhach.soTreEm! > 0) {
         guestText += ' • ${widget.lichPhongTrong.soLuongKhach.soTreEm} '
-            'child${widget.lichPhongTrong.soLuongKhach.soTreEm! > 1 ? 'ren' : ''}';
+            'child${widget.lichPhongTrong.soLuongKhach.soTreEm! > 1
+            ? 'ren'
+            : ''}';
       }
     }
     return guestText;
@@ -857,15 +1070,24 @@ class _PaymentScreenState extends State<PaymentScreen> {
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
-            _buildDetailRow(Icons.login, S.of(context).checkInDate, DateTimeHelper.formatDate(checkInDate)),
-            _buildDetailRow(Icons.access_time, S.of(context).checkInTime, formattedCheckInTime),
-            _buildDetailRow(Icons.logout, S.of(context).checkOutDate, DateTimeHelper.formatDate(checkOutDate!)),
-            _buildDetailRow(Icons.schedule, S.of(context).checkOutTime, getDatetime()),
+            _buildDetailRow(Icons.login, S
+                .of(context)
+                .checkInDate, DateTimeHelper.formatDate(checkInDate)),
+            _buildDetailRow(Icons.access_time, S
+                .of(context)
+                .checkInTime, formattedCheckInTime),
+            _buildDetailRow(Icons.logout, S
+                .of(context)
+                .checkOutDate, DateTimeHelper.formatDate(checkOutDate!)),
+            _buildDetailRow(Icons.schedule, S
+                .of(context)
+                .checkOutTime, getDatetime()),
             Divider(height: 24),
             _buildDetailRow(
               _getBookingTypeIcon(),
               _getBookingTypeText(),
-              '${widget.loaiPhong.giaLoaiPhong?.khoangThoiGian} ${widget.loaiPhong.giaLoaiPhong?.donVi}',
+              '${widget.loaiPhong.giaLoaiPhong?.khoangThoiGian} ${widget
+                  .loaiPhong.giaLoaiPhong?.donVi}',
               isHighlight: true,
             ),
           ],
@@ -888,20 +1110,40 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 Icon(Icons.receipt, color: Colors.green),
                 SizedBox(width: 8),
                 Text(
-                  S.of(context).priceDetails,
+                  S
+                      .of(context)
+                      .priceDetails,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             SizedBox(height: 12),
-            _buildPriceRow(S.of(context).roomPrice, CurrencyHelper.formatVND(widget.loaiPhong.giaLoaiPhong?.giaCoBan ?? 0.0)),
-            _buildPriceRow(S.of(context).totalDuration,'${widget.loaiPhong.giaLoaiPhong?.khoangThoiGian} ${widget.loaiPhong.giaLoaiPhong?.donVi}' ),
-            _buildPriceRow(S.of(context).subtotalBeforeDiscount, CurrencyHelper.formatVND(widget.loaiPhong.giaLoaiPhong!.phanTichGia.tongPhu)),
-            _buildPriceRow(S.of(context).weekendSurcharge, CurrencyHelper.formatVND(widget.loaiPhong.giaLoaiPhong!.phanTichGia.phuThuCuoiTuan)),
-            _buildPriceRow(S.of(context).discount, CurrencyHelper.formatVND(widget.loaiPhong.giaLoaiPhong!.phanTichGia.giamGiaTheoNgay)),
+            _buildPriceRow(S
+                .of(context)
+                .roomPrice, CurrencyHelper.formatVND(
+                widget.loaiPhong.giaLoaiPhong?.giaCoBan ?? 0.0)),
+            _buildPriceRow(S
+                .of(context)
+                .totalDuration,
+                '${widget.loaiPhong.giaLoaiPhong?.khoangThoiGian} ${widget
+                    .loaiPhong.giaLoaiPhong?.donVi}'),
+            _buildPriceRow(S
+                .of(context)
+                .subtotalBeforeDiscount, CurrencyHelper.formatVND(
+                widget.loaiPhong.giaLoaiPhong!.phanTichGia.tongPhu)),
+            _buildPriceRow(S
+                .of(context)
+                .weekendSurcharge, CurrencyHelper.formatVND(
+                widget.loaiPhong.giaLoaiPhong!.phanTichGia.phuThuCuoiTuan)),
+            _buildPriceRow(S
+                .of(context)
+                .discount, CurrencyHelper.formatVND(
+                widget.loaiPhong.giaLoaiPhong!.phanTichGia.giamGiaTheoNgay)),
             Divider(height: 24),
             _buildPriceRow(
-              S.of(context).totalAmount,
+              S
+                  .of(context)
+                  .totalAmount,
               CurrencyHelper.formatVND(widget.loaiPhong.giaCuoiCung),
               isTotal: true,
             ),
@@ -937,7 +1179,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 Icon(Icons.payment, color: Colors.orange),
                 SizedBox(width: 8),
                 Text(
-                  S.of(context).paymentMethod,
+                  S
+                      .of(context)
+                      .paymentMethod,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ],
@@ -948,7 +1192,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: (_isProcessingPayment || _isWaitingForPaymentResult) ? null : eventPaymentBooking,
+                onPressed: (_isProcessingPayment || _isWaitingForPaymentResult)
+                    ? null
+                    : eventPaymentBooking,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue.shade600,
                   foregroundColor: Colors.white,
@@ -971,7 +1217,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       ),
                     ),
                     SizedBox(width: 12),
-                    Text(_isWaitingForPaymentResult ? S.of(context).waitingForResult : S.of(context).processing.toUpperCase()),
+                    Text(_isWaitingForPaymentResult ? S
+                        .of(context)
+                        .waitingForResult : S
+                        .of(context)
+                        .processing
+                        .toUpperCase()),
                   ],
                 )
                     : Row(
@@ -980,7 +1231,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     Icon(Icons.lock, size: 20),
                     SizedBox(width: 8),
                     Text(
-                      '${S.of(context).payAmount} ${CurrencyHelper.formatVND(widget.loaiPhong.giaCuoiCung)}',
+                      '${S
+                          .of(context)
+                          .payAmount} ${CurrencyHelper.formatVND(
+                          widget.loaiPhong.giaCuoiCung)}',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -997,7 +1251,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   // ✅ Helper UI methods
-  Widget _buildDetailRow(IconData icon, String label, String value, {bool isHighlight = false}) {
+  Widget _buildDetailRow(IconData icon, String label, String value,
+      {bool isHighlight = false}) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -1128,84 +1383,89 @@ class _PaymentScreenState extends State<PaymentScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
+      builder: (context) =>
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
-            SizedBox(height: 20),
-            Text(
-              S.of(context).selectPaymentMethod,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 20),
-            ...(getPaymentMethods(context).map((method) => Container(
-              margin: EdgeInsets.only(bottom: 12),
-              child: ListTile(
-                leading: method['image'] != null
-                    ? Container(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
                   width: 40,
-                  height: 40,
+                  height: 4,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.asset(
-                      method['image'],
-                      width: 40,
-                      height: 40,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                )
-                    : Container(
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: method['color'],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    method['icon'],
-                    color: Colors.white,
-                    size: 20,
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                title: Text(method['name']),
-                subtitle: Text(method['description']),
-                trailing: selectedPaymentMethod == method['id']
-                    ? Icon(Icons.check_circle, color: Colors.green)
-                    : null,
-                onTap: () {
-                  setState(() {
-                    selectedPaymentMethod = method['id'] as PhuongThucThanhToan;
-                  });
-                  Navigator.pop(context);
-                },
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                SizedBox(height: 20),
+                Text(
+                  S
+                      .of(context)
+                      .selectPaymentMethod,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                tileColor: selectedPaymentMethod == method['id']
-                    ? Colors.green.shade50
-                    : Colors.grey.shade50,
-              ),
-            )).toList()),
-            SizedBox(height: 20),
-          ],
-        ),
-      ),
+                SizedBox(height: 20),
+                ...(getPaymentMethods(context).map((method) =>
+                    Container(
+                      margin: EdgeInsets.only(bottom: 12),
+                      child: ListTile(
+                        leading: method['image'] != null
+                            ? Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.asset(
+                              method['image'],
+                              width: 40,
+                              height: 40,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        )
+                            : Container(
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: method['color'],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            method['icon'],
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        title: Text(method['name']),
+                        subtitle: Text(method['description']),
+                        trailing: selectedPaymentMethod == method['id']
+                            ? Icon(Icons.check_circle, color: Colors.green)
+                            : null,
+                        onTap: () {
+                          setState(() {
+                            selectedPaymentMethod =
+                            method['id'] as PhuongThucThanhToan;
+                          });
+                          Navigator.pop(context);
+                        },
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        tileColor: selectedPaymentMethod == method['id']
+                            ? Colors.green.shade50
+                            : Colors.grey.shade50,
+                      ),
+                    )).toList()),
+                SizedBox(height: 20),
+              ],
+            ),
+          ),
     );
   }
 
@@ -1234,10 +1494,22 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   String _getBookingTypeText() {
     switch (widget.lichPhongTrong.loaiDatPhong) {
-      case 'theo_gio': return S.of(context).rentalTime;
-      case 'qua_dem': return S.of(context).numberOfNights;
-      case 'dai_ngay': return S.of(context).numberOfDays;
-      default: return S.of(context).duration;
+      case 'theo_gio':
+        return S
+            .of(context)
+            .rentalTime;
+      case 'qua_dem':
+        return S
+            .of(context)
+            .numberOfNights;
+      case 'dai_ngay':
+        return S
+            .of(context)
+            .numberOfDays;
+      default:
+        return S
+            .of(context)
+            .duration;
     }
   }
 }

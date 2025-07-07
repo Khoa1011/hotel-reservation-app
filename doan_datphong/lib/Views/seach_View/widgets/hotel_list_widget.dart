@@ -1,3 +1,4 @@
+import 'package:doan_datphong/Views/detail_View/detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:doan_datphong/Models/KhachSan.dart';
 
@@ -9,13 +10,15 @@ class HotelListWidget extends StatelessWidget {
   final List<KhachSan> hotels;
   final int totalResults;
   final ScrollController? scrollController;
-
+  final Function(KhachSan)? onHotelTap;
   const HotelListWidget({
     super.key,
     required this.hotels,
     required this.totalResults,
     this.scrollController,
+    this.onHotelTap
   });
+
 
   @override
   Widget build(BuildContext context) {
@@ -94,7 +97,7 @@ class HotelListWidget extends StatelessWidget {
               controller: scrollController,
               itemCount: hotels.length,
               itemBuilder: (context, index) {
-                return _buildHotelCard(hotels[index]);
+                return _buildHotelCard(context,hotels[index]);
               },
             ),
           ),
@@ -103,7 +106,7 @@ class HotelListWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildHotelCard(KhachSan hotel) {
+  Widget _buildHotelCard(BuildContext context,KhachSan hotel) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -200,154 +203,168 @@ class HotelListWidget extends StatelessWidget {
           ),
 
           // Hotel info
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Hotel name
-                Text(
-                  hotel.tenKhachSan,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-
-                // Location with icon
-                Row(
-                  children: [
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: 16,
-                      color: Colors.grey[600],
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        hotel.thanhPho,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-
-                // Star rating and reviews
-                Row(
-                  children: [
-                    // Star rating display
-                    Row(
-                      children: List.generate(5, (index) {
-                        return Icon(
-                          index < hotel.soSao ? Icons.star : Icons.star_border,
-                          color: index < hotel.soSao ? Colors.amber : Colors.grey[300],
-                          size: 16,
-                        );
-                      }),
-                    ),
-                    const SizedBox(width: 8),
-
-                    // Rating number
-                    Text(
-                      '${hotel.soSao}.0',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-
-                    // Reviews count (simulated)
-                    Text(
-                      '(${_getRandomReviews(hotel.id)} reviews)',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-
-                // Address (if different from city)
-                if (hotel.diaChi.isNotEmpty && hotel.diaChi != hotel.thanhPho) ...[
-                  const SizedBox(height: 6),
+          GestureDetector(
+            onTap: () => _navigateToHotelDetail(context,hotel),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Hotel name
                   Text(
-                    hotel.diaChi,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[500],
+                    hotel.tenKhachSan,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
                     ),
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                ],
+                  const SizedBox(height: 4),
 
-                const SizedBox(height: 12),
+                  // Location with icon
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.location_on_outlined,
+                        size: 16,
+                        color: Colors.grey[600],
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          hotel.thanhPho,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
 
-                // Price and book button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Price
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: CurrencyHelper.formatVND(hotel.giaCa),
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                  // Star rating and reviews
+                  Row(
+                    children: [
+                      // Star rating display
+                      Row(
+                        children: List.generate(5, (index) {
+                          return Icon(
+                            index < hotel.soSao ? Icons.star : Icons.star_border,
+                            color: index < hotel.soSao ? Colors.amber : Colors.grey[300],
+                            size: 16,
+                          );
+                        }),
+                      ),
+                      const SizedBox(width: 8),
+
+                      // Rating number
+                      Text(
+                        '${hotel.soSao}.0',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+
+                      // Reviews count (simulated)
+                      Text(
+                        '(${_getRandomReviews(hotel.id)} reviews)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Address (if different from city)
+                  if (hotel.diaChi.isNotEmpty && hotel.diaChi != hotel.thanhPho) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      hotel.diaChi,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[500],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+
+                  const SizedBox(height: 12),
+
+                  // Price and book button
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Price
+                      RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: CurrencyHelper.formatVND(hotel.giaCa),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1565C0),
+                              ),
+                            ),
+                            TextSpan(
+                              text: ' / đêm',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // View details button
+                      GestureDetector(
+                        onTap:() => _navigateToHotelDetail(context, hotel),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1565C0).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'Xem chi tiết',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
                               color: Color(0xFF1565C0),
                             ),
                           ),
-                          TextSpan(
-                            text: ' / đêm',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // View details button
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1565C0).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text(
-                        'Xem chi tiết',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF1565C0),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ],
       ),
     );
   }
+  void _navigateToHotelDetail(BuildContext context, KhachSan hotel) {
 
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DetailScreen(hotel: hotel),
+      ),
+    );
+  }
   // Generate consistent random review count based on hotel ID
   String _getRandomReviews(String hotelId) {
     final reviewCounts = ['1.2k', '2.1k', '3.5k', '4.2k', '1.8k', '5.1k', '2.8k', '3.1k'];

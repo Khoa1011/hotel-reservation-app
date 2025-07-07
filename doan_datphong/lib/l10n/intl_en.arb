@@ -584,12 +584,13 @@
   "checkOut": "Check-out",
   "standardRoom": "Standard Room",
   "ongoing": "Ongoing",
+  "noCheckIn": "No check-in",
   "completed": "Completed",
   "canceled": "Canceled",
   "cancelBooking": "Cancel Booking",
   "yeayCompleted": "Yeay, you have completed it!",
   "youCanceledBooking": "You canceled this hotel booking",
-
+  "youNoCheckInBooking": "You do not have this room",
   "@@_BOOKING_DETAIL": "--- Booking Detail ---",
   "bookingInformation": "Booking Information",
   "bookingId": "Booking ID",
@@ -641,7 +642,6 @@
   "no": "No",
 
   "@@_NAVIGATION": "--- Navigation ---",
-
   "@@_COMMON": "--- Common ---",
   "loading": "Loading...",
 
@@ -650,5 +650,13 @@
   "share": "Share",
   "phone": "Phone",
   "chat": "Chat",
-  "download": "Download"
+  "download": "Download",
+  "priceRange": "Price Range",
+  "highestPopularity": "Highest popularity",
+  "highestPrice": "Highest price",
+  "lowestPrice": "Lowest price",
+  "selectYourArrivalDate": "Select arrival date",
+  "selectTravelDate": "Select travel date",
+  "sortResults": "Sort Results",
+  "filterHotel":"Filter Hotel"
 }

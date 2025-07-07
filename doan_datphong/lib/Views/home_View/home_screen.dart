@@ -1,20 +1,25 @@
 import 'dart:io';
+import 'package:doan_datphong/Data/Provider/auth_provider.dart';
+import 'package:doan_datphong/Views/components/bottom_navigation_bar.dart';
 import 'package:doan_datphong/Views/home_View/listHotelView.dart';
 import 'package:doan_datphong/Views/home_View/listHotelView_type.dart';
 import 'package:doan_datphong/Views/home_View/searchView.dart';
 import 'package:doan_datphong/Views/listBooking_View/listBooking_screen.dart';
 import 'package:doan_datphong/Views/profile_View/profile_screen.dart';
 import 'package:flutter/material.dart';
+
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../Models/NguoiDung.dart';
+import '../login_View/login_screen.dart';
 import '../seach_View/search_screen.dart';
 import 'package:doan_datphong/generated/l10n.dart';
 
 class HomeScreen extends StatefulWidget {
-  final NguoiDung? user;
+
   const HomeScreen({super.key,
-    required this.user});
+  });
   @override
   _HomePageState createState() => _HomePageState();
 }
@@ -32,19 +37,19 @@ class _HomePageState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _saveUserId();
+    // _saveUserId();
   }
 
 
   // Hàm lưu user_id vào SharedPreferences
-  Future<void> _saveUserId() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString("user_id", widget.user!.id);
-    await prefs.setString("user_std", widget.user!.soDienThoai);
-    print("Token current: ${prefs.getString("token")}");
-    print("User ID saved: ${widget.user!.id}");
-    print("User phone number saved: ${widget.user!.soDienThoai}");
-  }
+  // Future<void> _saveUserId() async {
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   await prefs.setString("user_id", widget.user!.id);
+  //   await prefs.setString("user_std", widget.user!.soDienThoai);
+  //   print("Token current: ${prefs.getString("token")}");
+  //   print("User ID saved: ${widget.user!.id}");
+  //   print("User phone number saved: ${widget.user!.soDienThoai}");
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -99,16 +104,20 @@ class _HomePageState extends State<HomeScreen> {
           child: Container(
             child: Column(
               children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    "${S.of(context).welcomeToStaytion}, ${widget.user?.tenNguoiDung ?? "Người dùng"}",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1565C0)
-                    ),
-                  ),
+                Consumer<UserAuthProvider>(
+                    builder: (context, authProvider,child){
+                      return Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "${S.of(context).welcomeToStaytion}, ${authProvider.userName ?? "Người dùng"}",
+                          style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1565C0)
+                          ),
+                        ),
+                      );
+                    }
                 ),
                 const SizedBox(height: 15),
 
@@ -445,87 +454,128 @@ class _HomePageState extends State<HomeScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(),
+      bottomNavigationBar: CustomBottomNavigation(
+          currentPage: BottomNavPages.home),
     );
   }
 
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: (index) {
-        setState(() {
-          currentIndex = index;
-        });
-        if (index == 0) {
-          // Ở lại trang Home
-        } else if (index == 1) {
-          Navigator.pushReplacement(
-            context,
-            PageRouteBuilder(
-              pageBuilder: (context, animation1, animation2) => SearchView(user: widget.user),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: child,
-                );
-              },
-              transitionDuration: Duration(milliseconds: 300),
-            ),
-          );
-        } else if (index == 2) {
-          // Chuyển đến danh sách đặt phòng, bạn có thể tạo BookingScreen() chẳng hạn
-          Navigator.pushReplacement(
-            context,
-            PageRouteBuilder(
-              pageBuilder: (context, animation1, animation2) => ListBookingScreen(user: widget.user),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: child,
-                );
-              },
-              transitionDuration: Duration(milliseconds: 300),
-            ),
-          );
-        } else if (index == 3) {
-          Navigator.pushReplacement(
-            context,
-            PageRouteBuilder(
-              pageBuilder: (context, animation1, animation2) => ProfileScreen(user: widget.user),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: child,
-                );
-              },
-              transitionDuration: Duration(milliseconds: 300),
-            ),
-          );
-        }
-      },
+  // void _handleUserNotFound() {
+  //   showDialog(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return AlertDialog(
+  //         title: Text('Lỗi đăng nhập'),
+  //         content: Text('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'),
+  //         actions: [
+  //           TextButton(
+  //             onPressed: () => Navigator.of(context).pop(),
+  //             child: Text('Hủy'),
+  //           ),
+  //           ElevatedButton(
+  //             onPressed: () {
+  //               Navigator.of(context).pop();
+  //               context.read<UserAuthProvider>().logout();
+  //               Navigator.pushAndRemoveUntil(
+  //                 context,
+  //                 MaterialPageRoute(builder: (context) => LoginScreen()),
+  //                     (route) => false,
+  //               );
+  //             },
+  //             child: Text('Đăng nhập'),
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
 
-      selectedItemColor: Color(0xFF1565C0),
-      unselectedItemColor: Color(0xFF525150),
-      items: [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: S.of(context).home,
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.search),
-          label: S.of(context).search,
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.view_list_outlined),
-          label: S.of(context).booking,
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: S.of(context).profile,
-        ),
-      ],
-    );
-  }
+  // Widget _buildBottomNav() {
+  //   return Consumer<UserAuthProvider>(
+  //     builder: (context, authProvider, child){
+  //       return BottomNavigationBar(
+  //         currentIndex: currentIndex,
+  //         onTap: (index) {
+  //           // ✅ Kiểm tra user có tồn tại không
+  //           if (!authProvider.isLoggedIn) {
+  //             _handleUserNotFound();
+  //             return;
+  //           }
+  //           setState(() {
+  //             currentIndex = index;
+  //           });
+  //           if (index == 0) {
+  //             // Ở lại trang Home
+  //           } else if (index == 1) {
+  //             Navigator.pushReplacement(
+  //               context,
+  //               PageRouteBuilder(
+  //                 pageBuilder: (context, animation1, animation2) => SearchView(),
+  //                 transitionsBuilder: (context, animation, secondaryAnimation, child) {
+  //                   return FadeTransition(
+  //                     opacity: animation,
+  //                     child: child,
+  //                   );
+  //                 },
+  //                 transitionDuration: Duration(milliseconds: 300),
+  //               ),
+  //             );
+  //           } else if (index == 2) {
+  //             // Chuyển đến danh sách đặt phòng, bạn có thể tạo BookingScreen() chẳng hạn
+  //
+  //             Navigator.pushReplacement(
+  //               context,
+  //               PageRouteBuilder(
+  //                 pageBuilder: (context, animation1, animation2) => ListBookingScreen(),
+  //                 transitionsBuilder: (context, animation, secondaryAnimation, child) {
+  //                   return FadeTransition(
+  //                     opacity: animation,
+  //                     child: child,
+  //                   );
+  //                 },
+  //                 transitionDuration: Duration(milliseconds: 300),
+  //               ),
+  //             );
+  //           } else if (index == 3) {
+  //             Navigator.pushReplacement(
+  //               context,
+  //               PageRouteBuilder(
+  //                 pageBuilder: (context, animation1, animation2) => ProfileScreen(),
+  //                 transitionsBuilder: (context, animation, secondaryAnimation, child) {
+  //                   return FadeTransition(
+  //                     opacity: animation,
+  //                     child: child,
+  //                   );
+  //                 },
+  //                 transitionDuration: Duration(milliseconds: 300),
+  //               ),
+  //             );
+  //           }
+  //         },
+  //
+  //         selectedItemColor: Color(0xFF1565C0),
+  //         unselectedItemColor: Color(0xFF525150),
+  //         items: [
+  //           BottomNavigationBarItem(
+  //             icon: Icon(Icons.home),
+  //             label: S.of(context).home,
+  //           ),
+  //           BottomNavigationBarItem(
+  //             icon: Icon(Icons.search),
+  //             label: S.of(context).search,
+  //           ),
+  //           BottomNavigationBarItem(
+  //             icon: Icon(Icons.view_list_outlined),
+  //             label: S.of(context).booking,
+  //           ),
+  //           BottomNavigationBarItem(
+  //             icon: Icon(Icons.person),
+  //             label: S.of(context).profile,
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
 
 }
 

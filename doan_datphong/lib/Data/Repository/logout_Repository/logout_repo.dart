@@ -19,6 +19,7 @@ class LogoutRepository {
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString("token");
+      print("kiem tra token: ${token}");
       if(token == null){
         return ApiResponse(success: false, message: "Chưa đăng nhập!");
       }
@@ -32,8 +33,11 @@ class LogoutRepository {
 
       if (response.statusCode == 200) {
         await prefs.remove("token");
+
         return ApiResponse(success: true, message: "Đăng xuất thành công!");
       } else {
+        print("response body ${response.body}");
+        print("response message ${response.statusCode}");
         return ApiResponse(success: false, message: "Đăng xuất không thành công! Status: ${response.statusCode}, Body: ${response.body}");
       }
     } catch (e) {

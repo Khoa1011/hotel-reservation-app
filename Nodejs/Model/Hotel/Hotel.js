@@ -14,23 +14,23 @@ const HotelSchema = new mongoose.Schema({
    diaChiDayDu: {
          type: String,
          default: function() {
-            return `${this.soNha || ''} ${this.tenDuong || ''}, ${this.phuong || ''}, ${this.quan}, ${this.thanhPho}`.trim();
+            return `${this.soNha || ''} ${this.phuongXa || ''}, ${this.tinhThanh || ''}, ${this.quocGia}`.trim();
          }
    },
    diaChi: {
       soNha: String,
-      tenDuong: String,
-      phuong: String,
-      quan: {
-         type: String,
-         required: [true, "Quận/huyện là bắt buộc"]
-      },
-      thanhPho: {
-         type: String,
-         required: [true, "Thành phố là bắt buộc"],
-         index: true // For location-based search
-      },
-      tinhThanh: String,
+      tenDuong:String,
+      
+        phuongXa: {                     // ✅ Thay thế cho quan
+            type: String,
+            required: true,
+            index: true
+        },
+        tinhThanh: {                    // ✅ Thay thế cho thanhPho
+            type: String,
+            required: true,
+            index: true                 
+        },
       quocGia: {
          type: String,
          default: "Việt Nam"

@@ -1,916 +1,931 @@
-// API TÌM KIẾM KHÁCH SẠN VỚI FILTER NÂNG CAO
+// =============================================================================
+// 🔍 SIMPLE SEARCH API 2025 - CHỈ CÁC FILTER CẦN THIẾT
+// =============================================================================
+
 const express = require("express");
 const mongoose = require("mongoose");
 const Hotel = require('../Model/Hotel/Hotel');
 const RoomType = require('../Model/RoomType/RoomType');
-const Amenities = require('../Model/Amenities/Amenities');
-const AmenityDetails = require('../Model/Amenities/AmenityDetails');
-const Room = require('../Model/Room/Room');
-const RoomAvailability = require('../Model/Room/RoomAvailability');
+const Booking = require('../Model/Booking/Booking');
 const moment = require('moment-timezone');
 
 const searchRouter = express.Router();
 
-// 🔍 API TÌM KIẾM KHÁCH SẠN CHÍNH
-// Endpoint: GET /search
-// Mục đích: Tìm kiếm khách sạn với nhiều tiêu chí filter khác nhau
+// 🔍 API TÌM KIẾM KHÁCH SẠN ĐỚN GIẢN 2025
 searchRouter.get('/search', async (req, res) => {
     try {
-        
-        // 📥 NHẬN CÁC THAM SỐ TỪ QUERY STRING
+
+        // 📥 NHẬN CÁC THAM SỐ CẦN THIẾT
         const {
-            // === TÌM KIẾM CƠ BẢN ===
-            keyword,           // Từ khóa tìm kiếm: tên khách sạn, địa chỉ, mô tả
-            city,              // Thành phố cụ thể
-            district,          // Quận/huyện cụ thể
-            
-            // === FILTER GIÁ CẢ ===
+            // === TÌM KIẾM TỔNG QUÁT ===
+            keyword,           // ✅ THÊM: Từ khóa tìm kiếm (tên khách sạn, địa điểm)
+            showAll,           // ✅ THÊM: Flag để hiển thị tất cả khách sạn
+
+            // === ĐỊA ĐIỂM (CẤU TRÚC 2025) ===
+            tinhThanh,         // Tỉnh/thành phố
+            phuongXa,          // Phường/xã
+
+            // === GIÁ CẢ ===
             minPrice,          // Giá tối thiểu (VND)
             maxPrice,          // Giá tối đa (VND)
-            
-            // === FILTER ĐÁNH GIÁ ===
-            minStars,          // Số sao tối thiểu (1-5)
-            maxStars,          // Số sao tối đa (1-5)
-            
-            // === FILTER LOẠI KHÁCH SẠN ===
-            hotelTypes,        // Mảng loại khách sạn: ['khachSan', 'khuNghiDuong', 'nhaNghi']
-            
-            // === FILTER TIỆN NGHI ===
-            amenities,         // Mảng ID tiện nghi: ['wifi_id', 'pool_id', 'parking_id']
-            
-            // === FILTER SỨC CHỨA ===
-            guests,            // Số khách tối thiểu mà khách sạn phải phục vụ được
-            rooms,             // Số phòng cần thiết
-            
-            // === FILTER NGÀY (KIỂM TRA PHÒNG TRỐNG) ===
-            checkIn,           // Ngày check-in (YYYY-MM-DD)
-            checkOut,          // Ngày check-out (YYYY-MM-DD)
-            bookingType,       // Loại đặt phòng: 'theo_gio', 'qua_dem', 'dai_ngay'
-            
-            // === SẮP XẾP & PHÂN TRANG ===
-            sortBy,            // Cách sắp xếp: 'price_asc', 'price_desc', 'rating_desc'
-            sortOrder,         // Thứ tự sắp xếp (không sử dụng nhiều)
-            page = 1,          // Trang hiện tại (mặc định = 1)
-            limit = 10,        // Số lượng kết quả mỗi trang (mặc định = 10)
-            
-            // === VỊ TRÍ ĐỊA LÝ ===
-            lat,               // Vĩ độ để tìm kiếm theo khoảng cách
-            lng,               // Kinh độ để tìm kiếm theo khoảng cách
-            radius,            // Bán kính tìm kiếm (km)
-            
-            // === FILTER NÂNG CAO ===
-            hasImages,         // Chỉ lấy khách sạn có hình ảnh
-            hasAvailability,   // Chỉ lấy khách sạn có phòng trống
-            verified,          // Chỉ lấy khách sạn đã xác minh
+
+            // === SỨC CHỨA ===
+            guests,            // Số khách
+            rooms,             // Số phòng cần
+
+            // === NGÀY & LOẠI ĐẶT PHÒNG ===
+            checkIn,           // Ngày nhận phòng (YYYY-MM-DD)
+            checkOut,          // Ngày trả phòng (YYYY-MM-DD)
+            bookingType,       // Loại đặt: 'theo_gio', 'qua_dem', 'dai_ngay'
+
+
         } = req.query;
 
-        console.log('🔍 Yêu cầu tìm kiếm:', req.query);
+        console.log('🔍 Search request 2025:', req.query);
 
-        // 🏗️ BƯỚC 1: XÂY DỰNG PIPELINE AGGREGATION
-        // Pipeline là một chuỗi các bước xử lý dữ liệu trong MongoDB
+        // ✅ KIỂM TRA NẾU LÀ REQUEST LOAD TẤT CẢ KHÁCH SẠN
+        const isShowAllRequest = showAll === 'true' || (
+            !keyword &&
+            !tinhThanh &&
+            !phuongXa &&
+            !minPrice &&
+            !maxPrice &&
+            !guests &&
+            !rooms &&
+            !checkIn &&
+            !checkOut
+        );
+
+        // 🏗️ XÂY DỰNG PIPELINE TÌM KIẾM
         const pipeline = [];
-        
-        // 🎯 BƯỚC 1.1: MATCH STAGE - LỌC DỮ LIỆU CƠ BẢN
-        // Tạo điều kiện tìm kiếm ban đầu
-        const matchStage = {};
-        
-        // Tìm kiếm theo từ khóa trong nhiều trường
-        if (keyword) {
-            matchStage.$or = [
-                { tenKhachSan: { $regex: keyword, $options: 'i' } },        // Tìm trong tên khách sạn
-                { 'diaChi.thanhPho': { $regex: keyword, $options: 'i' } },  // Tìm trong tên thành phố
-                { 'diaChi.quan': { $regex: keyword, $options: 'i' } },      // Tìm trong tên quận
-                { diaChiDayDu: { $regex: keyword, $options: 'i' } },        // Tìm trong địa chỉ đầy đủ
-                { moTa: { $regex: keyword, $options: 'i' } }                // Tìm trong mô tả
-            ];
-            // $regex: tìm kiếm theo pattern
-            // $options: 'i' = không phân biệt chữ hoa/thường
+
+        // 🎯 BƯỚC 1: FILTER THEO KEYWORD VÀ ĐỊA ĐIỂM
+        const searchMatch = {};
+
+        if (!isShowAllRequest) {
+            // ✅ TÌM KIẾM THEO KEYWORD (tên khách sạn, địa chỉ, mô tả)
+            if (keyword) {
+                searchMatch.$or = [
+                    { tenKhachSan: { $regex: keyword, $options: 'i' } },
+                    { diaChiDayDu: { $regex: keyword, $options: 'i' } },
+                    { moTa: { $regex: keyword, $options: 'i' } },
+                    { 'diaChi.tinhThanh': { $regex: keyword, $options: 'i' } },
+                    { 'diaChi.phuongXa': { $regex: keyword, $options: 'i' } }
+                ];
+            }
+
+            // ✅ TÌM KIẾM THEO ĐỊA ĐIỂM CỤ THỂ (kết hợp với keyword)
+            if (tinhThanh) {
+                searchMatch['diaChi.tinhThanh'] = { $regex: tinhThanh, $options: 'i' };
+            }
+            if (phuongXa) {
+                searchMatch['diaChi.phuongXa'] = { $regex: phuongXa, $options: 'i' };
+            }
         }
-        
-        // Tìm kiếm theo thành phố cụ thể
-        if (city) {
-            matchStage['diaChi.thanhPho'] = { $regex: city, $options: 'i' };
+
+        // ✅ Chỉ thêm match nếu có điều kiện tìm kiếm
+        if (Object.keys(searchMatch).length > 0) {
+            pipeline.push({ $match: searchMatch });
         }
-        
-        // Tìm kiếm theo quận/huyện cụ thể
-        if (district) {
-            matchStage['diaChi.quan'] = { $regex: district, $options: 'i' };
-        }
-        
-        // Lọc theo số sao (rating)
-        if (minStars || maxStars) {
-            matchStage.soSao = {};
-            if (minStars) matchStage.soSao.$gte = parseFloat(minStars);  // Lớn hơn hoặc bằng
-            if (maxStars) matchStage.soSao.$lte = parseFloat(maxStars);  // Nhỏ hơn hoặc bằng
-        }
-        
-        // Lọc theo loại khách sạn
-        if (hotelTypes && hotelTypes.length > 0) {
-            // Xử lý trường hợp hotelTypes là string hoặc array
-            const types = Array.isArray(hotelTypes) ? hotelTypes : [hotelTypes];
-            matchStage.loaiKhachSan = { $in: types };  // $in: có trong danh sách
-        }
-        
-        // Thêm match stage vào pipeline nếu có điều kiện
-        if (Object.keys(matchStage).length > 0) {
-            pipeline.push({ $match: matchStage });
-        }
-        
-        // 🔗 BƯỚC 1.2: LOOKUP ROOM TYPES - NỐI BẢNG LOẠI PHÒNG
-        // Mục đích: Lấy thông tin loại phòng để tính giá
+
+        // 🔗 BƯỚC 2: JOIN VỚI ROOM TYPES
         pipeline.push({
             $lookup: {
-                from: 'loaiphongs',        // Tên collection loại phòng
-                localField: '_id',         // Trường _id trong bảng Hotel
-                foreignField: 'maKhachSan',// Trường maKhachSan trong bảng RoomType
-                as: 'roomTypes'            // Tên field chứa kết quả join
+                from: 'loaiphongs',
+                localField: '_id',
+                foreignField: 'maKhachSan',
+                as: 'roomTypes'
             }
         });
-        
-        // 🧮 BƯỚC 1.3: CALCULATE PRICE RANGE - TÍNH GIÁ PHÒNG
-        // Tính giá min, max, trung bình cho mỗi khách sạn
+
+        // 🧮 BƯỚC 3: TÍNH GIÁ VÀ SỨC CHỨA
         pipeline.push({
             $addFields: {
-                // Giá phòng thấp nhất
-                minRoomPrice: {
-                    $min: {
-                        $map: {
-                            input: '$roomTypes',      // Duyệt qua mảng roomTypes
-                            as: 'roomType',           // Biến tạm cho mỗi phần tử
-                            in: '$$roomType.giaCa'    // Lấy giá của từng loại phòng
-                        }
-                    }
-                },
-                // Giá phòng cao nhất
-                maxRoomPrice: {
-                    $max: {
-                        $map: {
-                            input: '$roomTypes',
-                            as: 'roomType',
-                            in: '$$roomType.giaCa'
-                        }
-                    }
-                },
-                // Giá phòng trung bình
-                avgRoomPrice: {
-                    $avg: {
-                        $map: {
-                            input: '$roomTypes',
-                            as: 'roomType',
-                            in: '$$roomType.giaCa'
-                        }
-                    }
-                },
-                // Tổng số loại phòng
+                minRoomPrice: { $min: '$roomTypes.giaCa' },
+                maxRoomPrice: { $max: '$roomTypes.giaCa' },
                 totalRoomTypes: { $size: '$roomTypes' },
-                
-                // Tổng số phòng của khách sạn
-                totalRooms: {
-                    $sum: {
-                        $map: {
-                            input: '$roomTypes',
-                            as: 'roomType',
-                            in: '$$roomType.tongSoPhong'
-                        }
-                    }
-                },
-                // Sức chứa tối đa (khách sạn có thể phục vụ bao nhiêu khách)
-                maxCapacity: {
-                    $max: {
-                        $map: {
-                            input: '$roomTypes',
-                            as: 'roomType',
-                            in: '$$roomType.soLuongKhach'
-                        }
+                maxCapacity: { $max: '$roomTypes.soLuongKhach' },
+
+                // ✅ THÊM: Tính điểm relevance cho keyword search
+                relevanceScore: {
+                    $cond: {
+                        if: { $and: [{ $ne: [keyword, null] }, { $ne: [keyword, ""] }] },
+                        then: {
+                            $add: [
+                                // Tên khách sạn match = +10 điểm
+                                {
+                                    $cond: [
+                                        { $regexMatch: { input: '$tenKhachSan', regex: keyword, options: 'i' } },
+                                        10, 0
+                                    ]
+                                },
+                                // Địa chỉ match = +5 điểm  
+                                {
+                                    $cond: [
+                                        { $regexMatch: { input: '$diaChiDayDu', regex: keyword, options: 'i' } },
+                                        5, 0
+                                    ]
+                                },
+                                // Mô tả match = +3 điểm
+                                {
+                                    $cond: [
+                                        { $regexMatch: { input: '$moTa', regex: keyword, options: 'i' } },
+                                        3, 0
+                                    ]
+                                },
+                                // Bonus điểm cho số sao
+                                { $multiply: ['$soSao', 1] }
+                            ]
+                        },
+                        else: '$soSao' // Không có keyword thì sort theo sao
                     }
                 }
             }
         });
-        
-        // 💰 BƯỚC 1.4: FILTER BY PRICE RANGE - LỌC THEO GIÁ
-        // Lọc khách sạn theo khoảng giá đã tính
-        const priceMatchStage = {};
-        
-        if (minPrice || maxPrice) {
-            if (minPrice) priceMatchStage.minRoomPrice = { $gte: parseFloat(minPrice) };
-            if (maxPrice) priceMatchStage.maxRoomPrice = { $lte: parseFloat(maxPrice) };
+
+        // 💰 BƯỚC 4: FILTER THEO GIÁ VÀ SỨC CHỨA
+        const priceCapacityMatch = {};
+
+        if (!isShowAllRequest) {
+            // Filter giá (chỉ khi không show all)
+            if (minPrice) priceCapacityMatch.minRoomPrice = { $gte: parseFloat(minPrice) };
+            if (maxPrice) priceCapacityMatch.maxRoomPrice = { $lte: parseFloat(maxPrice) };
+
+            // Filter sức chứa (chỉ khi không show all)
+            if (guests) priceCapacityMatch.maxCapacity = { $gte: parseInt(guests) };
         }
-        
-        // Lọc theo sức chứa
-        if (guests) {
-            priceMatchStage.maxCapacity = { $gte: parseInt(guests) };
+
+        // ✅ Luôn chỉ lấy khách sạn có phòng (kể cả show all)
+        priceCapacityMatch.totalRoomTypes = { $gt: 0 };
+
+        if (Object.keys(priceCapacityMatch).length > 0) {
+            pipeline.push({ $match: priceCapacityMatch });
         }
-        
-        // Chỉ lấy khách sạn có ít nhất 1 loại phòng
-        priceMatchStage.totalRoomTypes = { $gt: 0 };
-        
-        if (Object.keys(priceMatchStage).length > 0) {
-            pipeline.push({ $match: priceMatchStage });
-        }
-        
-        // 🏨 BƯỚC 1.5: LOOKUP AMENITIES - LỌC THEO TIỆN NGHI
-        // Nếu có filter tiện nghi, nối với bảng phòng và tiện nghi
-        if (amenities && amenities.length > 0) {
-            const amenityIds = Array.isArray(amenities) ? amenities : [amenities];
-            
-            // Nối với bảng phòng
-            pipeline.push({
-                $lookup: {
-                    from: 'phongs',
-                    localField: 'roomTypes._id',
-                    foreignField: 'maLoaiPhong',
-                    as: 'rooms'
-                }
+
+        // 📅 BƯỚC 5: KIỂM TRA PHÒNG TRỐNG (NẾU CÓ NGÀY)
+        if (!isShowAllRequest && checkIn && checkOut && bookingType) {
+            // Validate booking type và dates
+            const isValidBooking = validateBookingRequest({
+                checkIn, checkOut, bookingType, guests: parseInt(guests), rooms: parseInt(rooms)
             });
-            
-            // Nối với bảng chi tiết tiện nghi
-            pipeline.push({
-                $lookup: {
-                    from: 'chitiettiennghis',
-                    localField: 'rooms._id',
-                    foreignField: 'maPhong',
-                    as: 'amenityDetails'
-                }
-            });
-            
-            // Lọc khách sạn có tiện nghi yêu cầu
-            pipeline.push({
-                $match: {
-                    'amenityDetails.maTienNghi': { 
-                        $in: amenityIds.map(id => new mongoose.Types.ObjectId(id)) 
-                    }
-                }
-            });
-        }
-        
-        // 📅 BƯỚC 1.6: CHECK AVAILABILITY - KIỂM TRA PHÒNG TRỐNG
-        // Nếu có ngày check-in và yêu cầu phòng trống
-        if (checkIn && hasAvailability === 'true') {
-            pipeline.push({
-                $lookup: {
-                    from: 'lichphongtongs',         // Bảng lịch phòng trống
-                    let: { 
-                        hotelId: '$_id',            // ID khách sạn
-                        roomTypeIds: '$roomTypes._id' // Danh sách ID loại phòng
-                    },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $eq: ['$maKhachSan', '$$hotelId'] },
-                                        { $in: ['$maLoaiPhong', '$$roomTypeIds'] },
-                                        { $gte: ['$ngay', new Date(checkIn)] },
-                                        { $gt: ['$soPhongConLai', 0] }  // Có phòng trống
-                                    ]
-                                }
-                            }
+
+            if (isValidBooking.valid) {
+                // Tìm khách sạn có phòng trống
+                const availableHotels = await findAvailableHotels({
+                    checkIn,
+                    checkOut,
+                    bookingType,
+                    requiredGuests: parseInt(guests),
+                    requiredRooms: parseInt(rooms)
+                });
+
+                if (availableHotels.length > 0) {
+                    pipeline.push({
+                        $match: {
+                            _id: { $in: availableHotels.map(h => new mongoose.Types.ObjectId(h)) }
                         }
-                    ],
-                    as: 'availability'
+                    });
+                } else {
+                    // Không có khách sạn nào có phòng trống
+                    return res.json({
+                        message: 'Không tìm thấy khách sạn có phòng trống trong thời gian này',
+                        searchInfo: {
+                            keyword: keyword || null,
+                            checkIn, checkOut, bookingType, guests, rooms
+                        },
+                        hotels: [],
+                        total: 0,
+                        pagination: {
+                            page: parseInt(page),
+                            limit: parseInt(limit),
+                            totalPages: 0
+                        }
+                    });
                 }
-            });
-            
-            // Chỉ lấy khách sạn có phòng trống
-            pipeline.push({
-                $match: {
-                    'availability.0': { $exists: true }  // Có ít nhất 1 bản ghi availability
-                }
-            });
+            } else {
+                return res.status(400).json({
+                    message: isValidBooking.message,
+                    error: true
+                });
+            }
         }
-        
-        // 🔄 BƯỚC 1.7: SORTING - SẮP XẾP
-        // Xác định cách sắp xếp kết quả
-        const sortStage = {};
-        switch (sortBy) {
-            case 'price_asc':           // Giá tăng dần
-                sortStage.minRoomPrice = 1;
-                break;
-            case 'price_desc':          // Giá giảm dần
-                sortStage.maxRoomPrice = -1;
-                break;
-            case 'rating_desc':         // Rating giảm dần (khách sạn tốt nhất trước)
-                sortStage.soSao = -1;
-                break;
-            case 'rating_asc':          // Rating tăng dần
-                sortStage.soSao = 1;
-                break;
-            case 'name_asc':            // Tên A-Z
-                sortStage.tenKhachSan = 1;
-                break;
-            case 'name_desc':           // Tên Z-A
-                sortStage.tenKhachSan = -1;
-                break;
-            case 'newest':              // Mới nhất
-                sortStage.createdAt = -1;
-                break;
-            case 'capacity_desc':       // Sức chứa cao nhất
-                sortStage.maxCapacity = -1;
-                break;
-            default:                    // Mặc định: Rating cao nhất, nhiều loại phòng
-                sortStage.soSao = -1;
-                sortStage.totalRoomTypes = -1;
+
+        // 🔄 BƯỚC 6: SẮP XẾP THÔNG MINH
+        const sortCriteria = {};
+
+        if (isShowAllRequest) {
+            // ✅ Show All: Sort theo sao cao nhất, sau đó theo số phòng
+            sortCriteria.soSao = -1;
+            sortCriteria.totalRoomTypes = -1;
+            sortCriteria.tenKhachSan = 1; // Tên A-Z cho stable sort
+        } else if (keyword) {
+            // ✅ Có keyword: Sort theo relevance score trước
+            sortCriteria.relevanceScore = -1;
+            sortCriteria.soSao = -1;
+            sortCriteria.totalRoomTypes = -1;
+        } else {
+            // ✅ Không có keyword: Sort theo sao và số phòng
+            sortCriteria.soSao = -1;
+            sortCriteria.totalRoomTypes = -1;
         }
-        
-        pipeline.push({ $sort: sortStage });
-        
-        // 📄 BƯỚC 1.8: PAGINATION - PHÂN TRANG
-        // Xử lý phân trang kết quả
-        const pageNum = parseInt(page) || 1;                          // Trang hiện tại
-        const pageSize = Math.min(parseInt(limit) || 10, 50);         // Kích thước trang (tối đa 50)
-        const skip = (pageNum - 1) * pageSize;                       // Số item bỏ qua
-        
-        // Tạo pipeline để đếm tổng số kết quả (cho pagination)
-        const countPipeline = [...pipeline, { $count: 'total' }];
-        
-        // Thêm phân trang vào pipeline chính
-        pipeline.push({ $skip: skip });
-        pipeline.push({ $limit: pageSize });
-        
-        // 📊 BƯỚC 1.9: PROJECT FINAL FIELDS - CHỌN CÁC TRƯỜNG TRẢ VỀ
-        // Quyết định những trường nào sẽ có trong kết quả cuối cùng
+
+        pipeline.push({ $sort: sortCriteria });
+
+
+
+        // 📊 BƯỚC 7: CHỌN TRƯỜNG TRẢ VỀ
         pipeline.push({
             $project: {
-                // === THÔNG TIN CƠ BẢN KHÁCH SẠN ===
                 _id: 1,
                 tenKhachSan: 1,
                 diaChiDayDu: 1,
-                'diaChi.thanhPho': 1,
-                'diaChi.quan': 1,
+                'diaChi.tinhThanh': 1,
+                'diaChi.phuongXa': 1,
+                'diaChi.soNha': 1,
                 hinhAnh: 1,
                 moTa: 1,
                 soSao: 1,
                 soDienThoai: 1,
                 email: 1,
                 loaiKhachSan: 1,
-                
-                // === THÔNG TIN GIÁ ĐÃ TÍNH TOÁN ===
+
+                // Thông tin giá và phòng
                 minRoomPrice: 1,
                 maxRoomPrice: 1,
-                avgRoomPrice: { $round: ['$avgRoomPrice', 0] },     // Làm tròn giá trung bình
                 totalRoomTypes: 1,
-                totalRooms: 1,
                 maxCapacity: 1,
-                
-                // === THÔNG TIN HIỂN THỊ ===
-                priceRange: {
-                    min: '$minRoomPrice',
-                    max: '$maxRoomPrice',
-                    avg: { $round: ['$avgRoomPrice', 0] }
+
+                // ✅ THÊM: Relevance score để debug (chỉ khi có keyword)
+                relevanceScore: {
+                    $cond: {
+                        if: { $and: [{ $ne: [keyword, null] }, { $ne: [keyword, ""] }] },
+                        then: '$relevanceScore',
+                        else: '$$REMOVE'
+                    }
                 },
-                
-                roomInfo: {
-                    totalTypes: '$totalRoomTypes',
-                    totalRooms: '$totalRooms',
-                    maxGuests: '$maxCapacity'
-                },
-                
+
+                // Thông tin hiển thị
                 location: {
-                    city: '$diaChi.thanhPho',
-                    district: '$diaChi.quan',
+                    tinhThanh: '$diaChi.tinhThanh',
+                    phuongXa: '$diaChi.phuongXa',
+                    soNha: '$diaChi.soNha',
                     fullAddress: '$diaChiDayDu'
                 },
-                
-                // === CÁC FLAG TIỆN ÍCH ===
-                hasImage: { $ne: ['$hinhAnh', ''] },               // Có hình ảnh
-                isVerified: { $ne: ['$soDienThoai', ''] },         // Đã xác minh (có SĐT)
-                
-                // === TƯƠNG THÍCH VỚI CODE CŨ ===
-                giaTheoNgay: '$minRoomPrice'                       // Giá khởi điểm
+
+                giaTheoNgay: '$minRoomPrice',
+                hasImage: { $ne: ['$hinhAnh', ''] }
             }
         });
-        
-        // ⚡ BƯỚC 2: THỰC HIỆN QUERY
-        // Chạy 2 query song song để tối ưu performance
-        const [hotels, countResult] = await Promise.all([
-            Hotel.aggregate(pipeline),          // Lấy dữ liệu khách sạn
-            Hotel.aggregate(countPipeline)      // Đếm tổng số kết quả
-        ]);
-        
-        const totalHotels = countResult[0]?.total || 0;
-        const totalPages = Math.ceil(totalHotels / pageSize);
-        
-        // 🚀 BƯỚC 3: ENHANCE RESULTS - TĂNG CƯỜNG KẾT QUẢ
-        // Thêm các thông tin bổ sung cho mỗi khách sạn
-        const enhancedHotels = await Promise.all(
-            hotels.map(async (hotel) => {
-                try {
-                    // Tính toán các thông tin bổ sung
-                    const additionalInfo = {
-                        // Điểm liên quan (relevance score)
-                        searchScore: calculateSearchScore(hotel, { keyword, city, minStars }),
-                        
-                        // Khoảng cách từ điểm trung tâm (nếu có tọa độ)
-                        distanceFromCenter: lat && lng ? 
-                            calculateDistance(lat, lng, hotel.diaChi?.lat, hotel.diaChi?.lng) : null,
-                        
-                        // Điểm phổ biến (popularity score)
-                        popularityScore: hotel.soSao * 20 + hotel.totalRoomTypes * 5,
-                        
-                        // Phân loại mức giá
-                        priceLevel: categorizePriceLevel(hotel.avgRoomPrice),
-                        
-                        // Trạng thái có phòng trống
-                        availabilityStatus: hasAvailability === 'true' ? 'available' : 'unknown'
-                    };
-                    
-                    return {
-                        ...hotel,              // Giữ nguyên thông tin gốc
-                        ...additionalInfo      // Thêm thông tin bổ sung
-                    };
-                } catch (error) {
-                    console.error(`Lỗi khi tăng cường thông tin khách sạn ${hotel._id}:`, error);
-                    return hotel;  // Trả về dữ liệu gốc nếu có lỗi
-                }
-            })
-        );
-        
-        // 📤 BƯỚC 4: TẠO RESPONSE - CHUẨN BỊ KẾT QUẢ TRẢ VỀ
-        const response = {
-            // Thông báo kết quả
-            message: `Tìm thấy ${totalHotels} khách sạn phù hợp`,
-            
-            // Thông tin về yêu cầu tìm kiếm
+
+        // ⚡ THỰC HIỆN QUERY
+        const hotels = await Hotel.aggregate(pipeline);
+
+        // ✅ TẠO MESSAGE THÔNG MINH
+        let message = '';
+        if (isShowAllRequest) {
+            message = `Hiển thị tất cả khách sạn (${hotels.length} kết quả)`;
+        } else if (keyword && (tinhThanh || phuongXa)) {
+            const location = [phuongXa, tinhThanh].filter(Boolean).join(', ');
+            message = `Tìm thấy ${hotels.length} khách sạn cho "${keyword}" tại ${location}`;
+        } else if (keyword) {
+            message = `Tìm thấy ${hotels.length} khách sạn cho "${keyword}"`;
+        } else if (tinhThanh || phuongXa) {
+            const location = [phuongXa, tinhThanh].filter(Boolean).join(', ');
+            message = `Tìm thấy ${hotels.length} khách sạn tại ${location}`;
+        } else {
+            message = `Tìm thấy ${hotels.length} khách sạn phù hợp`;
+        }
+
+        // 📤 TRẢ VỀ KẾT QUẢ ĐƠN GIẢN
+        return res.json({
+            message,
             searchInfo: {
                 keyword: keyword || null,
-                city: city || null,
-                district: district || null,
-                priceRange: {
-                    min: minPrice ? parseFloat(minPrice) : null,
-                    max: maxPrice ? parseFloat(maxPrice) : null
-                },
-                starRange: {
-                    min: minStars ? parseFloat(minStars) : null,
-                    max: maxStars ? parseFloat(maxStars) : null
-                },
-                filters: {
-                    hotelTypes: hotelTypes || [],
-                    amenities: amenities || [],
-                    guests: guests ? parseInt(guests) : null,
-                    rooms: rooms ? parseInt(rooms) : null,
-                    hasAvailability: hasAvailability === 'true'
-                },
-                sorting: sortBy || 'rating_desc',
-                searchTime: new Date().toISOString()
+                tinhThanh: tinhThanh || null,
+                phuongXa: phuongXa || null,
+
+                guests: guests ? parseInt(guests) : null,
+                rooms: rooms ? parseInt(rooms) : null,
+                checkIn: checkIn || null,
+                checkOut: checkOut || null,
+                bookingType: bookingType || null,
+                showAll: isShowAllRequest
             },
-            
-            // Thông tin phân trang
-            pagination: {
-                currentPage: pageNum,
-                totalPages,
-                totalItems: totalHotels,
-                itemsPerPage: pageSize,
-                hasNext: pageNum < totalPages,
-                hasPrev: pageNum > 1,
-                nextPage: pageNum < totalPages ? pageNum + 1 : null,
-                prevPage: pageNum > 1 ? pageNum - 1 : null
-            },
-            
-            // Thống kê tổng quan
-            statistics: {
-                totalHotels,
-                priceRange: hotels.length > 0 ? {
-                    min: Math.min(...hotels.map(h => h.minRoomPrice)),
-                    max: Math.max(...hotels.map(h => h.maxRoomPrice)),
-                    avg: Math.round(hotels.reduce((sum, h) => sum + h.avgRoomPrice, 0) / hotels.length)
-                } : null,
-                starRange: hotels.length > 0 ? {
-                    min: Math.min(...hotels.map(h => h.soSao)),
-                    max: Math.max(...hotels.map(h => h.soSao)),
-                    avg: Math.round((hotels.reduce((sum, h) => sum + h.soSao, 0) / hotels.length) * 10) / 10
-                } : null,
-                hotelTypes: [...new Set(hotels.map(h => h.loaiKhachSan))],
-                cities: [...new Set(hotels.map(h => h.location.city))],
-                districts: [...new Set(hotels.map(h => h.location.district))]
-            },
-            
-            // Danh sách khách sạn
-            hotels: enhancedHotels,
-            
-            // Gợi ý tìm kiếm nếu không có kết quả
-            suggestions: totalHotels === 0 ? await generateSearchSuggestions(keyword, city) : null
-        };
-        
-        return res.status(200).json(response);
-        
+
+            hotels: hotels,
+            total: hotels.length,
+
+    
+        });
+
     } catch (error) {
-        console.error('❌ Lỗi API tìm kiếm khách sạn:', error);
+        console.error('❌ Search API error:', error);
         return res.status(500).json({
-            message: 'Lỗi máy chủ khi tìm kiếm khách sạn',
-            error: error.message,
-            success: false
+            message: 'Lỗi máy chủ',
+            error: error.message
         });
     }
 });
 
-// 🎯 API AUTOCOMPLETE/SUGGESTIONS - TỰ ĐỘNG HOÀN THÀNH
-// Endpoint: GET /suggestions
-// Mục đích: Đưa ra gợi ý khi người dùng gõ từ khóa
-searchRouter.get('/suggestions', async (req, res) => {
+// =============================================================================
+// 🔧 HELPER FUNCTIONS - CHỈ NHỮNG HÀM CẦN THIẾT
+// =============================================================================
+
+// ✅ Validate yêu cầu đặt phòng
+function validateBookingRequest({ checkIn, checkOut, bookingType, guests, rooms }) {
+    // Validate dates
+    if (!moment(checkIn, 'YYYY-MM-DD', true).isValid()) {
+        return { valid: false, message: 'Ngày nhận phòng không hợp lệ' };
+    }
+
+    if (!moment(checkOut, 'YYYY-MM-DD', true).isValid()) {
+        return { valid: false, message: 'Ngày trả phòng không hợp lệ' };
+    }
+
+    const checkInMoment = moment(checkIn);
+    const checkOutMoment = moment(checkOut);
+
+    if (checkInMoment.isAfter(checkOutMoment)) {
+        return { valid: false, message: 'Ngày nhận phòng không được sau ngày trả phòng' };
+    }
+
+    // Validate booking type
+    if (!['theo_gio', 'qua_dem', 'dai_ngay'].includes(bookingType)) {
+        return { valid: false, message: 'Loại đặt phòng không hợp lệ' };
+    }
+
+    // Validate theo loại đặt phòng
+    const daysDiff = checkOutMoment.diff(checkInMoment, 'days');
+
+    switch (bookingType) {
+        case 'theo_gio':
+            if (daysDiff !== 0) {
+                return { valid: false, message: 'Đặt theo giờ phải trong cùng ngày' };
+            }
+            break;
+        case 'qua_dem':
+            if (daysDiff !== 1) {
+                return { valid: false, message: 'Đặt qua đêm phải chính xác 1 ngày' };
+            }
+            break;
+        case 'dai_ngay':
+            if (daysDiff < 2) {
+                return { valid: false, message: 'Đặt dài ngày tối thiểu 2 ngày' };
+            }
+            break;
+    }
+
+    // Validate guests và rooms
+    if (guests < 1) {
+        return { valid: false, message: 'Số khách phải ít nhất 1' };
+    }
+
+    if (rooms < 1) {
+        return { valid: false, message: 'Số phòng phải ít nhất 1' };
+    }
+
+    return { valid: true };
+}
+
+// ✅ Tìm khách sạn có phòng trống - ENHANCED VERSION
+async function findAvailableHotels({ checkIn, checkOut, bookingType, requiredGuests, requiredRooms }) {
     try {
-        const { q, type = 'all', limit = 10 } = req.query;
-        
-        // Kiểm tra độ dài từ khóa
-        if (!q || q.length < 2) {
-            return res.json({
-                suggestions: [],
-                message: 'Nhập ít nhất 2 ký tự để tìm kiếm'
+        // ✅ Phân tích phân bổ khách
+        const guestCapacityAnalysis = calculateMultiRoomCapacity({
+            totalGuests: requiredGuests,
+            requestedRooms: requiredRooms
+        });
+
+        console.log('👥 Guest capacity analysis:', guestCapacityAnalysis);
+
+        // Tìm room types phù hợp với phân bổ khách
+        const suitableRoomTypes = await RoomType.find({
+            soLuongKhach: { $gte: guestCapacityAnalysis.minCapacityPerRoom },
+            tongSoPhong: { $gte: requiredRooms }
+        }).select('_id maKhachSan tongSoPhong soLuongKhach tenLoaiPhong');
+
+        if (!suitableRoomTypes.length) {
+            console.log('❌ No suitable room types found');
+            return [];
+        }
+
+        const availableHotelIds = [];
+
+        // Kiểm tra từng room type với enhanced availability check
+        for (const roomType of suitableRoomTypes) {
+            const isAvailable = await checkEnhancedRoomAvailability({
+                hotelId: roomType.maKhachSan,
+                roomTypeId: roomType._id,
+                checkInDate: checkIn,
+                checkOutDate: checkOut,
+                bookingType,
+                requestedRooms: requiredRooms
             });
+
+            if (isAvailable.isAvailable &&
+                isAvailable.availableRooms >= requiredRooms &&
+                !availableHotelIds.includes(roomType.maKhachSan.toString())) {
+
+                availableHotelIds.push(roomType.maKhachSan.toString());
+                console.log(`✅ Hotel ${roomType.maKhachSan} available with ${roomType.tenLoaiPhong}`);
+            }
         }
-        
-        const suggestions = [];
-        
-        // === GỢI Ý TÊN KHÁCH SẠN ===
-        if (type === 'all' || type === 'hotels') {
-            const hotelSuggestions = await Hotel.find({
-                tenKhachSan: { $regex: q, $options: 'i' }
-            })
-            .select('tenKhachSan diaChi.thanhPho soSao')  // Chỉ lấy các trường cần thiết
-            .limit(limit)
-            .lean();  // Trả về plain JavaScript object (nhanh hơn)
-            
-            // Chuyển đổi format cho frontend
-            suggestions.push(...hotelSuggestions.map(hotel => ({
-                type: 'hotel',
-                title: hotel.tenKhachSan,
-                subtitle: hotel.diaChi?.thanhPho || '',
-                stars: hotel.soSao,
-                value: hotel.tenKhachSan,
-                id: hotel._id
-            })));
-        }
-        
-        // === GỢI Ý THÀNH PHỐ ===
-        if (type === 'all' || type === 'cities') {
-            const citySuggestions = await Hotel.aggregate([
-                {
-                    $match: {
-                        'diaChi.thanhPho': { $regex: q, $options: 'i' }
-                    }
-                },
-                {
-                    $group: {
-                        _id: '$diaChi.thanhPho',
-                        count: { $sum: 1 },                    // Đếm số khách sạn
-                        avgRating: { $avg: '$soSao' }          // Tính rating trung bình
-                    }
-                },
-                {
-                    $sort: { count: -1 }                       // Sắp xếp theo số lượng khách sạn
-                },
-                {
-                    $limit: limit
-                }
-            ]);
-            
-            suggestions.push(...citySuggestions.map(city => ({
-                type: 'city',
-                title: city._id,
-                subtitle: `${city.count} khách sạn`,
-                stars: Math.round(city.avgRating * 10) / 10,
-                value: city._id,
-                count: city.count
-            })));
-        }
-        
-        // === GỢI Ý QUẬN/HUYỆN ===
-        if (type === 'all' || type === 'districts') {
-            const districtSuggestions = await Hotel.aggregate([
-                {
-                    $match: {
-                        'diaChi.quan': { $regex: q, $options: 'i' }
-                    }
-                },
-                {
-                    $group: {
-                        _id: {
-                            district: '$diaChi.quan',
-                            city: '$diaChi.thanhPho'
-                        },
-                        count: { $sum: 1 },
-                        avgRating: { $avg: '$soSao' }
-                    }
-                },
-                {
-                    $sort: { count: -1 }
-                },
-                {
-                    $limit: limit
-                }
-            ]);
-            
-            suggestions.push(...districtSuggestions.map(district => ({
-                type: 'district',
-                title: district._id.district,
-                subtitle: `${district._id.city} - ${district.count} khách sạn`,
-                stars: Math.round(district.avgRating * 10) / 10,
-                value: district._id.district,
-                count: district.count
-            })));
-        }
-        
-        // === SẮP XẾP THEO ĐỘ LIÊN QUAN ===
-        const sortedSuggestions = suggestions
-            .sort((a, b) => {
-                // Ưu tiên match chính xác (bắt đầu bằng từ khóa)
-                const aExact = a.title.toLowerCase().startsWith(q.toLowerCase());
-                const bExact = b.title.toLowerCase().startsWith(q.toLowerCase());
-                
-                if (aExact && !bExact) return -1;
-                if (!aExact && bExact) return 1;
-                
-                // Sau đó sắp xếp theo số lượng/rating
-                return (b.count || 0) - (a.count || 0) || (b.stars || 0) - (a.stars || 0);
-            })
-            .slice(0, limit);  // Giới hạn số lượng kết quả
-        
-        return res.json({
-            suggestions: sortedSuggestions,
-            query: q,
-            total: sortedSuggestions.length
-        });
-        
+
+        return availableHotelIds;
+
     } catch (error) {
-        console.error('❌ Lỗi API gợi ý:', error);
-        return res.status(500).json({
-            suggestions: [],
-            error: error.message
-        });
-    }
-});
-
-// 📊 API FILTER OPTIONS - TÙY CHỌN FILTER
-// Endpoint: GET /filter-options
-// Mục đích: Lấy các tùy chọn filter động dựa trên dữ liệu thực tế
-searchRouter.get('/filter-options', async (req, res) => {
-    try {
-        const { city, district } = req.query;
-        
-        // Điều kiện lọc theo vị trí (nếu có)
-        const locationMatch = {};
-        if (city) locationMatch['diaChi.thanhPho'] = city;
-        if (district) locationMatch['diaChi.quan'] = district;
-        
-        // Chạy 6 query song song để lấy tất cả filter options
-        const [priceRange, starRange, cities, districts, hotelTypes, amenities] = await Promise.all([
-            
-            // === 1. KHOẢNG GIÁ ===
-            // Tính giá min/max/avg của tất cả khách sạn
-            Hotel.aggregate([
-                { $match: locationMatch },
-                {
-                    $lookup: {
-                        from: 'loaiphongs',
-                        localField: '_id',
-                        foreignField: 'maKhachSan',
-                        as: 'roomTypes'
-                    }
-                },
-                {
-                    $addFields: {
-                        minPrice: { $min: '$roomTypes.giaCa' },
-                        maxPrice: { $max: '$roomTypes.giaCa' }
-                    }
-                },
-                {
-                    $group: {
-                        _id: null,
-                        minPrice: { $min: '$minPrice' },
-                        maxPrice: { $max: '$maxPrice' },
-                        avgPrice: { $avg: '$minPrice' }
-                    }
-                }
-            ]),
-            
-            // === 2. KHOẢNG SAO ===
-            // Tính số sao min/max/avg của tất cả khách sạn
-            Hotel.aggregate([
-                { $match: locationMatch },
-                {
-                    $group: {
-                        _id: null,
-                        minStars: { $min: '$soSao' },
-                        maxStars: { $max: '$soSao' },
-                        avgStars: { $avg: '$soSao' }
-                    }
-                }
-            ]),
-            
-            // === 3. DANH SÁCH THÀNH PHỐ ===
-            // Lấy tất cả thành phố có khách sạn
-            Hotel.aggregate([
-                { $match: locationMatch },
-                {
-                    $group: {
-                        _id: '$diaChi.thanhPho',
-                        count: { $sum: 1 }                    // Đếm số khách sạn mỗi thành phố
-                    }
-                },
-                { $sort: { count: -1 } }                       // Sắp xếp theo số lượng
-            ]),
-            
-            // === 4. DANH SÁCH QUẬN/HUYỆN ===
-            // Lấy tất cả quận/huyện có khách sạn
-            Hotel.aggregate([
-                { $match: locationMatch },
-                {
-                    $group: {
-                        _id: {
-                            city: '$diaChi.thanhPho',
-                            district: '$diaChi.quan'
-                        },
-                        count: { $sum: 1 }
-                    }
-                },
-                { $sort: { count: -1 } }
-            ]),
-            
-            // === 5. LOẠI KHÁCH SẠN ===
-            // Lấy tất cả loại khách sạn có sẵn
-            Hotel.aggregate([
-                { $match: locationMatch },
-                {
-                    $group: {
-                        _id: '$loaiKhachSan',
-                        count: { $sum: 1 }
-                    }
-                },
-                { $sort: { count: -1 } }
-            ]),
-            
-            // === 6. TIỆN NGHI PHỔ BIẾN ===
-            // Lấy 20 tiện nghi phổ biến nhất
-            Amenities.find()
-                .populate('maNhomTienNghi', 'tenNhomTienNghi')  // Nối với bảng nhóm tiện nghi
-                .select('tenTienNghi icon maNhomTienNghi')
-                .limit(20)
-                .lean()
-        ]);
-        
-        // Trả về kết quả với format chuẩn
-        return res.json({
-            // Khoảng giá (fallback nếu không có dữ liệu)
-            priceRange: priceRange[0] || { 
-                minPrice: 0, 
-                maxPrice: 1000000, 
-                avgPrice: 500000 
-            },
-            
-            // Khoảng sao (fallback nếu không có dữ liệu)
-            starRange: starRange[0] || { 
-                minStars: 1, 
-                maxStars: 5, 
-                avgStars: 3 
-            },
-            
-            // Danh sách thành phố
-            cities: cities.map(c => ({ 
-                name: c._id, 
-                count: c.count 
-            })),
-            
-            // Danh sách quận/huyện
-            districts: districts.map(d => ({ 
-                name: d._id.district, 
-                city: d._id.city,
-                count: d.count 
-            })),
-            
-            // Danh sách loại khách sạn
-            hotelTypes: hotelTypes.map(t => ({ 
-                type: t._id, 
-                count: t.count 
-            })),
-            
-            // Danh sách tiện nghi
-            amenities: amenities.map(a => ({
-                id: a._id,
-                name: a.tenTienNghi,
-                icon: a.icon,
-                category: a.maNhomTienNghi?.tenNhomTienNghi || 'Khác'
-            }))
-        });
-        
-    } catch (error) {
-        console.error('❌ Lỗi API filter options:', error);
-        return res.status(500).json({
-            error: error.message
-        });
-    }
-});
-
-// 🔧 HELPER FUNCTIONS - CÁC HÀM HỖ TRỢ
-
-// Tính điểm liên quan của khách sạn với yêu cầu tìm kiếm
-function calculateSearchScore(hotel, searchParams) {
-    let score = 0;
-    
-    // Điểm cơ bản từ rating (5 sao = 100 điểm)
-    score += hotel.soSao * 20;
-    
-    // Bonus nếu tên khách sạn chứa từ khóa
-    if (searchParams.keyword) {
-        if (hotel.tenKhachSan.toLowerCase().includes(searchParams.keyword.toLowerCase())) {
-            score += 30;  // +30 điểm cho keyword match
-        }
-    }
-    
-    // Bonus nếu thành phố trùng khớp
-    if (searchParams.city && hotel.location.city === searchParams.city) {
-        score += 25;  // +25 điểm cho city match
-    }
-    
-    // Bonus nếu đáp ứng yêu cầu về sao
-    if (searchParams.minStars && hotel.soSao >= searchParams.minStars) {
-        score += 15;  // +15 điểm cho star requirement
-    }
-    
-    // Bonus cho khách sạn có nhiều loại phòng
-    score += hotel.totalRoomTypes * 5;  // +5 điểm mỗi loại phòng
-    
-    // Bonus cho khách sạn có hình ảnh
-    if (hotel.hasImage) {
-        score += 10;  // +10 điểm cho có hình ảnh
-    }
-    
-    return Math.round(score);
-}
-
-// Tính khoảng cách giữa 2 điểm GPS (công thức Haversine)
-function calculateDistance(lat1, lng1, lat2, lng2) {
-    if (!lat2 || !lng2) return null;
-    
-    const R = 6371; // Bán kính Trái Đất (km)
-    
-    // Chuyển đổi độ sang radian
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLng = (lng2 - lng1) * Math.PI / 180;
-    
-    // Công thức Haversine
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-        Math.sin(dLng/2) * Math.sin(dLng/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    
-    return Math.round(R * c * 100) / 100; // Làm tròn 2 chữ số thập phân
-}
-
-// Phân loại mức giá khách sạn
-function categorizePriceLevel(avgPrice) {
-    if (avgPrice < 200000) return 'budget';         // Giá rẻ
-    if (avgPrice < 500000) return 'mid_range';      // Tầm trung
-    if (avgPrice < 1000000) return 'high_end';      // Cao cấp
-    return 'luxury';                                // Sang trọng
-}
-
-// Tạo gợi ý tìm kiếm khi không có kết quả
-async function generateSearchSuggestions(keyword, city) {
-    try {
-        const suggestions = [];
-        
-        // === GỢI Ý THÀNH PHỐ PHỔ BIẾN ===
-        const popularCities = await Hotel.aggregate([
-            {
-                $group: {
-                    _id: '$diaChi.thanhPho',
-                    count: { $sum: 1 },
-                    avgRating: { $avg: '$soSao' }
-                }
-            },
-            { $sort: { count: -1 } },
-            { $limit: 5 }
-        ]);
-        
-        suggestions.push(...popularCities.map(c => ({
-            type: 'city',
-            suggestion: `Thử tìm kiếm ở ${c._id}`,
-            query: { city: c._id }
-        })));
-        
-        // === GỢI Ý LOẠI KHÁCH SẠN PHỔ BIẾN ===
-        const popularTypes = await Hotel.aggregate([
-            {
-                $group: {
-                    _id: '$loaiKhachSan',
-                    count: { $sum: 1 }
-                }
-            },
-            { $sort: { count: -1 } },
-            { $limit: 3 }
-        ]);
-        
-        suggestions.push(...popularTypes.map(t => ({
-            type: 'hotel_type',
-            suggestion: `Xem các ${t._id}`,
-            query: { hotelTypes: [t._id] }
-        })));
-        
-        return suggestions;
-        
-    } catch (error) {
-        console.error('Lỗi tạo gợi ý tìm kiếm:', error);
+        console.error('❌ Error finding available hotels:', error);
         return [];
     }
 }
+
+// ✅ Tính toán phân bổ khách cho nhiều phòng
+function calculateMultiRoomCapacity({ totalGuests, requestedRooms, roomCapacity = 2 }) {
+    const avgGuestsPerRoom = Math.ceil(totalGuests / requestedRooms);
+    const minCapacityPerRoom = Math.max(1, avgGuestsPerRoom);
+
+    // Phân bổ khách theo phòng
+    const guestDistribution = [];
+    let remainingGuests = totalGuests;
+
+    for (let i = 0; i < requestedRooms && remainingGuests > 0; i++) {
+        const guestsInThisRoom = Math.min(minCapacityPerRoom, remainingGuests);
+        guestDistribution.push({
+            roomNumber: i + 1,
+            guests: guestsInThisRoom,
+            capacity: minCapacityPerRoom
+        });
+        remainingGuests -= guestsInThisRoom;
+    }
+
+    return {
+        totalGuests,
+        requestedRooms,
+        avgGuestsPerRoom,
+        minCapacityPerRoom,
+        guestDistribution,
+        canAccommodate: remainingGuests === 0,
+        remainingGuests
+    };
+}
+
+// ✅ ENHANCED: Kiểm tra availability chi tiết (copy từ hotel controller)
+async function checkEnhancedRoomAvailability({
+    hotelId, roomTypeId, bookingType, checkInDate, checkOutDate,
+    checkInTime, checkOutTime, requestedRooms
+}) {
+    try {
+        // Lấy thông tin loại phòng
+        const roomType = await RoomType.findById(roomTypeId);
+        if (!roomType) {
+            return { isAvailable: false, availableRooms: 0, reason: "Loại phòng không tồn tại" };
+        }
+
+        const totalRooms = roomType.tongSoPhong || 0;
+        if (totalRooms === 0) {
+            return { isAvailable: false, availableRooms: 0, reason: "Không có phòng" };
+        }
+
+        // Xử lý theo loại đặt phòng
+        switch (bookingType) {
+            case 'theo_gio':
+                return await checkHourlyAvailabilityEnhanced({
+                    hotelId, roomTypeId, totalRooms, checkInDate, checkInTime, checkOutTime, requestedRooms
+                });
+
+            case 'qua_dem':
+                return await checkOvernightAvailabilityEnhanced({
+                    hotelId, roomTypeId, totalRooms, checkInDate, checkOutDate, requestedRooms
+                });
+
+            case 'dai_ngay':
+                return await checkLongStayAvailabilityEnhanced({
+                    hotelId, roomTypeId, totalRooms, checkInDate, checkOutDate, requestedRooms
+                });
+
+            default:
+                return { isAvailable: false, availableRooms: 0, reason: "Loại đặt phòng không hỗ trợ" };
+        }
+
+    } catch (error) {
+        console.error('❌ Enhanced availability check error:', error);
+        return { isAvailable: false, availableRooms: 0, reason: "Lỗi hệ thống" };
+    }
+}
+
+// ✅ Kiểm tra availability theo giờ
+async function checkHourlyAvailabilityEnhanced({
+    hotelId, roomTypeId, totalRooms, checkInDate, checkInTime, checkOutTime, requestedRooms
+}) {
+    try {
+        const targetDate = moment(checkInDate).startOf('day');
+        const requestStart = moment(`${checkInDate} ${checkInTime}`, 'YYYY-MM-DD HH:mm');
+        let requestEnd = moment(`${checkInDate} ${checkOutTime}`, 'YYYY-MM-DD HH:mm');
+
+        // Xử lý checkout ngày hôm sau
+        if (requestEnd.isSameOrBefore(requestStart)) {
+            requestEnd.add(1, 'day');
+        }
+
+        // Lấy tất cả booking conflicts
+        const conflictingBookings = await Booking.find({
+            maKhachSan: hotelId,
+            maLoaiPhong: roomTypeId,
+            trangThai: { $nin: ['da_huy'] },
+            $or: [
+                {
+                    loaiDatPhong: 'theo_gio',
+                    ngayNhanPhong: {
+                        $gte: targetDate.toDate(),
+                        $lt: targetDate.clone().add(1, 'day').toDate()
+                    }
+                },
+                {
+                    loaiDatPhong: { $in: ['qua_dem', 'dai_ngay'] },
+                    ngayNhanPhong: { $lte: requestEnd.toDate() },
+                    ngayTraPhong: { $gte: requestStart.toDate() }
+                }
+            ]
+        }).select('loaiDatPhong ngayNhanPhong ngayTraPhong gioNhanPhong gioTraPhong soLuongPhong');
+
+        let maxConflictRooms = 0;
+
+        // Kiểm tra từng booking conflict
+        for (const booking of conflictingBookings) {
+            let isConflict = false;
+
+            if (booking.loaiDatPhong === 'theo_gio') {
+                const bookingStart = moment(`${moment(booking.ngayNhanPhong).format('YYYY-MM-DD')} ${booking.gioNhanPhong}`);
+                let bookingEnd = moment(`${moment(booking.ngayNhanPhong).format('YYYY-MM-DD')} ${booking.gioTraPhong}`);
+
+                if (bookingEnd.isSameOrBefore(bookingStart)) {
+                    bookingEnd.add(1, 'day');
+                }
+
+                if (requestStart.isBefore(bookingEnd) && requestEnd.isAfter(bookingStart)) {
+                    isConflict = true;
+                }
+            } else {
+                const bookingStart = moment(booking.ngayNhanPhong);
+                const bookingEnd = moment(booking.ngayTraPhong);
+
+                if (requestStart.isBefore(bookingEnd) && requestEnd.isAfter(bookingStart)) {
+                    isConflict = true;
+                }
+            }
+
+            if (isConflict) {
+                maxConflictRooms += booking.soLuongPhong;
+            }
+        }
+
+        const availableRooms = Math.max(0, totalRooms - maxConflictRooms);
+
+        return {
+            isAvailable: availableRooms >= requestedRooms,
+            availableRooms,
+            totalRooms,
+            bookedRooms: maxConflictRooms
+        };
+
+    } catch (error) {
+        console.error('❌ Hourly availability error:', error);
+        return { isAvailable: false, availableRooms: 0 };
+    }
+}
+
+// ✅ Kiểm tra availability qua đêm
+async function checkOvernightAvailabilityEnhanced({
+    hotelId, roomTypeId, totalRooms, checkInDate, checkOutDate, requestedRooms
+}) {
+    try {
+        const startDate = moment(checkInDate);
+        const endDate = moment(checkOutDate);
+
+        // Tạo array các ngày cần check
+        const datesInRange = [];
+        const current = startDate.clone();
+        while (current.isBefore(endDate)) {
+            datesInRange.push(current.format('YYYY-MM-DD'));
+            current.add(1, 'day');
+        }
+
+        let minAvailableRooms = totalRooms;
+
+        // Check availability cho từng ngày
+        for (const dateStr of datesInRange) {
+            const dayStart = moment(dateStr).startOf('day');
+            const dayEnd = moment(dateStr).endOf('day');
+
+            const conflictingBookings = await Booking.find({
+                maKhachSan: hotelId,
+                maLoaiPhong: roomTypeId,
+                trangThai: { $nin: ['da_huy'] },
+                $or: [
+                    { ngayNhanPhong: { $gte: dayStart.toDate(), $lte: dayEnd.toDate() } },
+                    { ngayTraPhong: { $gte: dayStart.toDate(), $lte: dayEnd.toDate() } },
+                    {
+                        ngayNhanPhong: { $lt: dayStart.toDate() },
+                        ngayTraPhong: { $gt: dayEnd.toDate() }
+                    }
+                ]
+            }).select('soLuongPhong');
+
+            const dayConflictRooms = conflictingBookings.reduce((sum, booking) =>
+                sum + booking.soLuongPhong, 0);
+
+            const dayAvailableRooms = Math.max(0, totalRooms - dayConflictRooms);
+            minAvailableRooms = Math.min(minAvailableRooms, dayAvailableRooms);
+        }
+
+        return {
+            isAvailable: minAvailableRooms >= requestedRooms,
+            availableRooms: minAvailableRooms,
+            totalRooms,
+            bookedRooms: totalRooms - minAvailableRooms
+        };
+
+    } catch (error) {
+        console.error('❌ Overnight availability error:', error);
+        return { isAvailable: false, availableRooms: 0 };
+    }
+}
+
+// ✅ Kiểm tra availability dài ngày
+async function checkLongStayAvailabilityEnhanced({
+    hotelId, roomTypeId, totalRooms, checkInDate, checkOutDate, requestedRooms
+}) {
+    try {
+        // Sử dụng cùng logic với overnight
+        const overnightResult = await checkOvernightAvailabilityEnhanced({
+            hotelId, roomTypeId, totalRooms, checkInDate, checkOutDate, requestedRooms
+        });
+
+        // Tính discount cho lưu trú dài ngày
+        const stayDuration = moment(checkOutDate).diff(moment(checkInDate), 'days');
+        let discount = 0;
+        if (stayDuration >= 7) discount = 15;
+        else if (stayDuration >= 5) discount = 10;
+        else if (stayDuration >= 3) discount = 5;
+
+        return {
+            ...overnightResult,
+            longStayDiscount: discount,
+            stayDuration
+        };
+
+    } catch (error) {
+        console.error('❌ Long stay availability error:', error);
+        return { isAvailable: false, availableRooms: 0 };
+    }
+}
+
+// ✅ API lấy gợi ý địa điểm đơn giản
+searchRouter.get('/locations', async (req, res) => {
+    try {
+        const { q, type = 'all' } = req.query;
+
+        if (!q || q.length < 2) {
+            return res.json({ suggestions: [] });
+        }
+
+        const suggestions = [];
+
+        // Gợi ý tỉnh/thành phố
+        if (type === 'all' || type === 'provinces') {
+            const provinces = await Hotel.aggregate([
+                {
+                    $match: {
+                        'diaChi.tinhThanh': { $regex: q, $options: 'i' }
+                    }
+                },
+                {
+                    $group: {
+                        _id: '$diaChi.tinhThanh',
+                        count: { $sum: 1 }
+                    }
+                },
+                { $sort: { count: -1 } },
+                { $limit: 5 }
+            ]);
+
+            suggestions.push(...provinces.map(p => ({
+                type: 'province',
+                name: p._id,
+                count: p.count
+            })));
+        }
+
+        // Gợi ý phường/xã
+        if (type === 'all' || type === 'wards') {
+            const wards = await Hotel.aggregate([
+                {
+                    $match: {
+                        'diaChi.phuongXa': { $regex: q, $options: 'i' }
+                    }
+                },
+                {
+                    $group: {
+                        _id: {
+                            phuongXa: '$diaChi.phuongXa',
+                            tinhThanh: '$diaChi.tinhThanh'
+                        },
+                        count: { $sum: 1 }
+                    }
+                },
+                { $sort: { count: -1 } },
+                { $limit: 5 }
+            ]);
+
+            suggestions.push(...wards.map(w => ({
+                type: 'ward',
+                name: w._id.phuongXa,
+                province: w._id.tinhThanh,
+                count: w.count
+            })));
+        }
+
+        return res.json({ suggestions });
+
+    } catch (error) {
+        console.error('❌ Locations API error:', error);
+        return res.status(500).json({
+            error: error.message
+        });
+    }
+});
+
+// ✅ API chi tiết availability cho khách sạn cụ thể
+searchRouter.post('/hotel/:hotelId/availability', async (req, res) => {
+    try {
+        const { hotelId } = req.params;
+        const {
+            checkIn,
+            checkOut,
+            bookingType,
+            guests,
+            rooms: requestedRooms = 1
+        } = req.body;
+
+        // Validate input
+        const validation = validateBookingRequest({
+            checkIn, checkOut, bookingType,
+            guests: parseInt(guests),
+            rooms: parseInt(requestedRooms)
+        });
+
+        if (!validation.valid) {
+            return res.status(400).json({
+                message: validation.message,
+                error: true
+            });
+        }
+
+        // Kiểm tra khách sạn tồn tại
+        const hotel = await Hotel.findById(hotelId);
+        if (!hotel) {
+            return res.status(404).json({
+                message: 'Khách sạn không tồn tại',
+                error: true
+            });
+        }
+
+        // Lấy tất cả loại phòng của khách sạn
+        const roomTypes = await RoomType.find({ maKhachSan: hotelId }).sort({ giaCa: 1 });
+
+        if (!roomTypes.length) {
+            return res.status(404).json({
+                message: 'Khách sạn chưa có loại phòng nào',
+                error: true
+            });
+        }
+
+        const totalGuests = parseInt(guests);
+        const capacityAnalysis = calculateMultiRoomCapacity({
+            totalGuests,
+            requestedRooms: parseInt(requestedRooms)
+        });
+
+        const availableRoomTypes = [];
+        const suggestions = [];
+
+        // Kiểm tra từng loại phòng
+        for (const roomType of roomTypes) {
+            try {
+                // Kiểm tra khả năng chứa khách
+                const canAccommodate = (roomType.soLuongKhach * parseInt(requestedRooms)) >= totalGuests;
+
+                if (!canAccommodate) {
+                    // Tạo đề xuất số phòng cần thiết
+                    const suggestedRooms = Math.ceil(totalGuests / roomType.soLuongKhach);
+                    if (suggestedRooms <= roomType.tongSoPhong) {
+                        suggestions.push({
+                            roomTypeId: roomType._id,
+                            roomTypeName: roomType.tenLoaiPhong,
+                            currentCapacity: roomType.soLuongKhach,
+                            suggestedRooms,
+                            totalCapacity: roomType.soLuongKhach * suggestedRooms,
+                            pricePerRoom: roomType.giaCa,
+                            estimatedTotal: roomType.giaCa * suggestedRooms
+                        });
+                    }
+                    continue;
+                }
+
+                // Kiểm tra availability
+                const availability = await checkEnhancedRoomAvailability({
+                    hotelId,
+                    roomTypeId: roomType._id,
+                    bookingType,
+                    checkInDate: checkIn,
+                    checkOutDate: checkOut,
+                    requestedRooms: parseInt(requestedRooms)
+                });
+
+                if (availability.isAvailable && availability.availableRooms >= parseInt(requestedRooms)) {
+                    availableRoomTypes.push({
+                        roomTypeId: roomType._id,
+                        tenLoaiPhong: roomType.tenLoaiPhong,
+                        moTa: roomType.moTa,
+                        soLuongKhach: roomType.soLuongKhach,
+                        giaCa: roomType.giaCa,
+                        tongSoPhong: roomType.tongSoPhong,
+
+                        availability: {
+                            availableRooms: availability.availableRooms,
+                            totalRooms: availability.totalRooms,
+                            bookedRooms: availability.bookedRooms,
+                            canBookRequestedQuantity: availability.availableRooms >= parseInt(requestedRooms)
+                        },
+
+                        capacityInfo: {
+                            requestedRooms: parseInt(requestedRooms),
+                            totalCapacity: roomType.soLuongKhach * parseInt(requestedRooms),
+                            guestDistribution: capacityAnalysis.guestDistribution,
+                            occupancyRate: Math.round((totalGuests / (roomType.soLuongKhach * parseInt(requestedRooms))) * 100)
+                        },
+
+                        pricing: {
+                            pricePerRoom: roomType.giaCa,
+                            totalPrice: roomType.giaCa * parseInt(requestedRooms),
+                            bookingType,
+                            // Giảm giá nhóm nếu >= 3 phòng
+                            groupDiscount: parseInt(requestedRooms) >= 3 ? 0.05 : 0,
+                            finalPrice: Math.round(roomType.giaCa * parseInt(requestedRooms) *
+                                (1 - (parseInt(requestedRooms) >= 3 ? 0.05 : 0)))
+                        }
+                    });
+                }
+
+            } catch (error) {
+                console.error(`❌ Error checking room type ${roomType._id}:`, error);
+            }
+        }
+
+        return res.json({
+            message: availableRoomTypes.length > 0
+                ? `Tìm thấy ${availableRoomTypes.length} loại phòng có sẵn`
+                : 'Không tìm thấy phòng phù hợp',
+
+            hotelInfo: {
+                id: hotel._id,
+                name: hotel.tenKhachSan,
+                address: hotel.diaChiDayDu,
+                location: {
+                    tinhThanh: hotel.diaChi?.tinhThanh,
+                    phuongXa: hotel.diaChi?.phuongXa
+                }
+            },
+
+            searchCriteria: {
+                checkIn,
+                checkOut,
+                bookingType,
+                guests: totalGuests,
+                rooms: parseInt(requestedRooms)
+            },
+
+            capacityAnalysis,
+            availableRoomTypes,
+
+            // Đề xuất nếu không có phòng phù hợp
+            suggestions: availableRoomTypes.length === 0 ? suggestions.slice(0, 3) : null,
+
+            statistics: {
+                totalRoomTypes: roomTypes.length,
+                availableRoomTypes: availableRoomTypes.length,
+                totalAvailableRooms: availableRoomTypes.reduce((sum, room) =>
+                    sum + room.availability.availableRooms, 0)
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Hotel availability error:', error);
+        return res.status(500).json({
+            message: 'Lỗi máy chủ',
+            error: error.message
+        });
+    }
+});
 
 module.exports = searchRouter;

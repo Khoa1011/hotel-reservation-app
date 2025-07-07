@@ -1,12 +1,13 @@
 import 'package:doan_datphong/Helper/FormatCurrency.dart';
 import 'package:doan_datphong/Helper/FormatDateTime.dart';
+import 'package:doan_datphong/Models/BookingFull.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../generated/l10n.dart';
 import 'listBooking_screen.dart';
 
 class BookingCard extends StatelessWidget {
-  final dynamic booking;
+  final BookingWithHotel booking;
   final BookingStatusFilter status;
   final VoidCallback onCancelBooking;
   final VoidCallback onViewTicket;
@@ -41,6 +42,7 @@ class BookingCard extends StatelessWidget {
           if (status == BookingStatusFilter.ongoing) _buildOngoingActions(context),
           if (status == BookingStatusFilter.completed) _buildCompletedStatus(context),
           if (status == BookingStatusFilter.canceled) _buildCanceledStatus(context),
+          if (status == BookingStatusFilter.noCheckIn) _buildNoCheckInStatus(context),
         ],
       ),
     );
@@ -60,7 +62,7 @@ class BookingCard extends StatelessWidget {
               color: Colors.grey.shade200,
               child: booking.image != null
                   ? Image.network(
-                booking.image,
+                booking.image ?? "",
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => Center(
                   child: Icon(Icons.hotel, size: 32, color: Colors.grey.shade500),
@@ -251,7 +253,7 @@ class BookingCard extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                '${booking.roomQuantity ?? 1} ${_buildRoomText(context)}',
+                _buildRoomText(context),
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.grey[700],
@@ -289,7 +291,7 @@ class BookingCard extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                '${_buildNightText(context)} ',
+                _buildNightText(context),
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.grey[700],
@@ -338,6 +340,11 @@ class BookingCard extends StatelessWidget {
         bgColor = const Color(0xFFEF4444).withOpacity(0.1);
         textColor = const Color(0xFFEF4444);
         statusText = S.of(context).canceled;
+        break;
+      case BookingStatusFilter.noCheckIn:
+        bgColor = const Color(0xFF292828).withOpacity(0.1);
+        textColor = const Color(0xFF292828);
+        statusText = S.of(context).noCheckIn;
         break;
     }
 
@@ -468,21 +475,38 @@ class BookingCard extends StatelessWidget {
     );
   }
 
-
-
-  int _calculateNights() {
-    try {
-      if (booking.checkInDate != null && booking.checkOutDate != null) {
-        final checkIn = DateTime.parse(booking.checkInDate);
-        final checkOut = DateTime.parse(booking.checkOutDate);
-        final nights = checkOut.difference(checkIn).inDays;
-        return nights > 0 ? nights : 1;
-      }
-    } catch (e) {
-      // Handle parsing error
-    }
-    return 1;
+  Widget _buildNoCheckInStatus(BuildContext context){
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF292828).withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.cancel,
+            color: const Color(0xFF292828),
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            S.of(context).youNoCheckInBooking,
+            style: TextStyle(
+              color: Color(0xFF292828),
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
   }
+
+
+
+
 
   String _getPaymentStatusText(BuildContext context,String? status) {
     if (status == null) return 'N/A';
@@ -492,7 +516,7 @@ class BookingCard extends StatelessWidget {
       case 'chua_thanh_toan':
         return S.of(context).unpaid;
       case 'thanh_toan_mot_phan':
-        return 'Partial';
+        return S.of(context).partiallyPaid;
       case 'da_hoan_tien':
         return S.of(context).refunded;
       default:
@@ -535,14 +559,33 @@ class BookingCard extends StatelessWidget {
     // Lấy ngôn ngữ hiện tại
     final locale = Localizations.localeOf(context);
     final isVietnamese = locale.languageCode == 'vi';
-    final nightCount = _calculateNights();
+    Map<String, dynamic> getPriceDetails = booking.priceDetails;
+    print("Danh sach PriceDetails${getPriceDetails}");
+    String unit = getPriceDetails["unit"];
+    int quantity = getPriceDetails["quantity"];
 
-    if (isVietnamese) {
-      // TIẾNG VIỆT - Không cần thêm 's'
-      return '$nightCount đêm';
-    } else {
-      // TIẾNG ANH - Cần thêm 's' cho số nhiều
-      return '$nightCount night${nightCount > 1 ? 's' : ''}';
+
+    print("Danh sach PriceDetails${unit}");
+
+
+    if(unit =="dem"){
+      if (isVietnamese) {
+        return '$quantity đêm';
+      } else {
+        return '$quantity night${quantity > 1 ? 's' : ''}';
+      }
+    }else if (unit =="gio"){
+      if (isVietnamese) {
+        return '$quantity giờ';
+      } else {
+        return '$quantity hour${quantity > 1 ? 's' : ''}';
+      }
+    }else {
+      if (isVietnamese) {
+        return '$quantity ngày';
+      } else {
+        return '$quantity day${quantity > 1 ? 's' : ''}';
+      }
     }
   }
 }

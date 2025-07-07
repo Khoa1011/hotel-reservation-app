@@ -578,9 +578,11 @@
 
   "hours": "giờ",
   "duration": "Thời gian",
-
-
-
+  "rooms":"Phòng",
+  "vnpay": "VNPay",
+  "zalopay": "ZaloPay",
+"selectYourArrivalDate": "Chọn ngày đến",
+  "selectTravelDate": "Chọn ngày đi",
 
   "@@_BOOKING_CARD": "--- Thẻ đặt phòng ---",
   "unknownHotel": "Khách sạn không xác định",
@@ -592,10 +594,12 @@
   "ongoing": "Đang diễn ra",
   "completed": "Đã hoàn thành",
   "canceled": "Đã hủy",
+
+  "noCheckIn": "Không nhận phòng",
   "cancelBooking": "Hủy đặt phòng",
   "yeayCompleted": "Tuyệt vời, bạn đã hoàn thành!",
   "youCanceledBooking": "Bạn đã hủy đặt phòng khách sạn này",
-
+  "youNoCheckInBooking": "Bạn không nhận phòng này",
   "@@_BOOKING_DETAIL": "--- Chi tiết đặt phòng ---",
   "bookingInformation": "Thông tin đặt phòng",
   "bookingId": "Mã đặt phòng",
@@ -652,9 +656,12 @@
   "share": "Chia sẻ",
   "phone": "Điện thoại",
   "chat": "Nhắn tin",
-  "download": "Tải về"
-
-
-
+  "download": "Tải về",
+  "priceRange": "Khoảng giá",
+  "highestPopularity": "Mức độ phổ biến cao nhất",
+  "highestPrice": "Giá cao nhất",
+  "lowestPrice": "Giá thấp nhất",
+  "sortResults": "Sắp xếp kết quả",
+  "filterHotel":"Lọc tìm kiếm khách sạn"
 
 }

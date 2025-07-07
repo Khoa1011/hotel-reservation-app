@@ -1,13 +1,17 @@
+import 'package:doan_datphong/Data/Provider/auth_provider.dart';
+import 'package:doan_datphong/Views/components/bottom_navigation_bar.dart';
 import 'package:doan_datphong/Views/home_View/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../generated/l10n.dart';
 import '../../Blocs/getListBooking_Blocs/getBookingList_bloc.dart';
 import '../../Blocs/getListBooking_Blocs/getBookingList_event.dart';
 import '../../Blocs/getListBooking_Blocs/getBookingList_state.dart';
 import '../../Models/BookingFull.dart';
 import '../../Models/NguoiDung.dart';
+import '../login_View/login_screen.dart';
 import '../profile_View/profile_screen.dart';
 import '../seach_View/search_screen.dart';
 import 'bookingCard_widget.dart';
@@ -15,12 +19,10 @@ import 'bookingDetails_screen.dart';
 import 'cancelBooking_widget.dart';
 
 // Enum cho booking status filter
-enum BookingStatusFilter { ongoing, completed, canceled }
+enum BookingStatusFilter { ongoing, completed, canceled, noCheckIn}
 
 class ListBookingScreen extends StatefulWidget {
-  final NguoiDung? user;
-
-  const ListBookingScreen({super.key, required this.user});
+  const ListBookingScreen({super.key});
 
   @override
   State<ListBookingScreen> createState() => _ListBookingScreenState();
@@ -29,15 +31,83 @@ class ListBookingScreen extends StatefulWidget {
 class _ListBookingScreenState extends State<ListBookingScreen> {
   int currentIndex = 2;
   BookingStatusFilter selectedStatus = BookingStatusFilter.ongoing;
+  NguoiDung? currentUser;
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    context.read<GetBookingListBloc>().add(FetchBookingList(widget.user!.id));
+    _loadCurrentUser();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? userJson = prefs.getString("user");
+
+      if (userJson != null) {
+        setState(() {
+          currentUser = NguoiDung.fromJsonString(userJson);
+          isLoading = false;
+        });
+
+        // ✅ Load booking list sau khi có user
+        context.read<GetBookingListBloc>().add(FetchBookingList(currentUser!.id));
+      } else {
+        // Không có user → về login
+        _navigateToLogin();
+      }
+    } catch (e) {
+      print('Error loading user: $e');
+      _navigateToLogin();
+    }
+  }
+  void _navigateToLogin() {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => LoginScreen()),
+          (route) => false,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(S.of(context).myBooking),
+          backgroundColor: Colors.white,
+        ),
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    // ✅ Kiểm tra user có tồn tại không
+    if (currentUser == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(S.of(context).myBooking),
+          backgroundColor: Colors.white,
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.person_off, size: 80, color: Colors.grey),
+              SizedBox(height: 16),
+              Text('Lỗi tải thông tin người dùng'),
+              SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _navigateToLogin,
+                child: Text('Đăng nhập lại'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -116,7 +186,7 @@ class _ListBookingScreenState extends State<ListBookingScreen> {
                         ElevatedButton(
                           onPressed: () {
                             context.read<GetBookingListBloc>().add(
-                              FetchBookingList(widget.user!.id),
+                              FetchBookingList(currentUser!.id),
                             );
                           },
                           style: ElevatedButton.styleFrom(
@@ -134,21 +204,27 @@ class _ListBookingScreenState extends State<ListBookingScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNav(),
+      bottomNavigationBar: CustomBottomNavigation(currentPage: BottomNavPages.booking,),
     );
   }
 
   Widget _buildFilterTabs() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          _buildFilterChip(S.of(context).ongoing, BookingStatusFilter.ongoing),
-          const SizedBox(width: 12),
-          _buildFilterChip(S.of(context).completed, BookingStatusFilter.completed),
-          const SizedBox(width: 12),
-          _buildFilterChip(S.of(context).canceled, BookingStatusFilter.canceled),
-        ],
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Row(
+          children: [
+            _buildFilterChip(S.of(context).ongoing, BookingStatusFilter.ongoing),
+            const SizedBox(width: 12),
+            _buildFilterChip(S.of(context).completed, BookingStatusFilter.completed),
+            const SizedBox(width: 12),
+            _buildFilterChip(S.of(context).canceled, BookingStatusFilter.canceled),
+            const SizedBox(width: 12),
+            _buildFilterChip(S.of(context).noCheckIn, BookingStatusFilter.noCheckIn),
+          ],
+        ),
       ),
     );
   }
@@ -222,6 +298,8 @@ class _ListBookingScreenState extends State<ListBookingScreen> {
         return BookingStatusFilter.completed;
       case 'canceled':
         return BookingStatusFilter.canceled;
+      case 'noCheckIn':
+        return BookingStatusFilter.noCheckIn;
       default:
         return BookingStatusFilter.ongoing;
     }
@@ -236,6 +314,8 @@ class _ListBookingScreenState extends State<ListBookingScreen> {
           return booking.status == 'completed';
         case BookingStatusFilter.canceled:
           return booking.status == 'canceled';
+        case BookingStatusFilter.noCheckIn:
+          return booking.status == 'noCheckIn';
         default:
           return true;
       }
@@ -260,7 +340,7 @@ class _ListBookingScreenState extends State<ListBookingScreen> {
             );
             // Refresh booking list
             context.read<GetBookingListBloc>().add(
-              RefreshBookingList(widget.user!.id),
+              RefreshBookingList(currentUser!.id),
             );
           } else if (state is CancelBookingFailure) {
             Navigator.pop(context);
@@ -294,58 +374,58 @@ class _ListBookingScreenState extends State<ListBookingScreen> {
     );
   }
 
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: (index) {
-        setState(() {
-          currentIndex = index;
-        });
-        if (index == 0) {
-          Navigator.pushReplacement(
-            context,
-            PageRouteBuilder(
-              pageBuilder: (context, animation1, animation2) => HomeScreen(user: widget.user),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-              transitionDuration: const Duration(milliseconds: 300),
-            ),
-          );
-        } else if (index == 1) {
-          Navigator.pushReplacement(
-            context,
-            PageRouteBuilder(
-              pageBuilder: (context, animation1, animation2) => SearchView(user: widget.user),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-              transitionDuration: const Duration(milliseconds: 300),
-            ),
-          );
-        } else if (index == 3) {
-          Navigator.pushReplacement(
-            context,
-            PageRouteBuilder(
-              pageBuilder: (context, animation1, animation2) => ProfileScreen(user: widget.user),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-              transitionDuration: const Duration(milliseconds: 300),
-            ),
-          );
-        }
-      },
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: const Color(0xFF1565C0),
-      unselectedItemColor: const Color(0xff9A9EAB),
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-        BottomNavigationBarItem(icon: Icon(Icons.view_list_outlined), label: 'Booking'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-      ],
-    );
-  }
+  // Widget _buildBottomNav() {
+  //   return BottomNavigationBar(
+  //     currentIndex: currentIndex,
+  //     onTap: (index) {
+  //       setState(() {
+  //         currentIndex = index;
+  //       });
+  //       if (index == 0) {
+  //         Navigator.pushReplacement(
+  //           context,
+  //           PageRouteBuilder(
+  //             pageBuilder: (context, animation1, animation2) => HomeScreen(),
+  //             transitionsBuilder: (context, animation, secondaryAnimation, child) {
+  //               return FadeTransition(opacity: animation, child: child);
+  //             },
+  //             transitionDuration: const Duration(milliseconds: 300),
+  //           ),
+  //         );
+  //       } else if (index == 1) {
+  //         Navigator.pushReplacement(
+  //           context,
+  //           PageRouteBuilder(
+  //             pageBuilder: (context, animation1, animation2) => SearchView(),
+  //             transitionsBuilder: (context, animation, secondaryAnimation, child) {
+  //               return FadeTransition(opacity: animation, child: child);
+  //             },
+  //             transitionDuration: const Duration(milliseconds: 300),
+  //           ),
+  //         );
+  //       } else if (index == 3) {
+  //         Navigator.pushReplacement(
+  //           context,
+  //           PageRouteBuilder(
+  //             pageBuilder: (context, animation1, animation2) => ProfileScreen(),
+  //             transitionsBuilder: (context, animation, secondaryAnimation, child) {
+  //               return FadeTransition(opacity: animation, child: child);
+  //             },
+  //             transitionDuration: const Duration(milliseconds: 300),
+  //           ),
+  //         );
+  //       }
+  //     },
+  //     type: BottomNavigationBarType.fixed,
+  //     selectedItemColor: const Color(0xFF1565C0),
+  //     unselectedItemColor: const Color(0xff9A9EAB),
+  //     items: const [
+  //       BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+  //       BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+  //       BottomNavigationBarItem(icon: Icon(Icons.view_list_outlined), label: 'Booking'),
+  //       BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+  //     ],
+  //   );
+  // }
 
 }

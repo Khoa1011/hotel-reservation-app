@@ -119,6 +119,11 @@ bookingRouter.get("/getBookingList/:userId", async (req, res) => {
         return "expired";
       }
 
+      // Nếu không nhận phòng
+      if (booking.trangThai === "khong_nhan_phong") {
+        return "noCheckIn";
+      }
+
       // Các trạng thái ongoing
       if (["dang_cho", "da_xac_nhan", "da_nhan_phong", "dang_su_dung"].includes(booking.trangThai)) {
         return "ongoing";

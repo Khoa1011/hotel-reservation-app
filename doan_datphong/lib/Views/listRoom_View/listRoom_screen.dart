@@ -24,6 +24,7 @@ class ListRoomScreen extends StatefulWidget {
   const ListRoomScreen({
     super.key,
     required this.idHotel,
+
     required this.lichPhongTrong,
   });
 

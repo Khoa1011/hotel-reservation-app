@@ -206,12 +206,66 @@ userRouter.get("/check-auth", authenticateUser, (req, res) => {
 
 //Đăng xuất tài khoản
 
+// userRouter.get(
+//     "/logout",
+//     passport.authenticate("jwt", { session: false }),
+//     (req, res) => {
+//         try {
+//             res.clearCookie("access_token");
+//         res.json({ user: { email: req.user.email }, success: true });
+
+//         res.status(200).json({
+//                 success: true,
+//                 message: "Đăng xuất khỏi tất cả thiết bị thành công",
+//                 data: {
+//                     user: { 
+//                         email: req.user.email 
+//                     },
+//                     logoutTime: new Date().toISOString(),
+//                     logoutType: "all_devices"
+//                 }
+//             });
+//         } catch (error) {
+//             console.error('❌ Logout all error:', error);
+//             res.status(500).json({
+//                 success: false,
+//                 message: "Lỗi khi đăng xuất khỏi tất cả thiết bị",
+//                 error: process.env.NODE_ENV === 'development' ? error.message : "Lỗi server"
+//             });
+//         }
+//     }
+// );
+
 userRouter.get(
     "/logout",
     passport.authenticate("jwt", { session: false }),
     (req, res) => {
-        res.clearCookie("access_token");
-        res.json({ user: { email: req.user.email }, success: true });
+        try {
+            // Xóa cookie chứa access token
+            res.clearCookie("access_token", {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict'
+            });
+            
+            res.status(200).json({ 
+                success: true,
+                message: "Đăng xuất thành công",
+                data: {
+                    user: { 
+                        email: req.user.email 
+                    },
+                    logoutTime: new Date().toISOString()
+                }
+            });
+        } catch (error) {
+            console.error('❌ Logout error:', error);
+            res.status(500).json({
+                success: false,
+                message: "Lỗi khi đăng xuất",
+                error: process.env.NODE_ENV === 'development' ? error.message : "Lỗi server"
+            });
+        }
     }
 );
 

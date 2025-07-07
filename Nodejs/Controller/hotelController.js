@@ -18,13 +18,19 @@ router.post("/upload", uploadHotel.single("hinhAnh"), async (req, res) => {
     try {
         const newHotel = new Hotel({
             tenKhachSan: req.body.tenKhachSan,
-            diaChi: req.body.diaChi,
-            thanhPho: req.body.thanhPho,
+            
+            // ✅ SỬ DỤNG CẤU TRÚC 2025
+            diaChi: {
+                tinhThanh: req.body.tinhThanh,      // ✅ Tỉnh/thành phố
+                phuongXa: req.body.phuongXa,        // ✅ Phường/xã
+                soNha: req.body.soNha               // ✅ Số nhà, tên đường
+            },
+            
             moTa: req.body.moTa,
             soSao: req.body.soSao,
             soDienThoai: req.body.soDienThoai,
             email: req.body.email,
-            giaCa: req.body.giaCa,
+            loaiKhachSan: req.body.loaiKhachSan || 'khachSan',
             hinhAnh: req.file ? `/uploads/hotels/${req.file.filename}` : "",
         });
 
@@ -82,7 +88,7 @@ router.get("/getHotelList", async (req, res) => {
                     _id: hotel._id,
                     tenKhachSan: hotel.tenKhachSan,
                     diaChiDayDu: hotel.diaChiDayDu,
-                    thanhPho: hotel.thanhPho,
+                    thanhPho: hotel.diaChi.tinhThanh,
                     moTa: hotel.moTa,
                     soSao: hotel.soSao,
                     soDienThoai: hotel.soDienThoai,
@@ -99,8 +105,8 @@ router.get("/getHotelList", async (req, res) => {
                 return {
                     _id: hotel._id,
                     tenKhachSan: hotel.tenKhachSan,
-                    diaChi: hotel.diaChi,
-                    thanhPho: hotel.thanhPho,
+                    diaChi: hotel.diaChiDayDu,
+                    thanhPho: hotel.diaChi.tinhThanh,
                     moTa: hotel.moTa,
                     soSao: hotel.soSao,
                     soDienThoai: hotel.soDienThoai,
@@ -321,7 +327,7 @@ router.post('/:hotelId/search-roomtypes', async (req, res) => {
             searchInfo: {
                 hotelId: hotel._id,
                 tenKhachSan: hotel.tenKhachSan,
-                diaChiKhachSan: hotel.diaChiDayDu || `${hotel.diaChi?.quan}, ${hotel.diaChi?.thanhPho}`,
+                diaChiKhachSan: hotel.diaChiDayDu || `${hotel.diaChi?.phuongXa}, ${hotel.diaChi?.tinh}`,
                 bookingType, checkInDate, checkOutDate: checkOutDate || checkInDate,
                 checkInTime, checkOutTime, guests: guests || {}, requestedRooms,
                 totalGuests,
@@ -447,8 +453,8 @@ function validateMultiRoomSearchInput({
                 return { valid: false, message: "Đặt dài ngày cần có ngày trả phòng!" };
             }
             const longDiff = checkOutMoment.diff(checkInMoment, 'days');
-            if (longDiff < 3) {
-                return { valid: false, message: "Đặt dài ngày tối thiểu 3 ngày!" };
+            if (longDiff < 2) {
+                return { valid: false, message: "Đặt dài ngày tối thiểu 2 ngày!" };
             }
             break;
     }

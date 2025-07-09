@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:doan_datphong/generated/l10n.dart';
 
+import '../../Models/KhachSan.dart';
 import 'guest_counter_widget.dart';
 
 enum BookingType {
@@ -16,11 +17,22 @@ enum BookingType {
 }
 
 class SelectDateScreen extends StatefulWidget {
+  final Map<String,dynamic>? data;
+  final KhachSan? selectedHotel;
+
+
+  const SelectDateScreen({super.key,
+  this.data,
+    this.selectedHotel,
+  });
   @override
   _SelectDateState createState() => _SelectDateState();
 }
 
 class _SelectDateState extends State<SelectDateScreen> with TickerProviderStateMixin {
+
+
+
   DateTime? _checkInDate;
   DateTime? _checkOutDate;
   DateTime _currentMonth = DateTime.now();

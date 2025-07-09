@@ -12,6 +12,7 @@ import '../../Blocs/searchHotels_Blocs/searchHotels_bloc.dart';
 import '../../Blocs/searchHotels_Blocs/searchHotels_event.dart';
 import '../../Blocs/searchHotels_Blocs/searchHotels_state.dart';
 import '../detail_View/detail_screen.dart';
+import '../selectDate_View/selectDate_screen.dart';
 
 class SearchView extends StatefulWidget {
   final NguoiDung? user;
@@ -43,6 +44,7 @@ class _SearchViewState extends State<SearchView> {
     'Sapa',
   ];
 
+
   @override
   void initState() {
     super.initState();
@@ -61,28 +63,36 @@ class _SearchViewState extends State<SearchView> {
   }
 
   // ✅ Xử lý tìm kiếm khi user nhập text hoặc submit
+  void _performSearch({
+    String? tenKhachSan,
+    String? loaiLoc,
+    bool useCurrentFilters = true,
+  }) {
+    context.read<HotelSearchBloc>().add(
+      SearchHotels(
+        tenKhachSan: tenKhachSan,
+        loaiLoc: useCurrentFilters ? _currentFilters['sortBy'] : null,
+        tinhThanh: useCurrentFilters ? _currentFilters['tinhThanh'] : null,
+        phuongXa: useCurrentFilters ? _currentFilters['phuongXa'] : null,
+        minPrice: useCurrentFilters ? _currentFilters['minPrice']?.toDouble() : null,
+        maxPrice: useCurrentFilters ? _currentFilters['maxPrice']?.toDouble() : null,
+        guests: useCurrentFilters ? _currentFilters['guests'] : null,
+        rooms: useCurrentFilters ? _currentFilters['rooms'] : null,
+        checkIn: useCurrentFilters ? _currentFilters['checkIn'] : null,
+        checkOut: useCurrentFilters ? _currentFilters['checkOut'] : null,
+        bookingType: useCurrentFilters ? _currentFilters['bookingType'] : null,
+
+      ),
+    );
+  }
+
   void _onSearchChanged(String query) {
     if (query.trim().isNotEmpty) {
       setState(() {
         _showResults = true;
       });
 
-      // ✅ CHỈ GỌI BLOC TẠI ĐÂY
-      context.read<HotelSearchBloc>().add(
-        SearchHotels(
-          tenKhachSan: query,
-          tinhThanh: _currentFilters['tinhThanh'],
-          // Include current filters if any
-          phuongXa: _currentFilters['phuongXa'],
-          minPrice: _currentFilters['minPrice'],
-          maxPrice: _currentFilters['maxPrice'],
-          guests: _currentFilters['guests'],
-          rooms: _currentFilters['rooms'],
-          checkIn: _currentFilters['checkIn'],
-          checkOut: _currentFilters['checkOut'],
-          bookingType: _currentFilters['bookingType'],
-        ),
-      );
+      _performSearch(tenKhachSan: query);
     } else {
       setState(() {
         _showResults = false;
@@ -96,9 +106,7 @@ class _SearchViewState extends State<SearchView> {
       setState(() {
         _showResults = true;
       });
-      context.read<HotelSearchBloc>().add(
-        SearchHotels(tinhThanh: query.trim(), tenKhachSan: query),
-      );
+      _performSearch(tenKhachSan: query.trim());
     }
   }
 
@@ -143,22 +151,26 @@ class _SearchViewState extends State<SearchView> {
       });
 
       // ✅ Gọi API với filterType
-      context.read<HotelSearchBloc>().add(
-        SearchHotels(
-          loaiLoc: filterType,
-          // Giữ lại keyword nếu có
-          tenKhachSan: _searchController.text.isNotEmpty ? _searchController.text : null,
-          // Include current filters if any
-          tinhThanh: _currentFilters['tinhThanh'],
-          phuongXa: _currentFilters['phuongXa'],
-          minPrice: _currentFilters['minPrice'],
-          maxPrice: _currentFilters['maxPrice'],
-          guests: _currentFilters['guests'],
-          rooms: _currentFilters['rooms'],
-          checkIn: _currentFilters['checkIn'],
-          checkOut: _currentFilters['checkOut'],
-          bookingType: _currentFilters['bookingType'],
-        ),
+      // context.read<HotelSearchBloc>().add(
+      //   SearchHotels(
+      //     loaiLoc: filterType,
+      //     // Giữ lại keyword nếu có
+      //     tenKhachSan: _searchController.text.isNotEmpty ? _searchController.text : null,
+      //     // Include current filters if any
+      //     tinhThanh: _currentFilters['tinhThanh'],
+      //     phuongXa: _currentFilters['phuongXa'],
+      //     minPrice: _currentFilters['minPrice'],
+      //     maxPrice: _currentFilters['maxPrice'],
+      //     guests: _currentFilters['guests'],
+      //     rooms: _currentFilters['rooms'],
+      //     checkIn: _currentFilters['checkIn'],
+      //     checkOut: _currentFilters['checkOut'],
+      //     bookingType: _currentFilters['bookingType'],
+      //   ),
+      // );
+      _performSearch(
+        loaiLoc: filterType,
+        tenKhachSan: _searchController.text.isNotEmpty ? _searchController.text : null,
       );
     }
   }
@@ -184,15 +196,16 @@ class _SearchViewState extends State<SearchView> {
               // ✅ CHỈ GỌI BLOC TẠI ĐÂY - với đầy đủ parameters
               context.read<HotelSearchBloc>().add(
                 SearchHotels(
-                  tenKhachSan: _searchController.text,
+                  tenKhachSan: _searchController.text.isNotEmpty ? _searchController.text : null,
+                  loaiLoc: filters['sortBy'],
                   tinhThanh: filters['tinhThanh'],
                   phuongXa: filters['phuongXa'],
                   minPrice: filters['minPrice']?.toDouble(),
                   maxPrice: filters['maxPrice']?.toDouble(),
                   guests: filters['guests'],
                   rooms: filters['rooms'],
-                  checkIn: filters['checkIn'] ?? "",
-                  checkOut: filters['checkOut']?? "",
+                  checkIn: filters['checkIn'],
+                  checkOut: filters['checkOut'],
                   bookingType: filters['bookingType'],
                 ),
               );
@@ -213,21 +226,9 @@ class _SearchViewState extends State<SearchView> {
   // ✅ Refresh search với filters hiện tại
   void _refreshSearch() {
     if (_searchController.text.isNotEmpty || _currentFilters.isNotEmpty) {
-      context.read<HotelSearchBloc>().add(
-        SearchHotels(
-          tenKhachSan: _currentFilters['keyword'],
-          tinhThanh:
-              _currentFilters['tinhThanh'] ?? _searchController.text.trim(),
-          phuongXa: _currentFilters['phuongXa'],
-          minPrice: _currentFilters['minPrice']?.toDouble(),
-          maxPrice: _currentFilters['maxPrice']?.toDouble(),
-          guests: _currentFilters['guests'],
-          rooms: _currentFilters['rooms'],
-          checkIn: _currentFilters['checkIn'],
-          checkOut: _currentFilters['checkOut'],
-          bookingType: _currentFilters['bookingType'],
-        ),
-      );
+      _performSearch(
+        tenKhachSan: _searchController.text.isNotEmpty
+            ? _searchController.text : null,);
     }
   }
 
@@ -299,10 +300,10 @@ class _SearchViewState extends State<SearchView> {
                                 color: Colors.black87,
                               ),
                             ),
-                            if (_currentFilters.isNotEmpty) ...[
+                            if (_currentFilters['sortBy'] != null) ...[
                               SizedBox(height: 8),
                               Text(
-                                'Với bộ lọc đã chọn',
+                                'Sắp xếp: ${_getSortDisplayText(_currentFilters['sortBy'])}',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey[600],
@@ -368,6 +369,7 @@ class _SearchViewState extends State<SearchView> {
                                   state.hotels.isEmpty
                                     ? _buildEmptyResults()
                                     : HotelListWidget(
+                                    currentFilter: _currentFilters,
                                       hotels: state.hotels,
                                       totalResults: state.hotels.length,
                                       scrollController: _scrollController,
@@ -499,6 +501,22 @@ class _SearchViewState extends State<SearchView> {
   Widget _buildActiveFiltersBar() {
     final activeFilters = <Widget>[];
 
+    // ✅ Sort filter - hiển thị đầu tiên
+    if (_currentFilters['sortBy'] != null) {
+      activeFilters.add(
+        _buildFilterChip(
+          label: _getSortDisplayText(_currentFilters['sortBy']),
+          icon: Icons.sort,
+          onRemove: () {
+            setState(() {
+              _currentFilters.remove('sortBy');
+            });
+            _refreshSearch();
+          },
+        ),
+      );
+    }
+
     // Location filter
     if (_currentFilters['tinhThanh'] != null) {
       String locationText = _currentFilters['tinhThanh'];
@@ -521,12 +539,10 @@ class _SearchViewState extends State<SearchView> {
     }
 
     // Date filter
-    if (_currentFilters['checkIn'] != null &&
-        _currentFilters['checkOut'] != null) {
+    if (_currentFilters['checkIn'] != null && _currentFilters['checkOut'] != null) {
       activeFilters.add(
         _buildFilterChip(
-          label:
-              '${_currentFilters['checkIn']} - ${_currentFilters['checkOut']}',
+          label: '${_currentFilters['checkIn']} - ${_currentFilters['checkOut']}',
           icon: Icons.calendar_today,
           onRemove: () {
             setState(() {
@@ -622,6 +638,7 @@ class _SearchViewState extends State<SearchView> {
     );
   }
 
+
   Widget _buildFilterChip({
     required String label,
     required IconData icon,
@@ -660,6 +677,19 @@ class _SearchViewState extends State<SearchView> {
         ],
       ),
     );
+  }
+
+  String _getSortDisplayText(String option) {
+    switch (option) {
+      case 'Highest Popularity':
+        return 'Phổ biến nhất';
+      case 'Highest Price':
+        return 'Giá cao nhất';
+      case 'Lowest Price':
+        return 'Giá thấp nhất';
+      default:
+        return option;
+    }
   }
 
   // ✅ Widget hiển thị khi không có kết quả

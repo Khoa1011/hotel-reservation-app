@@ -21,4 +21,12 @@ class DateTimeHelper{
     return DateFormat("dd/MM/yyyy").format(date);
   }
 
+  static DateTime? formatStringToDateTime(String date) {
+    try {
+      return DateTime.parse(date);
+    } catch (e) {
+      return null;
+    }
+  }
+
 }

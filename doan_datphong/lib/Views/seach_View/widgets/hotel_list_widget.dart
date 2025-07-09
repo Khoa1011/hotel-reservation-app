@@ -6,18 +6,73 @@ import 'package:flutter/material.dart';
 import 'package:doan_datphong/Models/KhachSan.dart';
 import 'package:doan_datphong/Helper/FormatCurrency.dart';
 
+import '../../selectDate_View/selectDate_screen.dart';
+
 class HotelListWidget extends StatelessWidget {
   final List<KhachSan> hotels;
   final int totalResults;
   final ScrollController? scrollController;
   final Function(KhachSan)? onHotelTap;
+  final Map<String, dynamic>? currentFilter;
   const HotelListWidget({
     super.key,
     required this.hotels,
     required this.totalResults,
     this.scrollController,
-    this.onHotelTap
+    this.onHotelTap,
+    this.currentFilter
   });
+
+  Map<String,dynamic> _initDateSendToSelectDateScreen(){
+    Map<String,dynamic> result =({
+      "initialCheckIn": currentFilter?['checkIn'], // String date
+      "initialCheckOut": currentFilter?['checkOut'], // String date
+      "initialAdults": currentFilter?['guests'] ?? 2,
+      "initialChildren": 0,
+      "initialRooms": currentFilter?['rooms'] ?? 1,
+      "initialBookingType": currentFilter?['bookingType'], // String
+    });
+    return result;
+  }
+
+
+  Future<void> _onTapAHotel(BuildContext context, KhachSan hotel) async {
+    // Kiểm tra có filters không
+    bool hasFilters = currentFilter != null &&
+        currentFilter!['checkIn'] != null &&
+        currentFilter!['checkOut'] != null;
+
+    if (hasFilters) {
+      // ✅ Có filters → Đi thẳng SelectDateScreen
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SelectDateScreen(
+            data: _initDateSendToSelectDateScreen(),
+            selectedHotel: hotel, // ✅ Truyền hotel đã chọn
+          ),
+        ),
+      );
+    } else {
+      // ✅ Không có filters → Đi DetailScreen như bình thường
+      if (onHotelTap != null) {
+        onHotelTap!(hotel);
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DetailScreen(hotel: hotel),
+          ),
+        );
+      }
+    }
+  }
+
+  // ✅ Sửa method navigate
+  void _navigateToHotelDetail(BuildContext context, KhachSan hotel) {
+    _onTapAHotel(context, hotel);
+  }
+
 
 
   @override
@@ -336,10 +391,10 @@ class HotelListWidget extends StatelessWidget {
                             color: const Color(0xFF1565C0).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Text(
-                            'Xem chi tiết',
+                          child: Text(
+                            'Đặt phòng',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 15,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF1565C0),
                             ),
@@ -356,15 +411,7 @@ class HotelListWidget extends StatelessWidget {
       ),
     );
   }
-  void _navigateToHotelDetail(BuildContext context, KhachSan hotel) {
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => DetailScreen(hotel: hotel),
-      ),
-    );
-  }
   // Generate consistent random review count based on hotel ID
   String _getRandomReviews(String hotelId) {
     final reviewCounts = ['1.2k', '2.1k', '3.5k', '4.2k', '1.8k', '5.1k', '2.8k', '3.1k'];

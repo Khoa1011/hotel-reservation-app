@@ -19,7 +19,7 @@ class HotelSearchBloc extends Bloc<HotelSearchEvent, HotelSearchState> {
 
     try {
       ApiResponse response = await repository.searchHotels(
-
+        loaiLoc: event.loaiLoc,
         tenKhachSan: event.tenKhachSan,
         tinhThanh: event.tinhThanh,
         phuongXa: event.phuongXa,

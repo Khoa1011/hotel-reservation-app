@@ -32,7 +32,9 @@ class UserAuthProvider extends ChangeNotifier {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString("token");
-      String? userId = prefs.getString("user_id");
+      print("token trong auth_provider ${token}");
+      String? userId = prefs.getString("_id");
+      print("ID user trong auth_provider ${userId}");
 
 
       if (token != null && userId != null) {
@@ -41,17 +43,18 @@ class UserAuthProvider extends ChangeNotifier {
         print("Kiem tra du lieu user tu json ${userJson}");
         if (userJson != null) {
           _user = NguoiDung.fromJsonString(userJson);
+          print("Kiem tra du lieu user trong authProvider: ${userJson}");
         } else {
           // ✅ Option 2: Tạo user từ các field riêng lẻ (fallback)
           _user = NguoiDung(
             id: userId,
-            tenNguoiDung: prefs.getString("user_name") ?? "User",
-            gioiTinh: prefs.getBool("user_gender") ?? true,
-            email: prefs.getString("user_email") ?? "",
+            tenNguoiDung: prefs.getString("tenNguoiDung") ?? "User",
+            gioiTinh: prefs.getBool("gioiTinh") ?? true,
+            email: prefs.getString("email") ?? "",
             matKhau: "", // Không lưu password
-            soDienThoai: prefs.getString("user_std") ?? "",
-            vaiTro: prefs.getString("user_role") ?? "nguoiDung",
-            hinhDaiDien: prefs.getString("user_avatar") ?? "",
+            soDienThoai: prefs.getString("soDienThoai") ?? "",
+            vaiTro: prefs.getString("vaiTro") ?? "nguoiDung",
+            hinhDaiDien: prefs.getString("hinhDaiDien") ?? "",
             ngaySinh: null, // Sẽ load sau nếu cần
             ngayTao: DateTime.now(),
             trangThaiTaiKhoan: "hoatDong",
@@ -68,26 +71,30 @@ class UserAuthProvider extends ChangeNotifier {
   }
 
   // ✅ Save user (sau login/update profile)
-  Future<void> saveUser(NguoiDung user) async {
+  Future<void> saveUser(NguoiDung user, {String? token}) async {
     _user = user;
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
     try {
-      // ✅ Lưu cả user object và các field quan trọng
-      await prefs.setString("user_object", user.toJsonString());
-
-      // ✅ Lưu riêng các field quan trọng để dễ truy cập
-      await prefs.setString("user_id", user.id);
-      await prefs.setString("user_name", user.tenNguoiDung);
-      await prefs.setString("user_std", user.soDienThoai);
-      await prefs.setString("user_email", user.email);
-      await prefs.setString("user_role", user.vaiTro);
-      await prefs.setBool("user_gender", user.gioiTinh);
-
-      if (user.hinhDaiDien.isNotEmpty) {
-        await prefs.setString("user_avatar", user.hinhDaiDien);
+      // ✅ Lưu token nếu có
+      if (token != null) {
+        await prefs.setString("token", token);
       }
 
+      // ✅ Lưu user data
+      await prefs.setString("user", user.toJsonString()); // Đổi key thành "user"
+      await prefs.setString("_id", user.id);
+      await prefs.setString("tenNguoiDung", user.tenNguoiDung);
+      await prefs.setString("soDienThoai", user.soDienThoai);
+      await prefs.setString("email", user.email);
+      await prefs.setString("vaiTro", user.vaiTro);
+      await prefs.setBool("gioiTinh", user.gioiTinh);
+
+      if (user.hinhDaiDien.isNotEmpty) {
+        await prefs.setString("hinhDaiDien", user.hinhDaiDien);
+      }
+
+      print("✅ User và token đã được lưu");
     } catch (e) {
       print("❌ Save user error: $e");
     }
@@ -127,5 +134,9 @@ class UserAuthProvider extends ChangeNotifier {
   String getUserInfo() {
     if (_user == null) return "No user";
     return "User: ${_user!.tenNguoiDung} (${_user!.id})";
+  }
+
+  Future<void> refreshUserData() async {
+    await loadUser(); // Reload user từ SharedPreferences
   }
 }

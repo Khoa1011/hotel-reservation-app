@@ -9,6 +9,7 @@ class BookingDetailScreen extends StatelessWidget {
   final dynamic booking;
 
   String _buildRoomText(BuildContext context) {
+
     // Lấy ngôn ngữ hiện tại
     final locale = Localizations.localeOf(context);
     final isVietnamese = locale.languageCode == 'vi';
@@ -22,6 +23,7 @@ class BookingDetailScreen extends StatelessWidget {
       return '$roomCount room${roomCount > 1 ? 's' : ''}';
     }
   }
+
   const BookingDetailScreen({super.key, required this.booking});
 
   @override
@@ -472,6 +474,7 @@ class BookingDetailScreen extends StatelessWidget {
   }
 
   Widget _buildInfoRow(String label, String value, {bool isBold = false, Color? valueColor}) {
+    print("Giá trị trong chi tiết :$value");
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(

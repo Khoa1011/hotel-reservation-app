@@ -33,11 +33,27 @@ class _ListBookingScreenState extends State<ListBookingScreen> {
   BookingStatusFilter selectedStatus = BookingStatusFilter.ongoing;
   NguoiDung? currentUser;
   bool isLoading = true;
+  // ✅ Map để track booking nào đã được review
+  Set<String> reviewedBookings = <String>{};
+
 
   @override
   void initState() {
     super.initState();
     _loadCurrentUser();
+    _loadReviewedBookings();
+  }
+
+  void _loadReviewedBookings() async {
+    try {
+      // Gọi API để lấy danh sách booking đã review
+      // final response = await _apiService.getReviewedBookings();
+      // setState(() {
+      //   reviewedBookings = Set.from(response.reviewedBookingIds);
+      // });
+    } catch (e) {
+      print('Error loading reviewed bookings: $e');
+    }
   }
 
   Future<void> _loadCurrentUser() async {
@@ -140,61 +156,81 @@ class _ListBookingScreenState extends State<ListBookingScreen> {
                   return const Center(child: CircularProgressIndicator());
                 } else if (state is GetBookingListSuccess) {
                   final filteredBookings = _getFilteredBookings(state.bookingFulls);
-
                   if (filteredBookings.isEmpty) {
                     return _buildEmptyState();
                   }
 
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filteredBookings.length,
-                    itemBuilder: (context, index) {
-                      final booking = filteredBookings[index];
-                      return BookingCard(
-                        booking: booking,
-                        onCancelBooking: () => _showCancelDialog(booking),
-                        onViewTicket: () => _navigateToBookingDetail(booking),
-                        status: _getBookingStatusFromString(booking.status),
+                  return
+                    RefreshIndicator(
+                      onRefresh: () async {
+                    context.read<GetBookingListBloc>().add(
+                    FetchBookingList(currentUser!.id)
+                    );
+                      },
+                      child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: filteredBookings.length,
+                      itemBuilder: (context, index) {
+                        final booking = filteredBookings[index];
+                        return BookingCard(
+                          booking: booking,
+
+                          onCancelBooking: () => _showCancelDialog(booking),
+                          onViewTicket: () => _navigateToBookingDetail(booking),
+                          status: _getBookingStatusFromString(booking.status),
+                          // ✅ Thêm callback và flag cho review
+                          onSubmitReview: booking.status == "completed"
+                              ? (rating, comment) => _submitReview(booking.id, rating, comment)
+                              : null, // Chỉ cho phép review khi completed
+                          hasReviewed: reviewedBookings.contains(booking.id),
+                        );
+                      },
+                                        ),
+                    );
+                } else if (state is GetBookingListFailure) {
+                  return  RefreshIndicator(
+                    onRefresh: () async{
+                      context.read<GetBookingListBloc>().add(
+                        FetchBookingList(currentUser!.id)
                       );
                     },
-                  );
-                } else if (state is GetBookingListFailure) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.error_outline, size: 60, color: Colors.red[400]),
-                        const SizedBox(height: 16),
-                        Text(
-                          S.of(context).errorLoadingBookings,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.red[700],
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.error_outline, size: 60, color: Colors.red[400]),
+                          const SizedBox(height: 16),
+                          Text(
+                            S.of(context).errorLoadingBookings,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.red[700],
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          state.error,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
+                          const SizedBox(height: 8),
+                          Text(
+                            state.error,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            context.read<GetBookingListBloc>().add(
-                              FetchBookingList(currentUser!.id),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1565C0),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () {
+                              context.read<GetBookingListBloc>().add(
+                                FetchBookingList(currentUser!.id),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF1565C0),
+                            ),
+                            child: Text(S.of(context).refresh, style: TextStyle(color: Colors.white)),
                           ),
-                          child: Text(S.of(context).refresh, style: TextStyle(color: Colors.white)),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 }
@@ -207,6 +243,75 @@ class _ListBookingScreenState extends State<ListBookingScreen> {
       bottomNavigationBar: CustomBottomNavigation(currentPage: BottomNavPages.booking,),
     );
   }
+
+  // ✅ Xử lý submit review
+  Future<void> _submitReview(String bookingId, int rating, String comment) async {
+    try {
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      // ✅ Gọi API submit review
+      final reviewData = {
+        'bookingId': bookingId,
+        'rating': rating,
+        'comment': comment,
+        'reviewDate': DateTime.now().toIso8601String(),
+      };
+
+      // Example API call:
+      // await _apiService.submitReview(reviewData);
+
+      // ✅ Thêm vào danh sách đã review
+      setState(() {
+        reviewedBookings.add(bookingId);
+      });
+
+      // Hide loading
+      Navigator.of(context).pop();
+
+      // ✅ Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 8),
+              Text('Cảm ơn bạn đã đánh giá!'),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
+        ),
+      );
+
+    } catch (e) {
+      // Hide loading
+      Navigator.of(context).pop();
+
+      // ✅ Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.error, color: Colors.white),
+              SizedBox(width: 8),
+              Text('Có lỗi xảy ra. Vui lòng thử lại!'),
+            ],
+          ),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+
 
   Widget _buildFilterTabs() {
     return Container(

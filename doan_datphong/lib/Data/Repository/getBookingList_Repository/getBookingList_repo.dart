@@ -41,7 +41,9 @@ class GetBookingListRepository {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
+
         if (data['success'] == true && data['data'] != null) {
+          print("data khi lay chi tiet: $data");
           return BookingDetail.fromJson(data['data']);
         } else {
           throw Exception("Invalid response structure");

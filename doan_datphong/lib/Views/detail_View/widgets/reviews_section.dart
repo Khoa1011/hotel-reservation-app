@@ -1,6 +1,13 @@
+import 'package:doan_datphong/Helper/FormatDateTime.dart';
+import 'package:doan_datphong/Models/DanhGiaRespone.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:doan_datphong/generated/l10n.dart';
+
+import '../../../Blocs/getReviewByHotel_Blocs/getReviewByHotel_bloc.dart';
+import '../../../Blocs/getReviewByHotel_Blocs/getReviewByHotel_event.dart';
+import '../../../Blocs/getReviewByHotel_Blocs/getReviewByHotel_state.dart';
 
 class ReviewsSection extends StatefulWidget {
   final String hotelId;
@@ -33,6 +40,9 @@ class _ReviewsSectionState extends State<ReviewsSection>
       parent: _animationController,
       curve: Curves.easeInOut, // Smooth curve (chậm -> nhanh -> chậm)
     );
+    context.read<HotelReviewBloc>().add(
+      LoadRecentReviewsEvent(hotelId: widget.hotelId, limit: 5),
+    );
   }
 
   @override
@@ -54,19 +64,32 @@ class _ReviewsSectionState extends State<ReviewsSection>
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildReviewHeader(context),
-        const SizedBox(height: 16),
-        _buildReviewsList(context),
-        const SizedBox(height: 16),
-        _buildMoreButton(context),
-      ],
+    return BlocBuilder<HotelReviewBloc, HotelReviewState>(
+      builder: (context, state) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildReviewHeader(context, state),
+            const SizedBox(height: 16),
+            _buildReviewsList(context, state),
+            const SizedBox(height: 16),
+            if (state is HotelReviewSuccess && state.reviews.length > 3)
+              _buildMoreButton(context, state.reviews),
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildReviewHeader(BuildContext context) {
+  Widget _buildReviewHeader(BuildContext context, HotelReviewState state) {
+
+    double averageRating = 0.0;
+    int totalReviews = 0;
+
+    if (state is HotelReviewSuccess && state.thongKe != null) {
+      averageRating = state.thongKe!.trungBinh;
+      totalReviews = state.thongKe!.tongDanhGia;
+    }
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -87,7 +110,7 @@ class _ReviewsSectionState extends State<ReviewsSection>
             ),
             const SizedBox(width: 4),
             Text(
-              "4.8",
+              "$averageRating",
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -96,7 +119,7 @@ class _ReviewsSectionState extends State<ReviewsSection>
             ),
             const SizedBox(width: 4),
             Text(
-              "(498 ${S.of(context).reviews})",
+              "($totalReviews ${S.of(context).reviews})",
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[600],
@@ -121,36 +144,61 @@ class _ReviewsSectionState extends State<ReviewsSection>
     );
   }
 
-  Widget _buildReviewsList(BuildContext context) {
-    final reviews = _getSampleReviews();
+  Widget _buildReviewsList(BuildContext context, HotelReviewState state) {
+    if (state is HotelReviewLoading) {
+      return Center(child: CircularProgressIndicator());
+    }
 
-    return Column(
-      children: [
-        // Luôn hiển thị 3 reviews đầu
-        ...reviews.take(3).map((review) =>
-            _buildReviewItem(context, review)
-        ).toList(),
+    if (state is HotelReviewFailure) {
+      return Center(
+        child: Text(
+          state.error,
+          style: TextStyle(color: Colors.red),
+        ),
+      );
+    }
 
-        // Phần có thể mở rộng (reviews còn lại)
-        if (reviews.length > 3)
-          AnimatedBuilder(
-            animation: _animation,
-            builder: (context, child) {
-              return SizeTransition(
-                sizeFactor: _animation,
-                child: Column(
-                  children: reviews.skip(3).map((review) =>
-                      _buildReviewItem(context, review)
-                  ).toList(),
-                ),
-              );
-            },
+    if (state is HotelReviewSuccess) {
+      final reviews = state.reviews;
+
+      if (reviews.isEmpty) {
+        return Center(
+          child: Text(
+            "Chưa có đánh giá nào",
+            style: TextStyle(color: Colors.grey[600]),
           ),
-      ],
-    );
-  }
+        );
+      }
 
-  Widget _buildReviewItem(BuildContext context, ReviewModel review) {
+      return Column(
+        children: [
+          // Luôn hiển thị 3 reviews đầu
+          ...reviews.take(3).map((review) =>
+              _buildReviewItem(context, review)
+          ).toList(),
+
+          // Phần có thể mở rộng (reviews còn lại)
+          if (reviews.length > 3)
+            AnimatedBuilder(
+              animation: _animation,
+              builder: (context, child) {
+                return SizeTransition(
+                  sizeFactor: _animation,
+                  child: Column(
+                    children: reviews.skip(3).map((review) =>
+                        _buildReviewItem(context, review)
+                    ).toList(),
+                  ),
+                );
+              },
+            ),
+        ],
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+  Widget _buildReviewItem(BuildContext context, DanhGiaResponse review) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -166,9 +214,10 @@ class _ReviewsSectionState extends State<ReviewsSection>
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundImage: NetworkImage(review.userAvatar),
-                onBackgroundImageError: (_, __) {},
-                child: review.userAvatar.isEmpty
+                backgroundImage: review.user.hinhDaiDien.isNotEmpty
+                    ? NetworkImage(review.user.hinhDaiDien)
+                    : null,
+                child: review.user.hinhDaiDien.isEmpty
                     ? Icon(Icons.person, color: Colors.grey[600])
                     : null,
               ),
@@ -178,7 +227,7 @@ class _ReviewsSectionState extends State<ReviewsSection>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      review.userName,
+                      review.user.tenNguoiDung,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -186,7 +235,7 @@ class _ReviewsSectionState extends State<ReviewsSection>
                       ),
                     ),
                     Text(
-                      review.date,
+                      DateTimeHelper.formatDateToString2(review.reviewDate),
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey[600],
@@ -198,7 +247,7 @@ class _ReviewsSectionState extends State<ReviewsSection>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.green,
+                  color: _getRatingColor(review.rating),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -237,14 +286,24 @@ class _ReviewsSectionState extends State<ReviewsSection>
     );
   }
 
-  Widget _buildMoreButton(BuildContext context) {
-    final reviews = _getSampleReviews();
-
-    // Don't show button if there are 3 or fewer reviews
-    if (reviews.length <= 3) {
-      return const SizedBox.expand();
+  Color _getRatingColor(int rating) {
+    switch (rating) {
+      case 5:
+        return Colors.green;
+      case 4:
+        return Colors.lightGreen;
+      case 3:
+        return Colors.orange;
+      case 2:
+        return Colors.orangeAccent;
+      case 1:
+        return Colors.red;
+      default:
+        return Colors.grey;
     }
+  }
 
+  Widget _buildMoreButton(BuildContext context, List<DanhGiaResponse> reviews) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -284,7 +343,14 @@ class _ReviewsSectionState extends State<ReviewsSection>
   }
 
   void _showAllReviews(BuildContext context) {
-    // Navigate to all reviews page or show bottom sheet
+    // ✅ Load all reviews với sort theo rating cao nhất
+    context.read<HotelReviewBloc>().add(
+      LoadAllReviewsEvent(
+        hotelId: widget.hotelId,
+        sortBy: 'highest_rating',
+      ),
+    );
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -316,19 +382,46 @@ class _ReviewsSectionState extends State<ReviewsSection>
                   ),
                   const Spacer(),
                   IconButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      // ✅ Quay lại load recent reviews
+                      context.read<HotelReviewBloc>().add(
+                        LoadRecentReviewsEvent(hotelId: widget.hotelId),
+                      );
+                    },
                     icon: Icon(Icons.close),
                   ),
                 ],
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: _getSampleReviews().length,
-                itemBuilder: (context, index) {
-                  final review = _getSampleReviews()[index];
-                  return _buildReviewItem(context, review);
+              child: BlocBuilder<HotelReviewBloc, HotelReviewState>(
+                builder: (context, state) {
+                  if (state is HotelReviewLoading) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+
+                  if (state is HotelReviewFailure) {
+                    return Center(
+                      child: Text(
+                        state.error,
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    );
+                  }
+
+                  if (state is HotelReviewSuccess) {
+                    return ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: state.reviews.length,
+                      itemBuilder: (context, index) {
+                        final review = state.reviews[index];
+                        return _buildReviewItem(context, review);
+                      },
+                    );
+                  }
+
+                  return const SizedBox.shrink();
                 },
               ),
             ),
@@ -338,59 +431,6 @@ class _ReviewsSectionState extends State<ReviewsSection>
     );
   }
 
-  List<ReviewModel> _getSampleReviews() {
-    return [
-      ReviewModel(
-        userName: "Jenny Wilson",
-        userAvatar: "https://i.pravatar.cc/150?img=1",
-        date: "Dec 10, 2024",
-        rating: 5,
-        comment: "Very nice and comfortable hotel, thank you for accompanying my vacation!",
-      ),
-      ReviewModel(
-        userName: "Guy Hawkins",
-        userAvatar: "https://i.pravatar.cc/150?img=2",
-        date: "Dec 10, 2024",
-        rating: 4,
-        comment: "Very beautiful hotel, my family and I are very satisfied with the service!",
-      ),
-      ReviewModel(
-        userName: "Kristin Watson",
-        userAvatar: "https://i.pravatar.cc/150?img=3",
-        date: "Dec 09, 2024",
-        rating: 5,
-        comment: "The rooms are very comfortable and the natural views are amazing, can't wait to come back again!",
-      ),
-      ReviewModel(
-        userName: "Robert Fox",
-        userAvatar: "https://i.pravatar.cc/150?img=4",
-        date: "Dec 08, 2024",
-        rating: 4,
-        comment: "Great location and excellent amenities. Staff was very helpful throughout our stay.",
-      ),
-      ReviewModel(
-        userName: "Savannah Nguyen",
-        userAvatar: "https://i.pravatar.cc/150?img=5",
-        date: "Dec 07, 2024",
-        rating: 5,
-        comment: "Absolutely loved this place! Perfect for a romantic getaway. Will definitely recommend to friends.",
-      ),
-    ];
-  }
-}
 
-class ReviewModel {
-  final String userName;
-  final String userAvatar;
-  final String date;
-  final int rating;
-  final String comment;
 
-  ReviewModel({
-    required this.userName,
-    required this.userAvatar,
-    required this.date,
-    required this.rating,
-    required this.comment,
-  });
 }

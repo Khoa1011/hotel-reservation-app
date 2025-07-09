@@ -18,14 +18,14 @@ router.post("/upload", uploadHotel.single("hinhAnh"), async (req, res) => {
     try {
         const newHotel = new Hotel({
             tenKhachSan: req.body.tenKhachSan,
-            
+
             // ✅ SỬ DỤNG CẤU TRÚC 2025
             diaChi: {
                 tinhThanh: req.body.tinhThanh,      // ✅ Tỉnh/thành phố
                 phuongXa: req.body.phuongXa,        // ✅ Phường/xã
                 soNha: req.body.soNha               // ✅ Số nhà, tên đường
             },
-            
+
             moTa: req.body.moTa,
             soSao: req.body.soSao,
             soDienThoai: req.body.soDienThoai,
@@ -943,103 +943,103 @@ async function checkLongStayAvailabilityEnhanced({
 }
 
 // ✅ Enhanced pricing calculation
-    function calculateEnhancedPricing({
-        roomType, bookingType, checkInDate, checkOutDate, checkInTime, checkOutTime
-    }) {
-        let basePrice = roomType.giaCa;         // ✅ Giá cơ bản của 1 đơn vị (giờ/ngày/đêm)
-        let duration = 1;                        // ✅ Khoảng thời gian sử dụng phòng
-        let unit = "đêm";                        // ✅ Đơn vị thời gian: đêm, ngày, giờ
-        let multiplier = 1;                     // ✅ Hệ số nhân tổng hợp (bao gồm cả phụ thu + giảm giá)
-        let priceDiscountPercent = 0;           // ✅ Phần trăm giảm giá nếu ở dài ngày
-        let taxPrice = 0;                        // ✅ Giá phụ thu (ví dụ cuối tuần)
-        
-        // ---------------------------------------------
-        // ⏰ TÍNH KHOẢNG THỜI GIAN VÀ GIÁ CƠ BẢN
-        // ---------------------------------------------
+function calculateEnhancedPricing({
+    roomType, bookingType, checkInDate, checkOutDate, checkInTime, checkOutTime
+}) {
+    let basePrice = roomType.giaCa;         // ✅ Giá cơ bản của 1 đơn vị (giờ/ngày/đêm)
+    let duration = 1;                        // ✅ Khoảng thời gian sử dụng phòng
+    let unit = "đêm";                        // ✅ Đơn vị thời gian: đêm, ngày, giờ
+    let multiplier = 1;                     // ✅ Hệ số nhân tổng hợp (bao gồm cả phụ thu + giảm giá)
+    let priceDiscountPercent = 0;           // ✅ Phần trăm giảm giá nếu ở dài ngày
+    let taxPrice = 0;                        // ✅ Giá phụ thu (ví dụ cuối tuần)
 
-        if (bookingType === "theo_gio") {
-            const startTime = moment(`${checkInDate} ${checkInTime}`, "YYYY-MM-DD HH:mm");
-            let endTime = moment(`${checkInDate} ${checkOutTime}`, "YYYY-MM-DD HH:mm");
+    // ---------------------------------------------
+    // ⏰ TÍNH KHOẢNG THỜI GIAN VÀ GIÁ CƠ BẢN
+    // ---------------------------------------------
 
-            // Nếu checkoutTime trước checkinTime thì chuyển sang ngày hôm sau
-            if (endTime.isSameOrBefore(startTime)) {
-                endTime.add(1, "day");
-            }
+    if (bookingType === "theo_gio") {
+        const startTime = moment(`${checkInDate} ${checkInTime}`, "YYYY-MM-DD HH:mm");
+        let endTime = moment(`${checkInDate} ${checkOutTime}`, "YYYY-MM-DD HH:mm");
 
-            duration = Math.ceil(endTime.diff(startTime, "hours", true)); // Làm tròn lên số giờ
-            unit = "giờ";
-
-            // ⚠️ Quy ước: giá phòng theo giờ được tính theo tỷ lệ 1/8 giá cơ bản
-            basePrice = Math.round((roomType.giaCa / 14) * duration);
-        } else if (checkOutDate) {
-            duration = moment(checkOutDate).diff(moment(checkInDate), "days");
-            unit = bookingType === "qua_dem" ? "đêm" : "ngày";
-
-            // Giá gốc = giá theo đêm/ngày * số lượng ngày
-            basePrice = roomType.giaCa * duration;
+        // Nếu checkoutTime trước checkinTime thì chuyển sang ngày hôm sau
+        if (endTime.isSameOrBefore(startTime)) {
+            endTime.add(1, "day");
         }
 
-        // ---------------------------------------------
-        // 🔼 PHỤ THU CUỐI TUẦN
-        // ---------------------------------------------
-        const weekendMultiplier = isWeekend(checkInDate) ? 1.2 : 1; // Tăng 20% nếu là cuối tuần
-        if (weekendMultiplier > 1) {
-            taxPrice = Math.round(basePrice * (weekendMultiplier - 1)); // Phụ thu = phần tăng
-        }
+        duration = Math.ceil(endTime.diff(startTime, "hours", true)); // Làm tròn lên số giờ
+        unit = "giờ";
 
-        // ---------------------------------------------
-        // 🔽 GIẢM GIÁ DÀI NGÀY
-        // ---------------------------------------------
-        let longStayMultiplier = 1;
-        if (bookingType === 'dai_ngay') {
-            if (duration >= 7) {
-                longStayMultiplier = 0.85; // Giảm 15%
-                priceDiscountPercent = 15;
-            } else if (duration >= 5) {
-                longStayMultiplier = 0.90; // Giảm 10%
-                priceDiscountPercent = 10;
-            } else if (duration >= 3) {
-                longStayMultiplier = 0.95; // Giảm 5%
-                priceDiscountPercent = 5;
-            }
-        }
+        // ⚠️ Quy ước: giá phòng theo giờ được tính theo tỷ lệ 1/8 giá cơ bản
+        basePrice = Math.round((roomType.giaCa / 14) * duration);
+    } else if (checkOutDate) {
+        duration = moment(checkOutDate).diff(moment(checkInDate), "days");
+        unit = bookingType === "qua_dem" ? "đêm" : "ngày";
 
-        // ✅ Tổng hệ số nhân cuối cùng
-        multiplier = weekendMultiplier * longStayMultiplier;
-
-        // ---------------------------------------------
-        // 💰 TÍNH GIÁ CUỐI CÙNG
-        // ---------------------------------------------
-        const finalPrice = Math.round(basePrice * multiplier);
-        const discountAmount = Math.round(basePrice * (1 - longStayMultiplier)); // Số tiền được giảm
-
-        // ---------------------------------------------
-        // 🧾 TRẢ VỀ KẾT QUẢ
-        // ---------------------------------------------
-        return {
-            basePrice: roomType.giaCa, // Giá gốc của 1 đơn vị
-            unitPrice: Math.round(basePrice / duration), // Giá mỗi đơn vị thời gian
-            finalPrice, // Tổng giá đã cộng phụ thu và trừ giảm giá
-            duration,
-            unit,
-            multiplier,
-            discounts: {
-                weekend: isWeekend(checkInDate),
-                longStay: bookingType === 'dai_ngay' && duration >= 3,
-                discountPercent: priceDiscountPercent,
-                discountAmount
-            },
-            breakdown: {
-                baseRate: roomType.giaCa,
-                duration: duration,
-                subtotal: basePrice,
-                taxPrice: taxPrice, // ✅ Phần tiền phụ thu (nếu có)
-                discountAmount: discountAmount, // ✅ Phần tiền giảm giá (nếu có)
-                multiplier: multiplier,
-                total: finalPrice,
-            },
-        };
+        // Giá gốc = giá theo đêm/ngày * số lượng ngày
+        basePrice = roomType.giaCa * duration;
     }
+
+    // ---------------------------------------------
+    // 🔼 PHỤ THU CUỐI TUẦN
+    // ---------------------------------------------
+    const weekendMultiplier = isWeekend(checkInDate) ? 1.2 : 1; // Tăng 20% nếu là cuối tuần
+    if (weekendMultiplier > 1) {
+        taxPrice = Math.round(basePrice * (weekendMultiplier - 1)); // Phụ thu = phần tăng
+    }
+
+    // ---------------------------------------------
+    // 🔽 GIẢM GIÁ DÀI NGÀY
+    // ---------------------------------------------
+    let longStayMultiplier = 1;
+    if (bookingType === 'dai_ngay') {
+        if (duration >= 7) {
+            longStayMultiplier = 0.85; // Giảm 15%
+            priceDiscountPercent = 15;
+        } else if (duration >= 5) {
+            longStayMultiplier = 0.90; // Giảm 10%
+            priceDiscountPercent = 10;
+        } else if (duration >= 3) {
+            longStayMultiplier = 0.95; // Giảm 5%
+            priceDiscountPercent = 5;
+        }
+    }
+
+    // ✅ Tổng hệ số nhân cuối cùng
+    multiplier = weekendMultiplier * longStayMultiplier;
+
+    // ---------------------------------------------
+    // 💰 TÍNH GIÁ CUỐI CÙNG
+    // ---------------------------------------------
+    const finalPrice = Math.round(basePrice * multiplier);
+    const discountAmount = Math.round(basePrice * (1 - longStayMultiplier)); // Số tiền được giảm
+
+    // ---------------------------------------------
+    // 🧾 TRẢ VỀ KẾT QUẢ
+    // ---------------------------------------------
+    return {
+        basePrice: roomType.giaCa, // Giá gốc của 1 đơn vị
+        unitPrice: Math.round(basePrice / duration), // Giá mỗi đơn vị thời gian
+        finalPrice, // Tổng giá đã cộng phụ thu và trừ giảm giá
+        duration,
+        unit,
+        multiplier,
+        discounts: {
+            weekend: isWeekend(checkInDate),
+            longStay: bookingType === 'dai_ngay' && duration >= 3,
+            discountPercent: priceDiscountPercent,
+            discountAmount
+        },
+        breakdown: {
+            baseRate: roomType.giaCa,
+            duration: duration,
+            subtotal: basePrice,
+            taxPrice: taxPrice, // ✅ Phần tiền phụ thu (nếu có)
+            discountAmount: discountAmount, // ✅ Phần tiền giảm giá (nếu có)
+            multiplier: multiplier,
+            total: finalPrice,
+        },
+    };
+}
 
 
 
@@ -1463,7 +1463,522 @@ router.post('/:hotelId/room-type/:roomTypeId/check-availability', async (req, re
             messageError: error.message
         });
     }
+
 });
+
+// ✅ API LẤY TẤT CẢ ĐÁNH GIÁ CỦA KHÁCH SẠN
+router.get('/:hotelId/reviews', async (req, res) => {
+    try {
+        const { hotelId } = req.params;
+        const { sortBy = 'newest' } = req.query;
+
+        // ✅ Validate hotelId
+        if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Mã khách sạn không hợp lệ!"
+            });
+        }
+
+        // ✅ Kiểm tra khách sạn có tồn tại không
+        const hotel = await Hotel.findById(hotelId);
+        if (!hotel) {
+            return res.status(404).json({
+                success: false,
+                message: "Khách sạn không tồn tại!"
+            });
+        }
+
+
+
+        // ✅ Setup sorting
+        let sortOption = {};
+        switch (sortBy) {
+            case 'newest':
+                sortOption = { ngayDanhGia: -1 };
+                break;
+            case 'oldest':
+                sortOption = { ngayDanhGia: 1 };
+                break;
+            case 'highest_rating':
+                sortOption = { soSao: -1, ngayDanhGia: -1 };
+                break;
+            case 'lowest_rating':
+                sortOption = { soSao: 1, ngayDanhGia: -1 };
+                break;
+            default:
+                sortOption = { ngayDanhGia: -1 };
+        }
+
+        console.log(`🔍 Đang tìm reviews cho khách sạn: ${hotel.tenKhachSan} (${hotelId})`);
+
+        // ✅ Lấy tất cả booking của khách sạn, sau đó lấy reviews
+        const pipeline = [
+            // Stage 1: Tìm tất cả reviews
+            {
+                $lookup: {
+                    from: "dondatphongs", // Tên collection booking
+                    localField: "maDatPhong",
+                    foreignField: "_id",
+                    as: "booking"
+                }
+            },
+            // Stage 2: Filter theo hotel
+            {
+                $match: {
+                    "booking.maKhachSan": new mongoose.Types.ObjectId(hotelId)
+                }
+            },
+            // Stage 3: Unwind booking array
+            {
+                $unwind: "$booking"
+            },
+            // Stage 4: Lookup user info
+            {
+                $lookup: {
+                    from: "nguoidungs", // Tên collection users
+                    localField: "booking.maNguoiDung",
+                    foreignField: "_id",
+                    as: "user"
+                }
+            },
+            // Stage 5: Unwind user array
+            {
+                $unwind: "$user"
+            },
+            // Stage 6: Lookup room type info
+            {
+                $lookup: {
+                    from: "loaiphongs", // Tên collection room types
+                    localField: "booking.maLoaiPhong",
+                    foreignField: "_id",
+                    as: "roomType"
+                }
+            },
+            // Stage 7: Add roomType info (optional)
+            {
+                $addFields: {
+                    roomType: { $arrayElemAt: ["$roomType", 0] }
+                }
+            },
+            // Stage 8: Project final fields
+            {
+                $project: {
+                    _id: 1,
+                    soSao: 1,
+                    binhLuan: 1,
+                    ngayDanhGia: 1,
+                    // User info (ẩn thông tin nhạy cảm)
+                    user: {
+                        _id: "$user._id",
+                        tenNguoiDung: "$user.tenNguoiDung",
+                        hinhDaiDien: "$user.hinhDaiDien"
+                    },
+                    // Booking info
+                    booking: {
+                        _id: "$booking._id",
+                        ngayNhanPhong: "$booking.ngayNhanPhong",
+                        ngayTraPhong: "$booking.ngayTraPhong",
+                        loaiDatPhong: "$booking.loaiDatPhong"
+                    },
+                    // Room type info
+                    roomType: {
+                        tenLoaiPhong: "$roomType.tenLoaiPhong"
+                    }
+                }
+            },
+            // Stage 9: Sort
+            {
+                $sort: sortOption
+            }
+        ];
+
+        // ✅ Execute aggregation with pagination
+        const reviews = await mongoose.model("danhGia").aggregate(pipeline);
+        if (reviews.length === 0) {
+            return res.status(200).json({
+                success: true,
+                message: `Không có đánh giá nào cho khách sạn ${hotel.tenKhachSan}`,
+                data: {
+                    hotel: {
+                        id: hotel._id,
+                        name: hotel.tenKhachSan,
+                        address: hotel.diaChiDayDu || `${hotel.diaChi?.phuongXa}, ${hotel.diaChi?.tinhThanh}`
+                    },
+                    statistics: {
+                        totalReviews: 0,
+                        averageRating: 0,
+                        ratingBreakdown: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+                    },
+                    reviews: []
+                }
+            });
+        }
+
+        const total = reviews.length;
+
+        // ✅ Tính toán thống kê ratings
+        const ratingStats = await mongoose.model("danhGia").aggregate([
+            ...pipeline.slice(0, 7), // Không cần project và sort cho stats
+            {
+                $group: {
+                    _id: null,
+                    averageRating: { $avg: "$soSao" },
+                    totalReviews: { $sum: 1 },
+                    ratingDistribution: {
+                        $push: "$soSao"
+                    }
+                }
+            }
+        ]);
+
+        // ✅ Tính phân bổ rating (1-5 sao)
+        let ratingBreakdown = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        if (ratingStats[0]?.ratingDistribution) {
+            ratingStats[0].ratingDistribution.forEach(rating => {
+                ratingBreakdown[rating] = (ratingBreakdown[rating] || 0) + 1;
+            });
+        }
+
+        // ✅ Format response data
+        const formattedReviews = reviews.map(review => ({
+            id: review._id,
+            rating: review.soSao,
+            comment: review.binhLuan || "",
+            reviewDate: review.ngayDanhGia,
+            user: {
+                id: review.user._id,
+                name: review.user.tenNguoiDung || "Người dùng ẩn danh",
+                avatar: review.user.hinhDaiDien || ""
+            },
+            booking: {
+                id: review.booking._id,
+                checkIn: review.booking.ngayNhanPhong,
+                checkOut: review.booking.ngayTraPhong,
+                bookingType: review.booking.loaiDatPhong
+            },
+            roomType: {
+                name: review.roomType?.tenLoaiPhong || "Không xác định"
+            }
+        }));
+
+        // ✅ Response
+        res.status(200).json({
+            success: true,
+            message: `Tìm thấy ${total} đánh giá cho khách sạn ${hotel.tenKhachSan}`,
+            data: {
+                hotel: {
+                    id: hotel._id,
+                    name: hotel.tenKhachSan,
+                    address: hotel.diaChiDayDu || `${hotel.diaChi?.phuongXa}, ${hotel.diaChi?.tinhThanh}`
+                },
+                statistics: {
+                    totalReviews: total,
+                    averageRating: ratingStats[0]?.averageRating ?
+                        Math.round(ratingStats[0].averageRating * 10) / 10 : 0,
+                    ratingBreakdown: ratingBreakdown
+                },
+                reviews: formattedReviews
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Lỗi lấy reviews khách sạn:', error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi máy chủ khi lấy đánh giá",
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+});
+
+// ✅ API LẤY THỐNG KÊ ĐÁNH GIÁ CHI TIẾT
+router.get('/:hotelId/reviews/statistics', async (req, res) => {
+    try {
+        const { hotelId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Mã khách sạn không hợp lệ!"
+            });
+        }
+
+        // ✅ Kiểm tra khách sạn
+        const hotel = await Hotel.findById(hotelId);
+        if (!hotel) {
+            return res.status(404).json({
+                success: false,
+                message: "Khách sạn không tồn tại!"
+            });
+        }
+
+        console.log(`📊 Đang tính thống kê reviews cho: ${hotel.tenKhachSan}`);
+
+        // ✅ Aggregation pipeline cho thống kê chi tiết
+        const statsResults = await mongoose.model("danhGia").aggregate([
+            // Lookup booking
+            {
+                $lookup: {
+                    from: "dondatphongs",
+                    localField: "maDatPhong",
+                    foreignField: "_id",
+                    as: "booking"
+                }
+            },
+            // Filter theo hotel
+            {
+                $match: {
+                    "booking.maKhachSan": new mongoose.Types.ObjectId(hotelId)
+                }
+            },
+            {
+                $unwind: "$booking"
+            },
+            // Thống kê tổng hợp
+            {
+                $group: {
+                    _id: null,
+                    totalReviews: { $sum: 1 },
+                    averageRating: { $avg: "$soSao" },
+                    maxRating: { $max: "$soSao" },
+                    minRating: { $min: "$soSao" },
+                    // Đếm theo từng mức rating
+                    rating5: { $sum: { $cond: [{ $eq: ["$soSao", 5] }, 1, 0] } },
+                    rating4: { $sum: { $cond: [{ $eq: ["$soSao", 4] }, 1, 0] } },
+                    rating3: { $sum: { $cond: [{ $eq: ["$soSao", 3] }, 1, 0] } },
+                    rating2: { $sum: { $cond: [{ $eq: ["$soSao", 2] }, 1, 0] } },
+                    rating1: { $sum: { $cond: [{ $eq: ["$soSao", 1] }, 1, 0] } },
+                    // Đếm theo loại booking
+                    hourlyBookings: { $sum: { $cond: [{ $eq: ["$booking.loaiDatPhong", "theo_gio"] }, 1, 0] } },
+                    overnightBookings: { $sum: { $cond: [{ $eq: ["$booking.loaiDatPhong", "qua_dem"] }, 1, 0] } },
+                    longStayBookings: { $sum: { $cond: [{ $eq: ["$booking.loaiDatPhong", "dai_ngay"] }, 1, 0] } },
+                    // Thống kê thời gian
+                    oldestReview: { $min: "$ngayDanhGia" },
+                    newestReview: { $max: "$ngayDanhGia" },
+                    // Collect all comments for analysis
+                    allComments: { $push: "$binhLuan" }
+                }
+            }
+        ]);
+
+        const stats = statsResults[0] || {
+            totalReviews: 0,
+            averageRating: 0,
+            rating5: 0, rating4: 0, rating3: 0, rating2: 0, rating1: 0
+        };
+
+        // ✅ Tính phần trăm cho rating breakdown
+        const total = stats.totalReviews || 1; // Tránh chia cho 0
+        const ratingBreakdown = {
+            5: { count: stats.rating5, percentage: Math.round((stats.rating5 / total) * 100) },
+            4: { count: stats.rating4, percentage: Math.round((stats.rating4 / total) * 100) },
+            3: { count: stats.rating3, percentage: Math.round((stats.rating3 / total) * 100) },
+            2: { count: stats.rating2, percentage: Math.round((stats.rating2 / total) * 100) },
+            1: { count: stats.rating1, percentage: Math.round((stats.rating1 / total) * 100) }
+        };
+
+        // ✅ Tính satisfaction level
+        const positiveReviews = stats.rating4 + stats.rating5;
+        const satisfactionRate = Math.round((positiveReviews / total) * 100);
+
+        // ✅ Phân tích comment length
+        const commentStats = {
+            withComments: stats.allComments?.filter(comment => comment && comment.trim().length > 0).length || 0,
+            withoutComments: (stats.totalReviews || 0) - (stats.allComments?.filter(comment => comment && comment.trim().length > 0).length || 0),
+            averageCommentLength: 0
+        };
+
+        if (stats.allComments && stats.allComments.length > 0) {
+            const validComments = stats.allComments.filter(comment => comment && comment.trim().length > 0);
+            if (validComments.length > 0) {
+                commentStats.averageCommentLength = Math.round(
+                    validComments.reduce((sum, comment) => sum + comment.length, 0) / validComments.length
+                );
+            }
+        }
+
+        // ✅ Response
+        res.status(200).json({
+            success: true,
+            message: "Thống kê đánh giá thành công",
+            data: {
+                hotel: {
+                    id: hotel._id,
+                    name: hotel.tenKhachSan
+                },
+                overview: {
+                    totalReviews: stats.totalReviews || 0,
+                    averageRating: stats.averageRating ? Math.round(stats.averageRating * 10) / 10 : 0,
+                    satisfactionRate: satisfactionRate,
+                    ratingRange: {
+                        min: stats.minRating || 0,
+                        max: stats.maxRating || 0
+                    }
+                },
+                ratingBreakdown: ratingBreakdown,
+                bookingTypeBreakdown: {
+                    hourly: stats.hourlyBookings || 0,
+                    overnight: stats.overnightBookings || 0,
+                    longStay: stats.longStayBookings || 0
+                },
+                timeline: {
+                    oldestReview: stats.oldestReview,
+                    newestReview: stats.newestReview,
+                    reviewPeriod: stats.oldestReview && stats.newestReview ?
+                        Math.ceil((new Date(stats.newestReview) - new Date(stats.oldestReview)) / (1000 * 60 * 60 * 24)) : 0
+                },
+                commentAnalysis: commentStats
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Lỗi thống kê reviews:', error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi máy chủ khi tính thống kê",
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+});
+
+// ✅ API LẤY REVIEWS MỚI NHẤT (cho widget/preview)
+router.get('/:hotelId/reviews/recent', async (req, res) => {
+    try {
+        const { hotelId } = req.params;
+        const { limit = 5 } = req.query;
+
+        if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Mã khách sạn không hợp lệ!"
+            });
+        }
+
+        // ✅ Kiểm tra khách sạn có tồn tại không
+        const hotel = await Hotel.findById(hotelId);
+        if (!hotel) {
+            return res.status(404).json({
+                success: false,
+                message: "Khách sạn không tồn tại!"
+            });
+        }
+
+        console.log(`🔍 Lấy ${limit} reviews mới nhất cho hotel: ${hotelId}`);
+
+        // ✅ Pipeline chung để lấy tất cả reviews của khách sạn
+        const basePipeline = [
+            {
+                $lookup: {
+                    from: "dondatphongs",
+                    localField: "maDatPhong",
+                    foreignField: "_id",
+                    as: "booking"
+                }
+            },
+            {
+                $match: {
+                    "booking.maKhachSan": new mongoose.Types.ObjectId(hotelId)
+                }
+            },
+            { $unwind: "$booking" },
+            {
+                $lookup: {
+                    from: "nguoidungs",
+                    localField: "booking.maNguoiDung",
+                    foreignField: "_id",
+                    as: "user"
+                }
+            },
+            { $unwind: "$user" }
+        ];
+
+        // ✅ Lấy reviews mới nhất (limited)
+        const recentReviews = await mongoose.model("danhGia").aggregate([
+            ...basePipeline,
+            {
+                $project: {
+                    _id: 1,
+                    soSao: 1,
+                    binhLuan: 1,
+                    ngayDanhGia: 1,
+                    user: {
+                        _id: "$user._id",
+                        tenNguoiDung: "$user.tenNguoiDung",
+                        hinhDaiDien: "$user.hinhDaiDien"
+                    }
+                }
+            },
+            { $sort: { ngayDanhGia: -1 } },
+            { $limit: parseInt(limit) }
+        ]);
+
+        // ✅ Tính statistics từ TẤT CẢ reviews (không limit)
+        const allReviewsStats = await mongoose.model("danhGia").aggregate([
+            ...basePipeline,
+            {
+                $group: {
+                    _id: null,
+                    averageRating: { $avg: "$soSao" },
+                    totalReviews: { $sum: 1 },
+                    ratingDistribution: {
+                        $push: "$soSao"
+                    }
+                }
+            }
+        ]);
+
+        // ✅ Tính phân bổ rating (1-5 sao)
+        let ratingBreakdown = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        if (allReviewsStats[0]?.ratingDistribution) {
+            allReviewsStats[0].ratingDistribution.forEach(rating => {
+                ratingBreakdown[rating] = (ratingBreakdown[rating] || 0) + 1;
+            });
+        }
+
+        // ✅ Format recent reviews cho frontend
+        const formattedReviews = recentReviews.map(review => ({
+            id: review._id,
+            rating: review.soSao,
+            comment: review.binhLuan || "",
+            reviewDate: review.ngayDanhGia,
+            user: {
+                id: review.user._id,
+                name: review.user.tenNguoiDung || "Khách hàng",
+                avatar: review.user.hinhDaiDien || ""
+            }
+        }));
+
+        // ✅ Response với cùng format như API /reviews
+        res.status(200).json({
+            success: true,
+            message: `Lấy ${formattedReviews.length} reviews mới nhất`,
+            data: {
+                hotel: {
+                    id: hotel._id,
+                    name: hotel.tenKhachSan,
+                    address: hotel.diaChiDayDu || `${hotel.diaChi?.phuongXa}, ${hotel.diaChi?.tinhThanh}`
+                },
+                statistics: {
+                    totalReviews: allReviewsStats[0]?.totalReviews || 0,
+                    averageRating: allReviewsStats[0]?.averageRating ? 
+                        Math.round(allReviewsStats[0].averageRating * 10) / 10 : 0,
+                    ratingBreakdown: ratingBreakdown
+                },
+                reviews: formattedReviews
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Lỗi lấy recent reviews:', error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi máy chủ",
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+});
+
 
 
 module.exports = router;

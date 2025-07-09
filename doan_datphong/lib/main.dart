@@ -8,6 +8,7 @@ import 'package:doan_datphong/Blocs/login_Blocs/login_bloc.dart';
 import 'package:doan_datphong/Blocs/logout_bloc/logout_bloc.dart';
 import 'package:doan_datphong/Blocs/payment_Blocs/payment_bloc.dart';
 import 'package:doan_datphong/Blocs/register_Blocs/register_bloc.dart';
+import 'package:doan_datphong/Blocs/review_Blocs/review_bloc.dart';
 import 'package:doan_datphong/Blocs/updateProfile/updateProfile_bloc.dart';
 import 'package:doan_datphong/Data/Repository/bookingCheckUser_Repository/bookingCheckUser_repo.dart';
 import 'package:doan_datphong/Data/Repository/getBookingList_Repository/getBookingList_repo.dart';
@@ -27,11 +28,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'Blocs/Hotel_Blocs/hotel_bloc.dart';
 import 'Blocs/checkLogin_Blocs/checkLogin_bloc.dart';
 import 'Blocs/getAmenities_Blocs/getAmenities_bloc.dart';
+import 'Blocs/getReviewByHotel_Blocs/getReviewByHotel_bloc.dart';
 import 'Blocs/logout_bloc/logout_event.dart';
 import 'Blocs/searchHotels_Blocs/searchHotels_bloc.dart';
 import 'Data/Provider/auth_provider.dart';
 import 'Data/Repository/fillProfile_Repository/fillProfile_repo.dart';
 import 'Data/Repository/getAmenities_Repository/getAmenities_repo.dart';
+import 'Data/Repository/getReviewByHotel_Repository/getReviewByHotel_repo.dart';
+import 'Data/Repository/review_Repository/review_repo.dart';
 import 'Data/Repository/searchHotels_Repository/searchHotels_repo.dart';
 import 'LanguageProvider.dart';
 import 'SplashScreen.dart';
@@ -55,6 +59,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     return MultiProvider(
 
       providers: [
@@ -67,7 +72,11 @@ class MyApp extends StatelessWidget {
         ),
 
         // Các BLoC providers
-        BlocProvider(create: (context) => LoginBloc(loginRepository: LoginRepository())),
+        BlocProvider(create: (context) => LoginBloc(
+            loginRepository: LoginRepository(),
+          authProvider: context.read<UserAuthProvider>(),
+
+        )),
         BlocProvider(create: (context) => RegisterBlocs(registerRepository: RegisterRepository())),
         BlocProvider(create: (context) => LogoutBloc(logoutRepository: LogoutRepository())),
         BlocProvider(create: (context) => CheckLoginBloc()),
@@ -81,7 +90,9 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (context) => UpdateProfileBloc(fpr: UpdateProfileRepository())),
         BlocProvider(create: (context) => GetAmenitiesBloc(getAmenitiesRepo: GetAmenitiesRepository())),
         BlocProvider(create: (context) => HotelSearchBloc(repository: HotelSearchRepository())),
-        BlocProvider(create: (context) => BookingCheckBloc(repository: BookingCheckRepository()))
+        BlocProvider(create: (context) => BookingCheckBloc(repository: BookingCheckRepository())),
+        BlocProvider(create: (context) => ReviewBloc(reviewRepository: ReviewRepository())),
+        BlocProvider(create: (context) => HotelReviewBloc(hotelReviewRepository: HotelReviewRepository())),
       ],
       child: Consumer<LanguageProvider>(
         builder: (context, languageProvider, child) {

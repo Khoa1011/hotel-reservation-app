@@ -41,6 +41,9 @@ class _LoginState extends State<LoginScreen> {
   }
 
   void authLogin() {
+    print("emailsController.text ${emailsController.text}");
+    print("passwordController.text ${passwordController.text}");
+
     validateEmail(emailsController.text);
     validatePassword(passwordController.text);
 
@@ -58,12 +61,14 @@ class _LoginState extends State<LoginScreen> {
       NotificationDialog.showWarning(context, message: S.of(context).pleaseFixValidationErrors);
       return;
     }
+    String textEmail = emailsController.text.trim();
+    String textPassword = passwordController.text.trim();
 
     // ✅ Dispatch event đến LoginBloc
     context.read<LoginBloc>().add(
       LoginSubmiited(
-        emailsController.text.trim(),
-        passwordController.text.trim(),
+        email: textEmail,
+        password: textPassword
       ),
     );
   }
@@ -100,15 +105,28 @@ class _LoginState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<LoginBloc, LoginState>(
+    return BlocListener<LoginBloc, LoginState> (
 
-      listener: (context, state) {
+      listener: (context, state) async{
         if (state is LoginSuccess) {
+          print("🎉 LoginSuccess state received");
+
+          final authProvider = context.read<UserAuthProvider>();
+          await authProvider.refreshUserData();
+
+          print("✅ refreshUserData completed");
+
+          // Kiểm tra lại trạng thái sau khi refresh
+          print("🔍 After refresh check:");
+          print("   - AuthProvider user: ${authProvider.userName}");
+          print("   - AuthProvider isLoggedIn: ${authProvider.isLoggedIn}");
           Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => HomeScreen()));
         }
         else if (state is LoginIncomplete) {
+          final authProvider = context.read<UserAuthProvider>();
+          await authProvider.refreshUserData();
           Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => FillProfile()));
         } else if (state is LoginFailure) {
 

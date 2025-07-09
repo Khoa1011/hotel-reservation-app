@@ -105,7 +105,12 @@ class _HomePageState extends State<HomeScreen> {
             child: Column(
               children: [
                 Consumer<UserAuthProvider>(
-                    builder: (context, authProvider,child){
+
+                    builder: (context, authProvider ,child){
+                      // ✅ Debug để kiểm tra trạng thái auth_provider
+                      print("🏠 HomeScreen - User: ${authProvider.userName}");
+                      print("🏠 HomeScreen - IsLoggedIn: ${authProvider.isLoggedIn}");
+                      print("🏠 HomeScreen - UserId: ${authProvider.userId}");
                       return Align(
                         alignment: Alignment.centerLeft,
                         child: Text(

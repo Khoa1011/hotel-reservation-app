@@ -10,7 +10,10 @@ class LoginSubmiited extends LoginEvent{
   final String email;
   final String password;
 
-  LoginSubmiited(this.email, this.password);
+  LoginSubmiited({
+    required this.email,
+    required this.password
+});
 
   @override
   List<Object> get props => [email,password];

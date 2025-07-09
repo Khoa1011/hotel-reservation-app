@@ -58,8 +58,13 @@ class _FilterModalState extends State<FilterModal> {
     // Initialize from currentFilters
     _adults = _filters['guests'] ?? 2;
     _rooms = _filters['rooms'] ?? 1;
-    checkInDate = _filters['checkIn'];
-    checkOutDate = _filters['checkOut'];
+    if (_filters['checkIn'] != null && _filters['checkIn'] is String) {
+      checkInDate = DateTimeHelper.formatStringToDateTime(_filters['checkIn']);
+    }
+
+    if (_filters['checkOut'] != null && _filters['checkOut'] is String) {
+      checkOutDate = DateTimeHelper.formatStringToDateTime(_filters['checkOut']);
+    }
     _bookingType = _filters['bookingType'];
   }
 
@@ -150,7 +155,7 @@ class _FilterModalState extends State<FilterModal> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSortSection(),
+                  // _buildSortSection(),
                   const SizedBox(height: 24),
                   _buildLocationSection(),
                   const SizedBox(height: 24),
@@ -909,12 +914,19 @@ class _FilterModalState extends State<FilterModal> {
     params['guests'] = _adults + _children;
     params['rooms'] = _rooms;
 
-    String formatedCheckInDate = DateTimeHelper.formatDateToString2(checkInDate!);
-    String formatedCheckOutDate = DateTimeHelper.formatDateToString2(checkOutDate!);
     // Dates
-    if (checkInDate != null) params['checkIn'] = formatedCheckInDate;
-    if (checkOutDate != null) params['checkOut'] = formatedCheckOutDate;
+    if (checkInDate != null) {
+      String formatedCheckInDate = DateTimeHelper.formatDateToString2(checkInDate!);
+      params['checkIn'] = formatedCheckInDate;
+    }
+    if (checkOutDate != null) {
+      String formatedCheckOutDate = DateTimeHelper.formatDateToString2(checkOutDate!);
+      params['checkOut'] = formatedCheckOutDate;
+    }
     if (_bookingType != null) params['bookingType'] = _bookingType;
+    if (_filters['sortBy'] != null) {
+      params['sortBy'] = _filters['sortBy'];
+    }
 
     return params;
   }

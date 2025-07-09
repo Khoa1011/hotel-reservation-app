@@ -8,6 +8,7 @@ const amenitiesRouter = require("../Controller/amenitiesController");
 const paymentRouter = require("../Controller/paymentController");
 const searchRouter = require("../Controller/searchController");
 const bookingAutoRouter = require("../Controller/bookingAutoController");
+const reviewRouter = require("../Controller/reviewController");
 
 
 module.exports = function (app) {
@@ -20,6 +21,7 @@ module.exports = function (app) {
     app.use("/api/payment", paymentRouter);
     app.use("/api/filter", searchRouter);
     app.use("/api/booking-auto", bookingAutoRouter);
+    app.use("/api/review", reviewRouter);
     // //Admin
     // app.use("/api/admin", userRouter); 
 

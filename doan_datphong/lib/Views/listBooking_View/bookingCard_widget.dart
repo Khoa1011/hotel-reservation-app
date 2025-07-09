@@ -1,6 +1,7 @@
 import 'package:doan_datphong/Helper/FormatCurrency.dart';
 import 'package:doan_datphong/Helper/FormatDateTime.dart';
 import 'package:doan_datphong/Models/BookingFull.dart';
+import 'package:doan_datphong/Views/listBooking_View/review_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../generated/l10n.dart';
@@ -12,13 +13,67 @@ class BookingCard extends StatelessWidget {
   final VoidCallback onCancelBooking;
   final VoidCallback onViewTicket;
 
+  final Function(int rating, String comment)? onSubmitReview;
+  final bool hasReviewed;
+
   const BookingCard({
     super.key,
     required this.booking,
     required this.status,
     required this.onCancelBooking,
     required this.onViewTicket,
+    this.onSubmitReview,
+    this.hasReviewed = false,
   });
+
+  // ✅ Kiểm tra deadline đánh giá (2 ngày sau check-out)
+  bool checkDeadlineReview() {
+    if (status != BookingStatusFilter.completed) return false;
+
+    try {
+      // ✅ Parse string thành DateTime
+      DateTime checkOutDate;
+      checkOutDate = DateTime.parse(booking.checkOutDate);
+
+      final now = DateTime.now();
+      final deadline = checkOutDate.add(Duration(days: 2));
+
+      // Kiểm tra xem hiện tại có vượt quá deadline không
+      bool isWithinDeadline = now.isBefore(deadline);
+
+      print("🔍 Review deadline check:");
+      print("   - Check-out: ${checkOutDate.toString()}");
+      print("   - Deadline: ${deadline.toString()}");
+      print("   - Now: ${now.toString()}");
+      print("   - Within deadline: $isWithinDeadline");
+
+      return isWithinDeadline;
+    } catch (e) {
+      print("❌ Error checking review deadline: $e");
+      return false;
+    }
+  }
+
+  // ✅ Tính số ngày còn lại để đánh giá
+  int getDaysLeftToReview() {
+    if (status != BookingStatusFilter.completed) return 0;
+
+    try {
+      // ✅ Parse string thành DateTime
+      DateTime checkOutDate;
+      checkOutDate = DateTime.parse(booking.checkOutDate);
+
+      final now = DateTime.now();
+      final deadline = checkOutDate.add(Duration(days: 2));
+
+      if (now.isAfter(deadline)) return 0;
+
+      return deadline.difference(now).inDays;
+    } catch (e) {
+      print("❌ Error calculating days left: $e");
+      return 0;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +95,7 @@ class BookingCard extends StatelessWidget {
           _buildHotelInfo(context),
           _buildBookingDetails(context),
           if (status == BookingStatusFilter.ongoing) _buildOngoingActions(context),
-          if (status == BookingStatusFilter.completed) _buildCompletedStatus(context),
+          if (status == BookingStatusFilter.completed) _buildCompletedActions(context),
           if (status == BookingStatusFilter.canceled) _buildCanceledStatus(context),
           if (status == BookingStatusFilter.noCheckIn) _buildNoCheckInStatus(context),
         ],
@@ -417,29 +472,201 @@ class BookingCard extends StatelessWidget {
     );
   }
 
-  Widget _buildCompletedStatus(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF10B981).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
+  // ✅ Hiển thị Review Modal
+  void _showReviewModal(BuildContext context) {
+    if (onSubmitReview == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ReviewModal(
+        booking: booking,
+        onSubmitReview: onSubmitReview!,
       ),
-      child: Row(
+    );
+  }
+
+  Widget _buildCompletedActions(BuildContext context) {
+    // ✅ Kiểm tra deadline và trạng thái review
+    final canReview = checkDeadlineReview();
+    final daysLeft = getDaysLeftToReview();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Column(
         children: [
-          Icon(
-            Icons.check_circle,
-            color: const Color(0xFF10B981),
-            size: 20,
-          ),
-          const SizedBox(width: 8),
-           Text(
-            S.of(context).yeayCompleted,
-            style: TextStyle(
-              color: Color(0xFF10B981),
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
+          // Success message
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF10B981).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
             ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.check_circle,
+                  color: const Color(0xFF10B981),
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  S.of(context).yeayCompleted,
+                  style: TextStyle(
+                    color: Color(0xFF10B981),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ✅ Review deadline warning (nếu còn ít thời gian)
+          if (canReview && daysLeft <= 1 && !hasReviewed) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF59E0B).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: const Color(0xFFF59E0B).withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.access_time,
+                    color: const Color(0xFFF59E0B),
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      daysLeft == 0
+                          ? 'Hôm nay là ngày cuối để đánh giá!'
+                          : 'Còn $daysLeft ngày để đánh giá',
+                      style: TextStyle(
+                        color: Color(0xFFF59E0B),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // ✅ Expired deadline warning (nếu đã quá hạn)
+          if (!canReview && !hasReviewed) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEF4444).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: const Color(0xFFEF4444).withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.schedule_outlined,
+                    color: const Color(0xFFEF4444),
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Đã quá thời hạn đánh giá (2 ngày sau check-out)',
+                      style: TextStyle(
+                        color: Color(0xFFEF4444),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          const SizedBox(height: 12),
+
+          // Action buttons
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: onViewTicket,
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF1565C0), width: 1.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: Text(
+                    'Xem chi tiết',
+                    style: TextStyle(
+                      color: Color(0xFF1565C0),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  // ✅ Chỉ enable nếu: chưa review + còn trong deadline + có callback
+                  onPressed: (hasReviewed || !canReview || onSubmitReview == null)
+                      ? null
+                      : () => _showReviewModal(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: hasReviewed
+                        ? Colors.grey[300]
+                        : (!canReview ? Colors.grey[400] : const Color(0xFF1565C0)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    elevation: 0,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        hasReviewed
+                            ? Icons.check
+                            : (!canReview ? Icons.schedule_outlined : Icons.star_outline),
+                        color: hasReviewed
+                            ? Colors.grey[600]
+                            : (!canReview ? Colors.grey[600] : Colors.white),
+                        size: 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        hasReviewed
+                            ? 'Đã đánh giá'
+                            : (!canReview ? 'Hết hạn' : 'Đánh giá'),
+                        style: TextStyle(
+                          color: hasReviewed
+                              ? Colors.grey[600]
+                              : (!canReview ? Colors.grey[600] : Colors.white),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -462,7 +689,7 @@ class BookingCard extends StatelessWidget {
             size: 20,
           ),
           const SizedBox(width: 8),
-           Text(
+          Text(
             S.of(context).youCanceledBooking,
             style: TextStyle(
               color: Color(0xFFEF4444),
@@ -503,10 +730,6 @@ class BookingCard extends StatelessWidget {
       ),
     );
   }
-
-
-
-
 
   String _getPaymentStatusText(BuildContext context,String? status) {
     if (status == null) return 'N/A';
@@ -564,9 +787,7 @@ class BookingCard extends StatelessWidget {
     String unit = getPriceDetails["unit"];
     int quantity = getPriceDetails["quantity"];
 
-
     print("Danh sach PriceDetails${unit}");
-
 
     if(unit =="dem"){
       if (isVietnamese) {

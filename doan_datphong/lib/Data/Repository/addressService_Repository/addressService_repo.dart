@@ -1,61 +1,95 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+// ✅ CẬP NHẬT: Province model theo esgoo.net API
 class Province {
-  final String code;
+  final String id;
   final String name;
+  final String nameEn;
 
-  Province({required this.code, required this.name});
+  Province({required this.id, required this.name, required this.nameEn});
 
   factory Province.fromJson(Map<String, dynamic> json) {
     return Province(
-      code: json['code']?.toString() ?? '',
-      name: json['province'] ?? json['name'] ?? '',
+      id: json['id']?.toString() ?? '',
+      name: json['name'] ?? '',
+      nameEn: json['name_en'] ?? '',
     );
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is Province && other.code == code;
+    return other is Province && other.id == id;
   }
 
   @override
-  int get hashCode => code.hashCode;
+  int get hashCode => id.hashCode;
 }
 
-class Ward {
-  final String code;
+// ✅ CẬP NHẬT: District model theo esgoo.net API
+class District {
+  final String id;
   final String name;
+  final String nameEn;
 
-  Ward({required this.code, required this.name});
+  District({required this.id, required this.name, required this.nameEn});
+
+  factory District.fromJson(Map<String, dynamic> json) {
+    return District(
+      id: json['id']?.toString() ?? '',
+      name: json['name'] ?? '',
+      nameEn: json['name_en'] ?? '',
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is District && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
+}
+
+// ✅ CẬP NHẬT: Ward model theo esgoo.net API
+class Ward {
+  final String id;
+  final String name;
+  final String nameEn;
+
+  Ward({required this.id, required this.name, required this.nameEn});
 
   factory Ward.fromJson(Map<String, dynamic> json) {
     return Ward(
-      code: json['code']?.toString() ?? '',
+      id: json['id']?.toString() ?? '',
       name: json['name'] ?? '',
+      nameEn: json['name_en'] ?? '',
     );
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is Ward && other.code == code;
+    return other is Ward && other.id == id;
   }
 
   @override
-  int get hashCode => code.hashCode;
+  int get hashCode => id.hashCode;
 }
 
 class AddressService {
-  static const String baseUrl = 'https://vietnamlabs.com/api/vietnamprovince';
+  // ✅ CẬP NHẬT: Sử dụng esgoo.net API
+  static const String baseUrl = 'https://esgoo.net/api-tinhthanh';
 
+  // ✅ Lấy danh sách tỉnh/thành phố
   static Future<List<Province>> getProvinces() async {
     try {
-      print('🌐 Đang tải danh sách tỉnh/thành phố từ vietnamlabs.com...');
+      print('🌐 Đang tải danh sách tỉnh/thành phố từ esgoo.net...');
 
       final response = await http.get(
-        Uri.parse(baseUrl),
+        Uri.parse('$baseUrl/1/0.htm'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -68,57 +102,77 @@ class AddressService {
         final responseBody = utf8.decode(response.bodyBytes);
         Map<String, dynamic> result = json.decode(responseBody);
 
-        if (result['success'] == true && result['data'] != null) {
+        if (result['error'] == 0 && result['data'] != null) {
           List<dynamic> data = result['data'];
           print('✅ Tải thành công ${data.length} tỉnh/thành phố');
 
-          List<Province> provinces = [];
-          for (int i = 0; i < data.length; i++) {
-            final provinceData = data[i];
-            provinces.add(Province(
-              code: (i + 1).toString().padLeft(2, '0'),
-              name: provinceData['province'] ?? '',
-            ));
-          }
+          List<Province> provinces = data.map((provinceData) {
+            return Province.fromJson(provinceData);
+          }).toList();
 
           return provinces;
         } else {
-          throw Exception('API trả về lỗi: ${result['message'] ?? 'Unknown error'}');
+          throw Exception('API trả về lỗi: ${result['error_text'] ?? 'Unknown error'}');
         }
       } else {
         throw Exception('HTTP ${response.statusCode}: ${response.reasonPhrase}');
       }
     } catch (e) {
-      print('❌ Lỗi tải từ vietnamlabs: $e');
+      print('❌ Lỗi tải từ esgoo.net: $e');
       throw Exception('Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng và thử lại.');
     }
   }
 
-  static Future<List<Ward>> getWards(String provinceCode) async {
+  // ✅ Lấy danh sách quận/huyện theo tỉnh/thành phố
+  static Future<List<District>> getDistricts(String provinceId) async {
     try {
-      print('🌐 Đang tải phường/xã cho tỉnh code: $provinceCode');
+      print('🌐 Đang tải quận/huyện cho tỉnh ID: $provinceId');
 
-      // First, get all provinces to find the province name by code
-      final provinces = await getProvinces();
-
-      // Find province by code
-      Province? targetProvince;
-      for (var province in provinces) {
-        if (province.code == provinceCode) {
-          targetProvince = province;
-          break;
-        }
-      }
-
-      if (targetProvince == null) {
-        throw Exception('Không tìm thấy tỉnh với code: $provinceCode');
-      }
-
-      print('🌐 Đang tải phường/xã cho tỉnh: ${targetProvince.name}');
-
-      // ✅ Call API with province name as parameter
       final response = await http.get(
-        Uri.parse('$baseUrl?province=${Uri.encodeComponent(targetProvince.name)}'),
+        Uri.parse('$baseUrl/2/$provinceId.htm'),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(Duration(seconds: 15));
+
+      print('📡 Districts response status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final responseBody = utf8.decode(response.bodyBytes);
+        Map<String, dynamic> result = json.decode(responseBody);
+
+        if (result['error'] == 0 && result['data'] != null) {
+          List<dynamic> data = result['data'];
+          print('✅ Tải thành công ${data.length} quận/huyện');
+
+          List<District> districts = data.map((districtData) {
+            return District.fromJson(districtData);
+          }).toList();
+
+          return districts;
+        } else {
+          throw Exception('API districts trả về lỗi: ${result['error_text'] ?? 'Unknown error'}');
+        }
+      } else if (response.statusCode == 404) {
+        print('⚠️ Không tìm thấy dữ liệu quận/huyện cho tỉnh ID: $provinceId');
+        return []; // Return empty list if no districts found
+      } else {
+        throw Exception('HTTP ${response.statusCode}: ${response.reasonPhrase}');
+      }
+    } catch (e) {
+      print('❌ Lỗi tải quận/huyện: $e');
+      throw Exception('Không thể tải danh sách quận/huyện. Vui lòng thử lại.');
+    }
+  }
+
+  // ✅ Lấy danh sách phường/xã theo quận/huyện (nếu cần)
+  static Future<List<Ward>> getWards(String districtId) async {
+    try {
+      print('🌐 Đang tải phường/xã cho quận/huyện ID: $districtId');
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/3/$districtId.htm'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -131,48 +185,82 @@ class AddressService {
         final responseBody = utf8.decode(response.bodyBytes);
         Map<String, dynamic> result = json.decode(responseBody);
 
-        if (result['success'] == true && result['data'] != null) {
-          Map<String, dynamic> data = result['data'];
+        if (result['error'] == 0 && result['data'] != null) {
+          List<dynamic> data = result['data'];
+          print('✅ Tải thành công ${data.length} phường/xã');
 
-          if (data['wards'] != null) {
-            List<dynamic> wardsData = data['wards'];
-            List<Ward> wards = [];
+          List<Ward> wards = data.map((wardData) {
+            return Ward.fromJson(wardData);
+          }).toList();
 
-            for (int i = 0; i < wardsData.length; i++) {
-              final wardData = wardsData[i];
-              wards.add(Ward(
-                code: i.toString().padLeft(3, '0'),
-                name: wardData['name'] ?? '',
-              ));
-            }
-
-            print('✅ Tải thành công ${wards.length} phường/xã cho ${targetProvince.name}');
-            return wards;
-          } else {
-            print('⚠️ Không có dữ liệu wards trong response cho ${targetProvince.name}');
-            return [];
-          }
+          return wards;
         } else {
-          throw Exception('API wards trả về lỗi: ${result['message'] ?? 'Unknown error'}');
+          throw Exception('API wards trả về lỗi: ${result['error_text'] ?? 'Unknown error'}');
         }
       } else if (response.statusCode == 404) {
-        print('⚠️ Không tìm thấy dữ liệu phường/xã cho tỉnh: ${targetProvince.name}');
+        print('⚠️ Không tìm thấy dữ liệu phường/xã cho quận/huyện ID: $districtId');
         return []; // Return empty list if no wards found
       } else {
         throw Exception('HTTP ${response.statusCode}: ${response.reasonPhrase}');
       }
-
     } catch (e) {
       print('❌ Lỗi tải phường/xã: $e');
       throw Exception('Không thể tải danh sách phường/xã. Vui lòng thử lại.');
     }
   }
 
-  @deprecated
-  static Future<List<dynamic>> getDistricts(String provinceCode) async {
-    throw UnsupportedError(
-        'Districts (Quận/Huyện) không còn tồn tại trong cấu trúc hành chính mới của Việt Nam từ 1/7/2025. '
-            'Hãy sử dụng getWards() để lấy danh sách xã/phường trực tiếp từ tỉnh.'
-    );
+  // ✅ HELPER: Tìm tỉnh theo tên
+  static Future<Province?> findProvinceByName(String provinceName) async {
+    try {
+      final provinces = await getProvinces();
+      for (var province in provinces) {
+        if (province.name.toLowerCase().contains(provinceName.toLowerCase()) ||
+            province.nameEn.toLowerCase().contains(provinceName.toLowerCase())) {
+          return province;
+        }
+      }
+      return null;
+    } catch (e) {
+      print('❌ Lỗi tìm tỉnh theo tên: $e');
+      return null;
+    }
+  }
+
+  // ✅ HELPER: Tìm quận/huyện theo tên trong tỉnh
+  static Future<District?> findDistrictByName(String provinceId, String districtName) async {
+    try {
+      final districts = await getDistricts(provinceId);
+      for (var district in districts) {
+        if (district.name.toLowerCase().contains(districtName.toLowerCase()) ||
+            district.nameEn.toLowerCase().contains(districtName.toLowerCase())) {
+          return district;
+        }
+      }
+      return null;
+    } catch (e) {
+      print('❌ Lỗi tìm quận/huyện theo tên: $e');
+      return null;
+    }
+  }
+
+  // ✅ HELPER: Lấy địa chỉ đầy đủ
+  static Future<String> getFullAddress({
+    String? wardName,
+    String? districtName,
+    String? provinceName,
+  }) async {
+    List<String> addressParts = [];
+
+    if (wardName != null && wardName.isNotEmpty) {
+      addressParts.add(wardName);
+    }
+    if (districtName != null && districtName.isNotEmpty) {
+      addressParts.add(districtName);
+    }
+    if (provinceName != null && provinceName.isNotEmpty) {
+      addressParts.add(provinceName);
+    }
+
+    return addressParts.join(', ');
   }
 }

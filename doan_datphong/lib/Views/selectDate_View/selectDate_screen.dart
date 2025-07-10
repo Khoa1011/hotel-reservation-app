@@ -1,4 +1,6 @@
+import 'package:doan_datphong/Helper/FormatDateTime.dart';
 import 'package:doan_datphong/Views/components/NotificationDialog.dart';
+import 'package:doan_datphong/Views/detail_View/detail_screen.dart';
 import 'package:doan_datphong/Views/listRoom_View/listRoom_screen.dart';
 import 'package:doan_datphong/Views/selectDate_View/datePickerField_widget.dart';
 import 'package:flutter/material.dart';
@@ -18,12 +20,12 @@ enum BookingType {
 
 class SelectDateScreen extends StatefulWidget {
   final Map<String,dynamic>? data;
-  final KhachSan? selectedHotel;
+  final KhachSan selectedHotel;
 
 
   const SelectDateScreen({super.key,
   this.data,
-    this.selectedHotel,
+    required this.selectedHotel,
   });
   @override
   _SelectDateState createState() => _SelectDateState();
@@ -42,6 +44,7 @@ class _SelectDateState extends State<SelectDateScreen> with TickerProviderStateM
   int _adults = 2;
   int _children = 0;
   int _rooms = 1;
+  Map<dynamic,String> resultFromFilterModal={};
 
   // Booking type management
   BookingType _selectedBookingType = BookingType.qua_dem;
@@ -62,13 +65,20 @@ class _SelectDateState extends State<SelectDateScreen> with TickerProviderStateM
         });
       }
     });
+    WidgetsBinding.instance.addPostFrameCallback((_){
+      _loadInitDataFromFilter();
+    });
   }
+
+
+
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
   }
+
 
   void _resetDateTimeForBookingType() {
     switch (_selectedBookingType) {
@@ -148,10 +158,111 @@ class _SelectDateState extends State<SelectDateScreen> with TickerProviderStateM
 
     final result = _buildBookingResult();
     _saveDateTime();
-    Navigator.pop(context, result);
+    if (widget.selectedHotel != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DetailScreen(
+              hotel: widget.selectedHotel,
+          result: result,),
+        ),
+      );
+    } else {
+      // ✅ Trường hợp: Từ DetailScreen -> Trả về DetailScreen
+      print("🔙 Returning to DetailScreen with result");
+      Navigator.pop(context, result);
+    }
+  }
+
+  void _loadInitDataFromFilter (){
+    if(widget.data != null){
+      print("🔄 Loading initial data: ${widget.data}");
+
+      try {
+        // ✅ Gán check-in date
+        if (widget.data!['initialCheckIn'] != null) {
+          String checkInStr = widget.data!['initialCheckIn'].toString();
+          DateTime? checkInDateTime = DateTimeHelper.smartParse(checkInStr);
+          _checkInDate = checkInDateTime;
+          print("check-in date 1: $checkInStr");
+          print("check-in date 2: $checkInDateTime");
+          print("✅ Parsed check-in date: $_checkInDate");
+        }
+
+        // ✅ Gán check-out date
+        if (widget.data!['initialCheckOut'] != null) {
+          String checkOutStr = widget.data!['initialCheckOut'].toString();
+          DateTime? checkInDateTime = DateTimeHelper.smartParse(checkOutStr);
+          _checkOutDate = checkInDateTime;
+          print("✅ Parsed check-out date: $_checkOutDate");
+        }
+
+        // ✅ Gán số khách
+        if (widget.data!['initialAdults'] != null) {
+          _adults = int.tryParse(widget.data!['initialAdults'].toString()) ?? 2;
+        }
+        if (widget.data!['initialChildren'] != null) {
+          _children = int.tryParse(widget.data!['initialChildren'].toString()) ?? 0;
+        }
+
+        // ✅ Gán số phòng
+        if (widget.data!['initialRooms'] != null) {
+          _rooms = int.tryParse(widget.data!['initialRooms'].toString()) ?? 1;
+        }
+        Duration? duration = _checkOutDate?.difference(_checkInDate!);
+        print("Khoảng cách giữa ngày nhận và trả: ${duration?.inDays}");
+        if(duration!.inDays >= 2){
+          _selectedBookingType = BookingType.dai_ngay;
+          _tabController.animateTo(2);
+
+        }else if (duration.inDays == 1 ){
+          _selectedBookingType = BookingType.qua_dem;
+          _tabController.animateTo(1);
+        }else {
+          _selectedBookingType = BookingType.theo_gio;
+          _tabController.animateTo(0);
+        }
+        // ✅ Gán booking type và tab
+        // if (widget.data!['initialBookingType'] != null) {
+        //   final bookingTypeStr = widget.data!['initialBookingType'].toString();
+        //   switch (bookingTypeStr) {
+        //     case 'theo_gio':
+        //       _selectedBookingType = BookingType.theo_gio;
+        //       _tabController.animateTo(0);
+        //       break;
+        //     case 'qua_dem':
+        //       _selectedBookingType = BookingType.qua_dem;
+        //       _tabController.animateTo(1);
+        //       break;
+        //     case 'dai_ngay':
+        //       _selectedBookingType = BookingType.dai_ngay;
+        //       _tabController.animateTo(2);
+        //       break;
+        //   }
+        // }
+
+        // ✅ Update current month để hiển thị đúng calendar
+        if (_checkInDate != null) {
+          _currentMonth = DateTime(_checkInDate!.year, _checkInDate!.month);
+        }
+
+        // // ✅ Set default times based on booking type
+        // _setDefaultTimes();
+
+        setState(() {});
+        print("✅ Initial data loaded successfully");
+      } catch (e) {
+        print("❌ Error loading initial data: $e");
+      }
+    }
+
   }
 
   Map<String, dynamic> _buildBookingResult() {
+    print("CheckinDate trước khi gán $_checkInDate");
+    print("CheckOutDate trước khi gán $_checkOutDate");
+    print("giờ vào trước khi gán $_selectedCheckInTime");
+    print("giờ ra trước khi gán $_selectedCheckOutTime");
     final formattedDateCheckIn = DateFormat('dd/MM').format(_checkInDate!);
     final timeCheckInPicked = _formatTime(_selectedCheckInTime!);
     final formattedCheckInDateRouter = DateFormat('yyyy-MM-dd').format(_checkInDate!);

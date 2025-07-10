@@ -11,7 +11,6 @@ class HotelSearchBloc extends Bloc<HotelSearchEvent, HotelSearchState> {
 
   HotelSearchBloc({required this.repository}) : super(HotelSearchInitial()) {
     on<SearchHotels>(_onSearchHotels);
-
   }
 
   void _onSearchHotels(SearchHotels event, Emitter<HotelSearchState> emit) async {
@@ -21,8 +20,9 @@ class HotelSearchBloc extends Bloc<HotelSearchEvent, HotelSearchState> {
       ApiResponse response = await repository.searchHotels(
         loaiLoc: event.loaiLoc,
         tenKhachSan: event.tenKhachSan,
-        tinhThanh: event.tinhThanh,
-        phuongXa: event.phuongXa,
+        // ✅ CHỈ SỬA: Đổi tên parameter theo API mới
+        thanhPho: event.thanhPho,     // Trước đây là tinhThanh
+        quan: event.quan,             // Trước đây là phuongXa
         minPrice: event.minPrice,
         maxPrice: event.maxPrice,
         guests: event.guests,
@@ -30,12 +30,11 @@ class HotelSearchBloc extends Bloc<HotelSearchEvent, HotelSearchState> {
         checkIn: event.checkIn,
         checkOut: event.checkOut,
         bookingType: event.bookingType,
-
       );
 
       emit(HotelSearchSuccess(
-        hotels: response.data,
-        message: response.message
+          hotels: response.data,
+          message: response.message
       ));
     } catch (err) {
       emit(HotelSearchFailure(err.toString()));

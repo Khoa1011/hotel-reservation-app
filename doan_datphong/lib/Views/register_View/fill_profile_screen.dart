@@ -32,10 +32,12 @@ class _FillProfileState extends State<FillProfile> {
 
   // Danh sách từ API
   List<Province> provinces = [];
+  List<District> districts = [];
   List<Ward> wards = [];
 
   // Loading states
   bool isLoadingProvinces = true;
+  bool isLoadingDistricts = false;
   bool isLoadingWards = false;
 
   List<String> get genders => [S.of(context).male, S.of(context).female];
@@ -45,11 +47,13 @@ class _FillProfileState extends State<FillProfile> {
   String? errorGender;
   String? errorDoB;
   String? errorProvince;
+  String? errorDistrict;
   String? errorWard;
   String? errorAddress;
 
   String? _selectedGender;
   Province? _selectedProvince;
+  District? _selectedDistrict;
   Ward? _selectedWard;
 
   TextEditingController fullNameController = TextEditingController();
@@ -75,10 +79,42 @@ class _FillProfileState extends State<FillProfile> {
     super.dispose();
   }
 
+  // ✅ THÊM: Method load wards
+  Future<void> loadWards(String districtId) async {
+    if (!mounted) return;
+
+    try {
+      setState(() {
+        isLoadingWards = true;
+        wards = [];
+        _selectedWard = null;
+        errorWard = null;
+      });
+      print('📥 BẮT ĐẦU loadWards với ID: $districtId');
+
+      final loadedWards = await AddressService.getWards(districtId);
+
+      if (!mounted) return;
+
+      setState(() {
+        wards = loadedWards;
+        isLoadingWards = false;
+      });
+    } catch (e) {
+      print('❌ Lỗi load wards: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        isLoadingWards = false;
+        errorWard = 'Không thể tải danh sách phường/xã';
+      });
+    }
+  }
+
   // ✅ Thêm error handling và loading state tốt hơn
   Future<void> loadProvinces() async {
     if (!mounted) return; // ✅ Check mounted state
-
     try {
       setState(() {
         isLoadingProvinces = true;
@@ -128,24 +164,24 @@ class _FillProfileState extends State<FillProfile> {
   }
 
   // ✅ Cập nhật method load wards với error handling
-  Future<void> loadWards(String provinceCode) async {
+  Future<void> loadDistricts(String provinceCode) async {
     if (!mounted) return;
 
     try {
       setState(() {
-        isLoadingWards = true;
-        wards = [];
-        _selectedWard = null;
-        errorWard = null;
+        isLoadingDistricts  = true;
+        districts  = [];
+        _selectedDistrict = null;
+        errorDistrict = null;
       });
 
-      final loadedWards = await AddressService.getWards(provinceCode);
+      final loadedDictricts = await AddressService.getDistricts(provinceCode);
 
       if (!mounted) return;
 
       setState(() {
-        wards = loadedWards;
-        isLoadingWards = false;
+        districts  = loadedDictricts;
+        isLoadingDistricts  = false;
       });
     } catch (e) {
       print('❌ Lỗi load wards: $e');
@@ -153,8 +189,8 @@ class _FillProfileState extends State<FillProfile> {
       if (!mounted) return;
 
       setState(() {
-        isLoadingWards = false;
-        errorWard = 'Không thể tải danh sách phường/xã';
+        isLoadingDistricts  = false;
+        errorDistrict = 'Không thể tải danh sách phường/xã';
       });
     }
   }
@@ -200,8 +236,9 @@ class _FillProfileState extends State<FillProfile> {
     validGenderCheck(_selectedGender ?? "");
     validDateOfBirthCheck(calendarController.text);
     validProvinceCheck(_selectedProvince?.name ?? "");
-    validWardCheck(_selectedWard?.name ?? "");
     validAddressCheck(addressController.text);
+    validDistrictCheck(_selectedDistrict?.name ?? "");  // ✅ SỬA: không phải validWardCheck
+    validWardCheck(_selectedWard?.name ?? "");
 
     // ✅ Check mounted state
     if (!mounted) return;
@@ -221,6 +258,7 @@ class _FillProfileState extends State<FillProfile> {
         errorGender == null &&
         errorDoB == null &&
         errorProvince == null &&
+        errorDistrict == null &&
         errorWard == null &&
         errorAddress == null) {
 
@@ -236,7 +274,8 @@ class _FillProfileState extends State<FillProfile> {
 
         // ✅ Tạo object ViTri với cấu trúc mới (không có thanhPho)
         ViTri viTri = ViTri(
-          tinhThanh: _selectedProvince?.name, // ✅ Sử dụng tinhThanh thay vì thanhPho
+          thanhPho: _selectedProvince?.name, // ✅ Sử dụng tinhThanh thay vì thanhPho
+          quan: _selectedDistrict?.name,
           phuong: _selectedWard?.name,
           soNha: addressController.text,
         );
@@ -342,6 +381,12 @@ class _FillProfileState extends State<FillProfile> {
       }
     });
   }
+  void validDistrictCheck(String value) {
+    if (!mounted) return;
+    setState(() {
+      errorDistrict = value.isEmpty ? "Vui lòng chọn quận/huyện" : null;
+    });
+  }
 
   void validProvinceCheck(String value) {
     if (!mounted) return;
@@ -353,7 +398,7 @@ class _FillProfileState extends State<FillProfile> {
   void validWardCheck(String value) {
     if (!mounted) return;
     setState(() {
-      errorWard = value.isEmpty ? "Vui lòng chọn phường/xã" : null;
+      errorWard = value.isEmpty ? "Vui lòng chọn phường/xã" : null;  // ✅ SỬA: errorWard
     });
   }
 
@@ -538,7 +583,6 @@ class _FillProfileState extends State<FillProfile> {
     );
   }
 
-  // ✅ Address section đã cập nhật cho cấu trúc 2025
   Widget _buildAddressSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -565,12 +609,14 @@ class _FillProfileState extends State<FillProfile> {
           onChanged: (Province? newValue) {
             setState(() {
               _selectedProvince = newValue;
+              _selectedDistrict = null;
               _selectedWard = null;
-              wards = [];
+              districts  = [];
+              wards =[];
               validProvinceCheck(newValue?.name ?? "");
             });
             if (newValue != null) {
-              loadWards(newValue.code);
+              loadDistricts(newValue.id);
             }
           },
         ),
@@ -578,6 +624,27 @@ class _FillProfileState extends State<FillProfile> {
         const SizedBox(height: 15),
 
         // Dropdown phường/xã
+        _buildDropdown<District>(
+          hint: 'Chọn quận/huyện',
+          value: _selectedDistrict,
+          items: districts,
+          getLabel: (district) => district.name,
+          isLoading: isLoadingDistricts ,
+          errorText: errorDistrict,
+          enabled: _selectedProvince != null,
+          onChanged: (District? newValue) {
+            setState(() {
+              _selectedDistrict = newValue;
+              _selectedWard = null;
+              wards = [];
+              validDistrictCheck(newValue?.name ?? "");
+            });
+            if (newValue != null) {
+              loadWards(newValue.id);
+            }
+          },
+        ),
+        const SizedBox(height: 15),
         _buildDropdown<Ward>(
           hint: 'Chọn phường/xã',
           value: _selectedWard,
@@ -585,7 +652,7 @@ class _FillProfileState extends State<FillProfile> {
           getLabel: (ward) => ward.name,
           isLoading: isLoadingWards,
           errorText: errorWard,
-          enabled: _selectedProvince != null,
+          enabled: _selectedDistrict != null,
           onChanged: (Ward? newValue) {
             setState(() {
               _selectedWard = newValue;
@@ -599,7 +666,6 @@ class _FillProfileState extends State<FillProfile> {
         TextFormField(
           controller: addressController,
           onChanged: validAddressCheck,
-          style: TextStyle(fontFamily: 'Lato Semibold'),
           decoration: InputDecoration(
             errorText: errorAddress,
             filled: true,
@@ -625,7 +691,7 @@ class _FillProfileState extends State<FillProfile> {
         ),
 
         // Hiển thị địa chỉ đầy đủ
-        if (_selectedProvince != null || _selectedWard != null || addressController.text.isNotEmpty)
+        if (_selectedProvince != null || _selectedDistrict != null || _selectedWard != null || addressController.text.isNotEmpty)
           Container(
             margin: EdgeInsets.only(top: 15),
             padding: EdgeInsets.all(12),
@@ -649,6 +715,7 @@ class _FillProfileState extends State<FillProfile> {
                   [
                     if (addressController.text.isNotEmpty) addressController.text,
                     _selectedWard?.name,
+                    _selectedDistrict?.name,
                     _selectedProvince?.name,
                   ].where((e) => e != null && e.isNotEmpty).join(', '),
                   style: TextStyle(color: Colors.blue[700]),

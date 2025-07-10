@@ -44,7 +44,6 @@ class _SearchViewState extends State<SearchView> {
     'Sapa',
   ];
 
-
   @override
   void initState() {
     super.initState();
@@ -72,8 +71,9 @@ class _SearchViewState extends State<SearchView> {
       SearchHotels(
         tenKhachSan: tenKhachSan,
         loaiLoc: useCurrentFilters ? _currentFilters['sortBy'] : null,
-        tinhThanh: useCurrentFilters ? _currentFilters['tinhThanh'] : null,
-        phuongXa: useCurrentFilters ? _currentFilters['phuongXa'] : null,
+        // ✅ CẬP NHẬT: Đổi từ tinhThanh/phuongXa sang thanhPho/quan
+        thanhPho: useCurrentFilters ? _currentFilters['thanhPho'] : null,
+        quan: useCurrentFilters ? _currentFilters['quan'] : null,
         minPrice: useCurrentFilters ? _currentFilters['minPrice']?.toDouble() : null,
         maxPrice: useCurrentFilters ? _currentFilters['maxPrice']?.toDouble() : null,
         guests: useCurrentFilters ? _currentFilters['guests'] : null,
@@ -81,7 +81,6 @@ class _SearchViewState extends State<SearchView> {
         checkIn: useCurrentFilters ? _currentFilters['checkIn'] : null,
         checkOut: useCurrentFilters ? _currentFilters['checkOut'] : null,
         bookingType: useCurrentFilters ? _currentFilters['bookingType'] : null,
-
       ),
     );
   }
@@ -150,24 +149,6 @@ class _SearchViewState extends State<SearchView> {
         _showResults = true;
       });
 
-      // ✅ Gọi API với filterType
-      // context.read<HotelSearchBloc>().add(
-      //   SearchHotels(
-      //     loaiLoc: filterType,
-      //     // Giữ lại keyword nếu có
-      //     tenKhachSan: _searchController.text.isNotEmpty ? _searchController.text : null,
-      //     // Include current filters if any
-      //     tinhThanh: _currentFilters['tinhThanh'],
-      //     phuongXa: _currentFilters['phuongXa'],
-      //     minPrice: _currentFilters['minPrice'],
-      //     maxPrice: _currentFilters['maxPrice'],
-      //     guests: _currentFilters['guests'],
-      //     rooms: _currentFilters['rooms'],
-      //     checkIn: _currentFilters['checkIn'],
-      //     checkOut: _currentFilters['checkOut'],
-      //     bookingType: _currentFilters['bookingType'],
-      //   ),
-      // );
       _performSearch(
         loaiLoc: filterType,
         tenKhachSan: _searchController.text.isNotEmpty ? _searchController.text : null,
@@ -181,45 +162,44 @@ class _SearchViewState extends State<SearchView> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder:
-          (context) => FilterModal(
-            currentFilters: _currentFilters,
-            onFiltersApplied: (filters) {
-              print('🔧 Applying filters: $filters');
+      builder: (context) => FilterModal(
+        currentFilters: _currentFilters,
+        onFiltersApplied: (filters) {
+          print('🔧 Applying filters: $filters');
 
-              // ✅ Lưu filters và gọi BLoC search
-              setState(() {
-                _currentFilters = filters;
-                _showResults = true;
-              });
+          // ✅ Lưu filters và gọi BLoC search
+          setState(() {
+            _currentFilters = filters;
+            _showResults = true;
+          });
 
-              // ✅ CHỈ GỌI BLOC TẠI ĐÂY - với đầy đủ parameters
-              context.read<HotelSearchBloc>().add(
-                SearchHotels(
-                  tenKhachSan: _searchController.text.isNotEmpty ? _searchController.text : null,
-                  loaiLoc: filters['sortBy'],
-                  tinhThanh: filters['tinhThanh'],
-                  phuongXa: filters['phuongXa'],
-                  minPrice: filters['minPrice']?.toDouble(),
-                  maxPrice: filters['maxPrice']?.toDouble(),
-                  guests: filters['guests'],
-                  rooms: filters['rooms'],
-                  checkIn: filters['checkIn'],
-                  checkOut: filters['checkOut'],
-                  bookingType: filters['bookingType'],
-                ),
-              );
-            },
-            onReset: () {
-              // Reset filters và về initial state
-              setState(() {
-                _currentFilters = {};
-                _showResults = false;
-                _searchController.clear();
-                _selectedFilter = 'All Hotel';
-              });
-            },
-          ),
+          // ✅ CẬP NHẬT: Đổi từ tinhThanh/phuongXa sang thanhPho/quan
+          context.read<HotelSearchBloc>().add(
+            SearchHotels(
+              tenKhachSan: _searchController.text.isNotEmpty ? _searchController.text : null,
+              loaiLoc: filters['sortBy'],
+              thanhPho: filters['thanhPho'],
+              quan: filters['quan'],
+              minPrice: filters['minPrice']?.toDouble(),
+              maxPrice: filters['maxPrice']?.toDouble(),
+              guests: filters['guests'],
+              rooms: filters['rooms'],
+              checkIn: filters['checkIn'],
+              checkOut: filters['checkOut'],
+              bookingType: filters['bookingType'],
+            ),
+          );
+        },
+        onReset: () {
+          // Reset filters và về initial state
+          setState(() {
+            _currentFilters = {};
+            _showResults = false;
+            _searchController.clear();
+            _selectedFilter = 'All Hotel';
+          });
+        },
+      ),
     );
   }
 
@@ -364,26 +344,22 @@ class _SearchViewState extends State<SearchView> {
                         Expanded(
                           child: RefreshIndicator(
                             onRefresh: () async => _refreshSearch(),
-                            child:
-
-                                  state.hotels.isEmpty
-                                    ? _buildEmptyResults()
-                                    : HotelListWidget(
-                                    currentFilter: _currentFilters,
-                                      hotels: state.hotels,
-                                      totalResults: state.hotels.length,
-                                      scrollController: _scrollController,
-                                      onHotelTap: (hotel) {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder:
-                                                (context) =>
-                                                DetailScreen(hotel: hotel),
-                                          ),
-                                        );
-                                      },
-                                    ),
+                            child: state.hotels.isEmpty
+                                ? _buildEmptyResults()
+                                : HotelListWidget(
+                              currentFilter: _currentFilters,
+                              hotels: state.hotels,
+                              totalResults: state.hotels.length,
+                              scrollController: _scrollController,
+                              onHotelTap: (hotel) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => DetailScreen(hotel: hotel),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ],
@@ -517,11 +493,11 @@ class _SearchViewState extends State<SearchView> {
       );
     }
 
-    // Location filter
-    if (_currentFilters['tinhThanh'] != null) {
-      String locationText = _currentFilters['tinhThanh'];
-      if (_currentFilters['phuongXa'] != null) {
-        locationText = '${_currentFilters['phuongXa']}, $locationText';
+    // ✅ CẬP NHẬT: Location filter - đổi từ tinhThanh/phuongXa sang thanhPho/quan
+    if (_currentFilters['thanhPho'] != null) {
+      String locationText = _currentFilters['thanhPho'];
+      if (_currentFilters['quan'] != null) {
+        locationText = '${_currentFilters['quan']}, $locationText';
       }
       activeFilters.add(
         _buildFilterChip(
@@ -529,8 +505,8 @@ class _SearchViewState extends State<SearchView> {
           icon: Icons.location_on,
           onRemove: () {
             setState(() {
-              _currentFilters.remove('tinhThanh');
-              _currentFilters.remove('phuongXa');
+              _currentFilters.remove('thanhPho');
+              _currentFilters.remove('quan');
             });
             _refreshSearch();
           },
@@ -619,16 +595,8 @@ class _SearchViewState extends State<SearchView> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.clear_all, size: 16, color: Colors.red[600]),
+                  Icon(Icons.playlist_remove_rounded, size: 16, color: Colors.red[600]),
                   SizedBox(width: 4),
-                  Text(
-                    'Xóa tất cả',
-                    style: TextStyle(
-                      color: Colors.red[600],
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -637,7 +605,6 @@ class _SearchViewState extends State<SearchView> {
       ),
     );
   }
-
 
   Widget _buildFilterChip({
     required String label,
@@ -759,36 +726,35 @@ class _SearchViewState extends State<SearchView> {
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children:
-                    ['Đà Nẵng', 'Hà Nội', 'Hồ Chí Minh'].map((suggestion) {
-                      return GestureDetector(
-                        onTap: () {
-                          _searchController.text = suggestion;
-                          _onSearchChanged(suggestion);
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Color(0xFF1565C0).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Color(0xFF1565C0).withOpacity(0.3),
-                            ),
-                          ),
-                          child: Text(
-                            suggestion,
-                            style: TextStyle(
-                              color: Color(0xFF1565C0),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+                children: ['Đà Nẵng', 'Hà Nội', 'Hồ Chí Minh'].map((suggestion) {
+                  return GestureDetector(
+                    onTap: () {
+                      _searchController.text = suggestion;
+                      _onSearchChanged(suggestion);
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Color(0xFF1565C0).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Color(0xFF1565C0).withOpacity(0.3),
                         ),
-                      );
-                    }).toList(),
+                      ),
+                      child: Text(
+                        suggestion,
+                        style: TextStyle(
+                          color: Color(0xFF1565C0),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
 
               // ✅ Clear filters suggestion nếu có filters active

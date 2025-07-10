@@ -1,8 +1,10 @@
 import 'KhachSan.dart';
 
 class SearchInfo {
-  String? tinhThanh;
-  String? phuongXa;
+  // ✅ CHỈ SỬA: Đổi tên theo API mới
+  String? thanhPho; // Trước đây là tinhThanh
+  String? quan; // Trước đây là phuongXa
+
   PriceRange? priceRange;
   int? guests;
   int? rooms;
@@ -11,8 +13,8 @@ class SearchInfo {
   String? bookingType;
 
   SearchInfo({
-    this.tinhThanh,
-    this.phuongXa,
+    this.thanhPho,
+    this.quan,
     this.priceRange,
     this.guests,
     this.rooms,
@@ -23,8 +25,8 @@ class SearchInfo {
 
   factory SearchInfo.fromJson(Map<String, dynamic> json) {
     return SearchInfo(
-      tinhThanh: json['tinhThanh'],
-      phuongXa: json['phuongXa'],
+      thanhPho: json['thanhPho'],
+      quan: json['quan'],
       priceRange: json['priceRange'] != null
           ? PriceRange.fromJson(json['priceRange'])
           : null,
@@ -38,8 +40,8 @@ class SearchInfo {
 
   Map<String, dynamic> toJson() {
     return {
-      'tinhThanh': tinhThanh,
-      'phuongXa': phuongXa,
+      'thanhPho': thanhPho,
+      'quan': quan,
       'priceRange': priceRange?.toJson(),
       'guests': guests,
       'rooms': rooms,

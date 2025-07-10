@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class SearchBarWidget extends StatelessWidget {
+class SearchBarWidget extends StatefulWidget {
   final TextEditingController controller;
   final Function(String) onChanged;
   final VoidCallback onFilterTap;
@@ -11,6 +11,37 @@ class SearchBarWidget extends StatelessWidget {
     required this.onChanged,
     required this.onFilterTap,
   });
+
+  @override
+  _SearchBarWidgetState createState() => _SearchBarWidgetState();
+
+
+}
+class _SearchBarWidgetState extends State<SearchBarWidget>{
+  final FocusNode _focusNode = FocusNode();
+  bool _onTapRemove = false;
+
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(_handleOnTapRemoveChange);
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_handleOnTapRemoveChange);
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _handleOnTapRemoveChange(){
+    setState(() {
+      _onTapRemove = _focusNode.hasFocus;
+    });
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -29,21 +60,30 @@ class SearchBarWidget extends StatelessWidget {
                 ),
               ),
               child: TextField(
-                controller: controller,
-                onChanged: onChanged,
-                decoration: const InputDecoration(
+                controller: widget.controller,
+                onChanged: widget.onChanged,
+                decoration: InputDecoration(
                   hintText: 'Hotel',
-                  hintStyle: TextStyle(
+                  hintStyle: const TextStyle(
                     color: Colors.grey,
                     fontSize: 16,
                   ),
-                  prefixIcon: Icon(
+                  prefixIcon: const Icon(
                     Icons.search,
                     color: Colors.grey,
                     size: 20,
                   ),
+                  suffixIcon: AnimatedRotation(
+                    duration: Duration(milliseconds: 300),
+                    turns: _onTapRemove ? 0.25 : 0,
+                    child: IconButton(
+                        onPressed: widget.controller.clear,
+                        icon: Icon(Icons.highlight_remove_outlined,color: Colors.red, size: 20,),
+
+                    ),
+                  ),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(
+                  contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,
                   ),
@@ -57,7 +97,7 @@ class SearchBarWidget extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           GestureDetector(
-            onTap: onFilterTap,
+            onTap: widget.onFilterTap,
             child: Container(
               width: 48,
               height: 48,

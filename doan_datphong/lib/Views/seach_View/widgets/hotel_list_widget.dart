@@ -23,24 +23,41 @@ class HotelListWidget extends StatelessWidget {
     this.currentFilter
   });
 
+  // Map<String,dynamic> _initDateSendToSelectDateScreen(){
+  //   Map<String,dynamic> result =({
+  //     "initialCheckIn": currentFilter?['checkIn'], // String date
+  //     "initialCheckOut": currentFilter?['checkOut'], // String date
+  //     "initialAdults": currentFilter?['guests1'] ?? 2,
+  //     "initialChildren": currentFilter?['children'] ?? 0,
+  //     "initialRooms": currentFilter?['rooms'] ?? 1,
+  //     "bookingType": currentFilter?['bookingType'], // String
+  //   });
+  //
+  //   print("Kiem tra dữ liệu lọc trong hotelListWidget: $result");
+  //   return result;
+  // }
   Map<String,dynamic> _initDateSendToSelectDateScreen(){
     Map<String,dynamic> result =({
       "initialCheckIn": currentFilter?['checkIn'], // String date
       "initialCheckOut": currentFilter?['checkOut'], // String date
-      "initialAdults": currentFilter?['guests'] ?? 2,
-      "initialChildren": 0,
+      "initialAdults": currentFilter?['guests1'] ?? 2,
+      "initialChildren": currentFilter?['children'] ?? 0,
       "initialRooms": currentFilter?['rooms'] ?? 1,
-      "initialBookingType": currentFilter?['bookingType'], // String
+      "bookingType": currentFilter?['bookingType'], // String
     });
+
+    print("Kiem tra dữ liệu lọc trong hotelListWidget: $result");
     return result;
   }
 
-
-  Future<void> _onTapAHotel(BuildContext context, KhachSan hotel) async {
+  Future<void> _onTapAHotelHasData(BuildContext context, KhachSan hotel) async {
     // Kiểm tra có filters không
     bool hasFilters = currentFilter != null &&
         currentFilter!['checkIn'] != null &&
         currentFilter!['checkOut'] != null;
+
+    print("Kiem tra dữ liệu lọc trong hotelListWidget: : ${_initDateSendToSelectDateScreen()}");
+
 
     if (hasFilters) {
       // ✅ Có filters → Đi thẳng SelectDateScreen
@@ -70,7 +87,7 @@ class HotelListWidget extends StatelessWidget {
 
   // ✅ Sửa method navigate
   void _navigateToHotelDetail(BuildContext context, KhachSan hotel) {
-    _onTapAHotel(context, hotel);
+    _onTapAHotelHasData(context, hotel);
   }
 
 
@@ -259,7 +276,10 @@ class HotelListWidget extends StatelessWidget {
 
           // Hotel info
           GestureDetector(
-            onTap: () => _navigateToHotelDetail(context,hotel),
+            onTap: () => {
+              _navigateToHotelDetail(context,hotel),
+              print("Khách sạn đã chọn: ${hotel.tenKhachSan}"),
+            },
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -384,7 +404,10 @@ class HotelListWidget extends StatelessWidget {
 
                       // View details button
                       GestureDetector(
-                        onTap:() => _navigateToHotelDetail(context, hotel),
+                        onTap:() => {
+                          _navigateToHotelDetail(context, hotel),
+                          print("Khách sạn đã chọn: ${hotel.tenKhachSan}"),
+                        },
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(

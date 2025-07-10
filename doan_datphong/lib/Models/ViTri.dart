@@ -1,48 +1,98 @@
-
-
 class ViTri {
-  String? soNha;
-  String? tenDuong;
-  String? phuong;
+  // ✅ CẤU TRÚC MỚI: theo database và API mới
+  String? thanhPho;     // Thành phố (Hồ Chí Minh, Hà Nội, Đà Nẵng...)
+  String? quan;         // Quận/Huyện (Quận 1, Quận 2, Huyện Củ Chi...)
+  String? phuong;       // Phường/Xã (Phường Bến Nghé, Xã Tân An...)
+  String? soNha;        // Số nhà, tên đường
+  String? quocGia;      // Quốc gia
 
-  String? tinhThanh;
-  String? quocGia;
+  // ✅ BACKWARD COMPATIBILITY: Giữ lại để không break code cũ
+  String? tinhThanh;    // Deprecated - map to thanhPho
+  String? tenDuong;     // Deprecated - merge vào soNha
 
   ViTri({
-    this.soNha,
-    this.tenDuong,
+    this.thanhPho,
+    this.quan,
     this.phuong,
-    this.tinhThanh,
+    this.soNha,
     this.quocGia = "Việt Nam",
-  });
 
+    // Deprecated fields
+    this.tinhThanh,
+    this.tenDuong,
+  }) {
+    // ✅ AUTO MIGRATION: Nếu có data cũ, tự động chuyển đổi
+    if (thanhPho == null && tinhThanh != null && tinhThanh!.isNotEmpty) {
+      thanhPho = tinhThanh;
+    }
+
+    // ✅ Merge tenDuong vào soNha nếu cần
+    if (tenDuong != null && tenDuong!.isNotEmpty) {
+      if (soNha != null && soNha!.isNotEmpty) {
+        soNha = '$soNha, $tenDuong';
+      } else {
+        soNha = tenDuong;
+      }
+    }
+  }
+
+  // ✅ CONSTRUCTOR từ JSON với auto migration
   factory ViTri.fromJson(Map<String, dynamic> json) {
     return ViTri(
-      quocGia: json['quocGia'] ?? '',
-      phuong: json['phuong'] ?? '',
-      tenDuong: json['tenDuong'] ?? '',
-      tinhThanh: json ['tinhThanh'],
-      soNha: json['soNha'] ?? '',
+      // ✅ Ưu tiên cấu trúc mới
+      thanhPho: json['thanhPho'] ?? json['tinhThanh'],
+      quan: json['quan'],
+      phuong: json['phuong'],
+      soNha: json['soNha'],
+      quocGia: json['quocGia'] ?? "Việt Nam",
+
+      // ✅ Backward compatibility
+      tinhThanh: json['tinhThanh'],
+      tenDuong: json['tenDuong'],
     );
   }
 
+  // ✅ TO JSON - xuất cấu trúc mới
   Map<String, dynamic> toJson() {
     return {
-      'quocGia': quocGia,
+      'thanhPho': thanhPho,
+      'quan': quan,
       'phuong': phuong,
-      'tenDuong': tenDuong,
       'soNha': soNha,
-      'tinhThanh':tinhThanh
+      'quocGia': quocGia,
+
+      // ✅ Cũng xuất tinhThanh để backward compatibility
+      'tinhThanh': thanhPho ?? tinhThanh,
     };
   }
 
+  // ✅ FIX: Địa chỉ đầy đủ với logic đúng
   String get diaChiDayDu {
     List<String> parts = [];
+
     if (soNha?.isNotEmpty == true) parts.add(soNha!);
     if (phuong?.isNotEmpty == true) parts.add(phuong!);
-    if (tinhThanh?.isEmpty == true) parts.add(tinhThanh!);
-    if (quocGia?.isNotEmpty == true) parts.add(quocGia!);
+    if (quan?.isNotEmpty == true) parts.add(quan!);
+    if (thanhPho?.isNotEmpty == true) parts.add(thanhPho!);
+    // ✅ FIX: Chỉ thêm quốc gia nếu không phải Việt Nam
+    if (quocGia?.isNotEmpty == true && quocGia != "Việt Nam") {
+      parts.add(quocGia!);
+    }
+
     return parts.join(', ');
+  }
+
+  // ✅ HELPER: Địa chỉ ngắn gọn
+  String get diaChiNganGon {
+    List<String> parts = [];
+    if (quan?.isNotEmpty == true) parts.add(quan!);
+    if (thanhPho?.isNotEmpty == true) parts.add(thanhPho!);
+    return parts.join(', ');
+  }
+
+  // ✅ HELPER: Check completeness
+  bool get isComplete {
+    return thanhPho?.isNotEmpty == true && quan?.isNotEmpty == true;
   }
 
   @override

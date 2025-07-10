@@ -26,6 +26,7 @@ class _FilterModalState extends State<FilterModal> {
   late Map<String, dynamic> _filters;
 
   final List<String> _sortOptions = ['Highest Popularity', 'Highest Price', 'Lowest Price'];
+
   // Filter values
   int _adults = 2;
   int _children = 0;
@@ -34,17 +35,17 @@ class _FilterModalState extends State<FilterModal> {
   DateTime? checkOutDate;
   String? _bookingType;
 
-  // Location
-  Province? _selectedProvince;
-  Ward? _selectedWard;
+  // ✅ CẬP NHẬT: Location theo cấu trúc mới
+  Province? _selectedProvince;    // Thành phố
+  District? _selectedDistrict;    // Quận/Huyện
   List<Province> provinces = [];
-  List<Ward> wards = [];
+  List<District> districts = [];
 
   // Loading states
   bool isLoadingProvinces = true;
-  bool isLoadingWards = false;
+  bool isLoadingDistricts = false;
   String? errorProvince;
-  String? errorWard;
+  String? errorDistrict;
 
   @override
   void initState() {
@@ -57,6 +58,7 @@ class _FilterModalState extends State<FilterModal> {
 
     // Initialize from currentFilters
     _adults = _filters['guests'] ?? 2;
+    _children = _filters['children'] ?? 0;
     _rooms = _filters['rooms'] ?? 1;
     if (_filters['checkIn'] != null && _filters['checkIn'] is String) {
       checkInDate = DateTimeHelper.formatStringToDateTime(_filters['checkIn']);
@@ -88,24 +90,25 @@ class _FilterModalState extends State<FilterModal> {
     }
   }
 
-  Future<void> loadWards(String districtCode) async {
+  // ✅ CẬP NHẬT: Load districts thay vì wards
+  Future<void> loadDistricts(String provinceId) async {
     try {
       setState(() {
-        isLoadingWards = true;
-        wards = [];
-        _selectedWard = null;
-        errorWard = null;
+        isLoadingDistricts = true;
+        districts = [];
+        _selectedDistrict = null;
+        errorDistrict = null;
       });
 
-      final loadedWards = await AddressService.getWards(districtCode);
+      final loadedDistricts = await AddressService.getDistricts(provinceId);
       setState(() {
-        wards = loadedWards;
-        isLoadingWards = false;
+        districts = loadedDistricts;
+        isLoadingDistricts = false;
       });
     } catch (e) {
       setState(() {
-        isLoadingWards = false;
-        errorWard = 'Không thể tải danh sách phường/xã';
+        isLoadingDistricts = false;
+        errorDistrict = 'Không thể tải danh sách quận/huyện';
       });
     }
   }
@@ -155,7 +158,6 @@ class _FilterModalState extends State<FilterModal> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // _buildSortSection(),
                   const SizedBox(height: 24),
                   _buildLocationSection(),
                   const SizedBox(height: 24),
@@ -226,59 +228,6 @@ class _FilterModalState extends State<FilterModal> {
           ),
         ],
       ),
-    );
-  }
-
-
-  Widget _buildSortSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          S.of(context).sortResults,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: _sortOptions.map((option) {
-            final isSelected = _filters['sortBy'] == option;
-            return FilterChip(
-              label: Text(
-                option,
-                style: TextStyle(
-                  color: isSelected ? Colors.white : const Color(0xFF1565C0),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              selected: isSelected,
-              onSelected: (selected) {
-                setState(() {
-                  if(selected){
-                    _filters['sortBy'] = option;
-                  }else{
-                    _filters['sortBy'] = "";
-                  }
-                });
-              },
-              backgroundColor: Colors.white,
-              selectedColor: const Color(0xFF1565C0),
-              checkmarkColor: Colors.white,
-              side: const BorderSide(
-                color: Color(0xFF1565C0),
-                width: 1,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
     );
   }
 
@@ -536,6 +485,7 @@ class _FilterModalState extends State<FilterModal> {
     );
   }
 
+  // ✅ CẬP NHẬT: Location section với thành phố/quận
   Widget _buildLocationSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -556,21 +506,21 @@ class _FilterModalState extends State<FilterModal> {
         ),
         const SizedBox(height: 16),
 
-        // Province Dropdown
+        // ✅ Province Dropdown (Thành phố)
         _buildDropdown<Province>(
-          hint: 'Chọn Tỉnh/Thành phố',
+          hint: 'Chọn Thành phố',
           value: _selectedProvince,
           items: provinces,
           getLabel: (province) => province.name,
           onChanged: (province) {
             setState(() {
               _selectedProvince = province;
-              _selectedWard = null;
-              wards = [];
+              _selectedDistrict = null;
+              districts = [];
             });
 
             if (province != null) {
-              loadWards(province.code);
+              loadDistricts(province.id);
             }
           },
           isLoading: isLoadingProvinces,
@@ -579,24 +529,24 @@ class _FilterModalState extends State<FilterModal> {
 
         const SizedBox(height: 12),
 
-        // Ward Dropdown
-        _buildDropdown<Ward>(
-          hint: 'Chọn Phường/Xã',
-          value: _selectedWard,
-          items: wards,
-          getLabel: (ward) => ward.name,
-          onChanged: (ward) {
+        // ✅ District Dropdown (Quận/Huyện)
+        _buildDropdown<District>(
+          hint: 'Chọn Quận/Huyện',
+          value: _selectedDistrict,
+          items: districts,
+          getLabel: (district) => district.name,
+          onChanged: (district) {
             setState(() {
-              _selectedWard = ward;
+              _selectedDistrict = district;
             });
           },
-          isLoading: isLoadingWards,
-          errorText: errorWard,
+          isLoading: isLoadingDistricts,
+          errorText: errorDistrict,
           enabled: _selectedProvince != null,
         ),
 
         // Location Summary
-        if (_selectedProvince != null || _selectedWard != null)
+        if (_selectedProvince != null || _selectedDistrict != null)
           Padding(
             padding: const EdgeInsets.only(top: 12),
             child: Container(
@@ -632,9 +582,10 @@ class _FilterModalState extends State<FilterModal> {
     );
   }
 
+  // ✅ CẬP NHẬT: Location summary
   String _buildLocationSummary() {
     List<String> parts = [];
-    if (_selectedWard != null) parts.add(_selectedWard!.name);
+    if (_selectedDistrict != null) parts.add(_selectedDistrict!.name);
     if (_selectedProvince != null) parts.add(_selectedProvince!.name);
     return parts.isNotEmpty ? parts.join(', ') : '';
   }
@@ -642,8 +593,8 @@ class _FilterModalState extends State<FilterModal> {
   void _clearLocationSelection() {
     setState(() {
       _selectedProvince = null;
-      _selectedWard = null;
-      wards = [];
+      _selectedDistrict = null;
+      districts = [];
     });
   }
 
@@ -819,7 +770,6 @@ class _FilterModalState extends State<FilterModal> {
     );
   }
 
-
   Future<void> _selectCheckInDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -841,7 +791,6 @@ class _FilterModalState extends State<FilterModal> {
       });
     }
   }
-
 
   Future<void> _selectCheckOutDate(BuildContext context) async {
     DateTime firstDate = checkInDate != null
@@ -865,7 +814,6 @@ class _FilterModalState extends State<FilterModal> {
     }
   }
 
-
   int _calculateNights() {
     if (checkInDate != null && checkOutDate != null) {
       return checkOutDate!.difference(checkInDate!).inDays;
@@ -888,19 +836,18 @@ class _FilterModalState extends State<FilterModal> {
     }
   }
 
-
   //--------------------------------------------
 
-  // ✅ Build search parameters từ current filters
+  // ✅ CẬP NHẬT: Build search parameters từ current filters
   Map<String, dynamic> _buildSearchParams() {
     final params = <String, dynamic>{};
 
-    // Location
+    // ✅ Location - đổi từ tinhThanh/phuongXa sang thanhPho/quan
     if (_selectedProvince != null) {
-      params['tinhThanh'] = _selectedProvince!.name;
+      params['thanhPho'] = _selectedProvince!.name;
     }
-    if (_selectedWard != null) {
-      params['phuongXa'] = _selectedWard!.name;
+    if (_selectedDistrict != null) {
+      params['quan'] = _selectedDistrict!.name;
     }
 
     // Price range
@@ -912,6 +859,8 @@ class _FilterModalState extends State<FilterModal> {
 
     // Guests and rooms
     params['guests'] = _adults + _children;
+    params['guests1'] = _adults;
+    params['children'] = _children;
     params['rooms'] = _rooms;
 
     // Dates
@@ -937,8 +886,8 @@ class _FilterModalState extends State<FilterModal> {
         'priceRange': {'min': 100000.0, 'max': 2000000.0},
       };
       _selectedProvince = null;
-      _selectedWard = null;
-      wards = [];
+      _selectedDistrict = null;
+      districts = [];
       _adults = 2;
       _children = 0;
       _rooms = 1;
@@ -946,7 +895,6 @@ class _FilterModalState extends State<FilterModal> {
       checkInDate = null;
       checkOutDate = null;
       _bookingType = null;
-
     });
 
     if (widget.onReset != null) {

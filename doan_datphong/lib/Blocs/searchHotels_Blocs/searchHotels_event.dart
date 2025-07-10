@@ -1,9 +1,13 @@
 abstract class HotelSearchEvent {}
+
 class SearchHotels extends HotelSearchEvent {
   final String? loaiLoc;
   final String? tenKhachSan;
-  final String? tinhThanh;
-  final String? phuongXa;
+
+  // ✅ CHỈ SỬA: Đổi tên theo API mới
+  final String? thanhPho;      // Trước đây là tinhThanh
+  final String? quan;          // Trước đây là phuongXa
+
   final double? minPrice;
   final double? maxPrice;
   final int? guests;
@@ -15,8 +19,8 @@ class SearchHotels extends HotelSearchEvent {
   SearchHotels({
     this.loaiLoc,
     this.tenKhachSan,
-    this.tinhThanh,
-    this.phuongXa,
+    this.thanhPho,
+    this.quan,
     this.minPrice,
     this.maxPrice,
     this.guests,
@@ -28,6 +32,16 @@ class SearchHotels extends HotelSearchEvent {
 
   @override
   List<Object?> get props => [
-    loaiLoc ,tenKhachSan, tinhThanh, phuongXa, minPrice, maxPrice, guests, rooms, checkIn, checkOut, bookingType
+    loaiLoc,
+    tenKhachSan,
+    thanhPho,
+    quan,
+    minPrice,
+    maxPrice,
+    guests,
+    rooms,
+    checkIn,
+    checkOut,
+    bookingType
   ];
 }

@@ -183,7 +183,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       }
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      String userID = prefs.getString("user_id") ?? '';
+      String userID = prefs.getString("_id") ?? '';
       String? hotelID = prefs.getString("hotel_id");
       String? userStd = prefs.getString("user_std") ?? '';
 

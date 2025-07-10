@@ -13,5 +13,5 @@ class IPv4 {
 
 
     //Ngrok
-    static const String IP_CURRENT = "https://76a94e0f5149.ngrok-free.app";
+    static const String IP_CURRENT = "https://a0353b9a4806.ngrok-free.app";
 }

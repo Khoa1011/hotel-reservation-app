@@ -16,15 +16,20 @@ import 'widgets/amenities_section.dart';
 
 class DetailScreen extends StatefulWidget {
   final KhachSan hotel;
+  final Map<String, dynamic>? result;
 
 
-  const DetailScreen({Key? key, required this.hotel}) : super(key: key);
+  const DetailScreen({Key? key, required this.hotel,
+  this.result}) : super(key: key);
 
   @override
   _DetailState createState() => _DetailState();
 }
 
 class _DetailState extends State<DetailScreen> {
+
+
+
   String _selecteDateCheckInShowText = "";
   String _selecteDateCheckOutShowText = "";
   bool _isCheckingAvailability = false;
@@ -51,6 +56,7 @@ class _DetailState extends State<DetailScreen> {
   void initState() {
     super.initState();
     _saveHotelId();
+
   }
 
   // ✅ Sử dụng didChangeDependencies
@@ -62,7 +68,33 @@ class _DetailState extends State<DetailScreen> {
     if (_selecteDateCheckInShowText.isEmpty) {
       _selecteDateCheckInShowText = S.of(context).selectDatesAndTimeCheckIn;
     }
+
+    if (widget.result != null) {
+      _loadResultData(widget.result!);
+    }
   }
+
+
+  void _loadResultData(Map<String, dynamic> result) {
+    setState(() {
+      _selecteDateCheckInShowText = result["dateCheckIn"] as String? ?? '';
+      _selecteDateCheckOutShowText = result["dateCheckOut"] as String? ?? '';
+      checkInDateRouter = result["checkInDateRouter"] as String? ?? '';
+      checkOutDateRouter = result["checkOutDateRouter"] as String? ?? '';
+
+      if(result["bookingType"]=="theo_gio"){
+        _bookingType = S.of(context).hourly;
+      }else if(result["bookingType"]=="qua_dem"){
+        _bookingType = S.of(context).overnight;
+      }else{
+        _bookingType = S.of(context).longDays;
+      }
+
+      _sendDataToListRoomType(result);
+    });
+  }
+
+
 
   Future<void> _saveHotelId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -89,40 +121,53 @@ class _DetailState extends State<DetailScreen> {
     print("thong tin lich phong trong: ${lichPhongTrong.gioNhanPhong}:${lichPhongTrong.gioTraPhong}");
   }
 
-
   Future<void> _showSelectedDateTime() async {
     final selectedDateTimeToNextScreen = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => SelectDateScreen()),
+      MaterialPageRoute(builder: (context) => SelectDateScreen(selectedHotel: widget.hotel,)),
     );
     print("Thong tin dat phong $selectedDateTimeToNextScreen");
     if (selectedDateTimeToNextScreen != null &&
         selectedDateTimeToNextScreen is Map<String, dynamic>) {
-      setState(() {
-        _selecteDateCheckInShowText =
-            selectedDateTimeToNextScreen["dateCheckIn"] as String? ?? '';
-        _selecteDateCheckOutShowText =
-            selectedDateTimeToNextScreen["dateCheckOut"] as String? ?? '';
-        checkInDateRouter =
-            selectedDateTimeToNextScreen["checkInDateRouter"] as String? ?? '';
-        checkOutDateRouter =
-            selectedDateTimeToNextScreen["checkOutDateRouter"] as String? ?? '';
 
-        if(selectedDateTimeToNextScreen["bookingType"]=="theo_gio"){
-          _bookingType =S.of(context).hourly;
-
-        }else if(selectedDateTimeToNextScreen["bookingType"]=="qua_dem"){
-          _bookingType =S.of(context).overnight;
-        }else{
-          _bookingType =S.of(context).longDays;
-        }
-
-        //
-        _sendDataToListRoomType(selectedDateTimeToNextScreen);
-        print(_sendDataToListRoomType(selectedDateTimeToNextScreen));
-      });
+      // ✅ SỬA: Dùng method _loadResultData thay vì setState trực tiếp
+      _loadResultData(selectedDateTimeToNextScreen);
     }
   }
+
+  // Future<void> _showSelectedDateTime() async {
+  //   final selectedDateTimeToNextScreen = await Navigator.push(
+  //     context,
+  //     MaterialPageRoute(builder: (context) => SelectDateScreen(selectedHotel: widget.hotel,)),
+  //   );
+  //   print("Thong tin dat phong $selectedDateTimeToNextScreen");
+  //   if (selectedDateTimeToNextScreen != null &&
+  //       selectedDateTimeToNextScreen is Map<String, dynamic>) {
+  //     setState(() {
+  //       _selecteDateCheckInShowText =
+  //           selectedDateTimeToNextScreen["dateCheckIn"] as String? ?? '';
+  //       _selecteDateCheckOutShowText =
+  //           selectedDateTimeToNextScreen["dateCheckOut"] as String? ?? '';
+  //       checkInDateRouter =
+  //           selectedDateTimeToNextScreen["checkInDateRouter"] as String? ?? '';
+  //       checkOutDateRouter =
+  //           selectedDateTimeToNextScreen["checkOutDateRouter"] as String? ?? '';
+  //
+  //       if(selectedDateTimeToNextScreen["bookingType"]=="theo_gio"){
+  //         _bookingType =S.of(context).hourly;
+  //
+  //       }else if(selectedDateTimeToNextScreen["bookingType"]=="qua_dem"){
+  //         _bookingType =S.of(context).overnight;
+  //       }else{
+  //         _bookingType =S.of(context).longDays;
+  //       }
+  //
+  //       //
+  //       _sendDataToListRoomType(selectedDateTimeToNextScreen);
+  //       print(_sendDataToListRoomType(selectedDateTimeToNextScreen));
+  //     });
+  //   }
+  // }
 
 
   // Future<bool> _validateRoomAvailability() async {
@@ -283,53 +328,102 @@ class _DetailState extends State<DetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 1000,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back,
+            color: Colors.black,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.favorite_border,
+              size: 28,
+              color: Color(0xFF525150),
+            ),
+            onPressed: () {
+              // TODO: Thêm logic yêu thích
+            },
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.bookmark_border_outlined,
+              size: 28,
+              color: Color(0xFF525150),
+            ),
+            onPressed: () {
+              // TODO: Thêm logic bookmark
+            },
+          ),
+        ],
+      ),
+
       body: Stack(
         children: [
           CustomScrollView(
             slivers: [
-              SliverAppBar(
-                expandedHeight: 270,
-                pinned: true,
-                flexibleSpace: Hero(
+              // ✅ HÌNH ẢNH HEADER: Không cần AppBar, chỉ là hình
+              SliverToBoxAdapter(
+                child: Hero(
                   tag: 'hotel-image-${widget.hotel.id}',
-                  child: Image.network(
-                    widget.hotel.hinhAnh,
-                    height: 300,
-                    fit: BoxFit.fill,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(color: Colors.grey);
-                    },
+                  child: Container(
+                    height: 270,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(16),
+                        bottomRight: Radius.circular(16),
+                      ),
+                      child: Image.network(
+                        widget.hotel.hinhAnh,
+                        height: 270,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.grey[300],
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.image_not_supported,
+                                  size: 50,
+                                  color: Colors.grey[500],
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'Không thể tải hình ảnh',
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ),
                 ),
-                actions: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.favorite_border,
-                      size: 30,
-                      color: Color(0xff9A9EAB),
-                    ),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.bookmark_border_outlined,
-                      size: 30,
-                      color: Color(0xff9A9EAB),
-                    ),
-                    onPressed: () {},
-                  ),
-                ],
               ),
+
+              // ✅ NỘI DUNG CHÍNH
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.only(
                     left: 16,
                     right: 16,
                     bottom: 100,
+                    top: 16,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // ✅ TÊN KHÁCH SẠN
                       Text(
                         widget.hotel.tenKhachSan,
                         style: const TextStyle(
@@ -339,6 +433,8 @@ class _DetailState extends State<DetailScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
+
+                      // ✅ ĐỊA CHỈ
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
@@ -359,6 +455,8 @@ class _DetailState extends State<DetailScreen> {
                         ],
                       ),
                       const SizedBox(height: 16),
+
+                      // ✅ RATING VÀ GIÁ
                       Row(
                         children: [
                           _buildRatingStars(widget.hotel.soSao),
@@ -376,7 +474,6 @@ class _DetailState extends State<DetailScreen> {
                           ),
                           Text(
                             "/ ${S.of(context).perNight}",
-
                             style: TextStyle(
                               color: Color(0xFF525150),
                               fontSize: 18,
@@ -386,10 +483,11 @@ class _DetailState extends State<DetailScreen> {
                       ),
                       const SizedBox(height: 24),
 
+                      // ✅ TIỆN ÍCH
                       AmenitiesSection(hotelId: widget.hotel.id),
-
                       const SizedBox(height: 24),
 
+                      // ✅ MÔ TẢ
                       Text(
                         S.of(context).description,
                         style: TextStyle(
@@ -399,11 +497,10 @@ class _DetailState extends State<DetailScreen> {
                       ),
                       const SizedBox(height: 8),
                       InkWell(
-                        onTap:
-                            () => _showDescriptionDialog(
-                              context,
-                              widget.hotel.moTa,
-                            ),
+                        onTap: () => _showDescriptionDialog(
+                          context,
+                          widget.hotel.moTa,
+                        ),
                         child: Text(
                           widget.hotel.moTa,
                           maxLines: 2,
@@ -412,6 +509,8 @@ class _DetailState extends State<DetailScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
+
+                      // ✅ VỊ TRÍ
                       Text(
                         S.of(context).locationHotel,
                         style: TextStyle(
@@ -432,8 +531,10 @@ class _DetailState extends State<DetailScreen> {
                       ),
 
                       const SizedBox(height: 24),
+
+                      // ✅ ĐÁNH GIÁ
                       ReviewsSection(hotelId: widget.hotel.id),
-                      const SizedBox(height: 80), // Thêm khoảng trống cho nút
+                      const SizedBox(height: 80),
                     ],
                   ),
                 ),

@@ -11,12 +11,12 @@ class HotelSearchRepository {
 
   // Tìm kiếm khách sạn
   Future<ApiResponse> searchHotels({
-
     String? loaiLoc, // Lọc All hotel, Recommended, Popular, Trending
     String? tenKhachSan,
-    // ===== ĐỊA ĐIỂM (THEO API 2025) =====
-    String? tinhThanh,    // API: tinhThanh
-    String? phuongXa,     // API: phuongXa
+
+    // ===== ĐỊA ĐIỂM (CHỈ SỬA TÊN THEO API MỚI) =====
+    String? thanhPho,     // API: thanhPho (trước đây là tinhThanh)
+    String? quan,         // API: quan (trước đây là phuongXa)
 
     // ===== GIÁ CẢ =====
     double? minPrice,     // API: minPrice (VND)
@@ -32,22 +32,23 @@ class HotelSearchRepository {
     String? bookingType,  // API: bookingType ('theo_gio', 'qua_dem', 'dai_ngay')
   }) async {
     try {
-      // ✅ BUILD QUERY PARAMETERS - CHỈ NHỮNG GÌ API HỖ TRỢ
+      // ✅ BUILD QUERY PARAMETERS - CHỈ SỬA TÊN PARAMETER
       Map<String, String> queryParams = {};
 
       if (tenKhachSan != null && tenKhachSan.isNotEmpty) {
         queryParams['keyword'] = tenKhachSan;
         print('🔍 DEBUG: Adding tenKhachSan = $tenKhachSan');
       }
-      // Địa điểm theo cấu trúc 2025
-      if (tinhThanh != null && tinhThanh.trim().isNotEmpty) {
-        queryParams['tinhThanh'] = tinhThanh.trim();
-        print('🔍 DEBUG: Adding tinhThanh = $tinhThanh');
+
+      // ✅ CHỈ SỬA: Đổi tên parameter theo API mới
+      if (thanhPho != null && thanhPho.trim().isNotEmpty) {
+        queryParams['thanhPho'] = thanhPho.trim();
+        print('🔍 DEBUG: Adding thanhPho = $thanhPho');
       }
 
-      if (phuongXa != null && phuongXa.trim().isNotEmpty) {
-        queryParams['phuongXa'] = phuongXa.trim();
-        print('🔍 DEBUG: Adding phuongXa = $phuongXa');
+      if (quan != null && quan.trim().isNotEmpty) {
+        queryParams['quan'] = quan.trim();
+        print('🔍 DEBUG: Adding quan = $quan');
       }
 
       // Giá cả (VND)
@@ -113,10 +114,13 @@ class HotelSearchRepository {
           print('🔍 Hotels Found: ${data['hotels'].length}');
         }
 
-        List<dynamic>hotelJson = data['hotels'];
+        List<dynamic> hotelJson = data['hotels'];
         print("Danh sách khách sạn khi tìm kiếm: $hotelJson");
-        return ApiResponse(success: true, message: data["message"],
-            data: hotelJson.map((json) => KhachSan.fromJson(json)).toList());
+        return ApiResponse(
+            success: true,
+            message: data["message"],
+            data: hotelJson.map((json) => KhachSan.fromJson(json)).toList()
+        );
       } else {
         print('❌ HTTP Error: ${response.statusCode} - ${response.body}');
         final data = jsonDecode(response.body);
@@ -128,7 +132,7 @@ class HotelSearchRepository {
     }
   }
 
-  // ✅ Lấy gợi ý địa điểm - THEO API /locations
+  // ✅ Lấy gợi ý địa điểm - GIỮ NGUYÊN
   Future<SuggestionsResponse> getSearchSuggestions({
     required String query,
     String type = 'all',
@@ -171,5 +175,4 @@ class HotelSearchRepository {
       throw Exception("Lỗi kết nối server: $err");
     }
   }
-
 }

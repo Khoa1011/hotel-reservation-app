@@ -7,11 +7,9 @@ class IPv4 {
   //Bamos
   // static final String IP_CURRENT ="http://172.16.22.220:3000";
 
-
   //Web server
   //   static final String IP_CURRENT ="https://hotel-backend-95xx.onrender.com";
 
-
     //Ngrok
-    static const String IP_CURRENT = "https://a0353b9a4806.ngrok-free.app";
+    static const String IP_CURRENT = "https://a7bfe2a1d521.ngrok-free.app";
 }

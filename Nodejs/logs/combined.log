@@ -1,0 +1,345 @@
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:15:03.163Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:15:16.723Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:16:01.646Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:17:15.366Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:17:21.553Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:17:49.668Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:17:52.673Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:17:57.340Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:19:07.931Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:19:23.213Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:19:45.524Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:19:48.190Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:20:00.764Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:20:05.481Z"}
+{"level":"info","message":"📱 Registering FCM token for user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T04:26:30.979Z"}
+{"level":"info","message":"📝 Registering FCM token for user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T04:26:30.986Z"}
+{"level":"info","message":"✅ FCM token registered successfully for user 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T04:26:31.068Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:31:53.125Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:32:08.190Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:36:04.417Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:36:42.178Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:38:46.227Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:39:19.376Z"}
+{"level":"info","message":"🎯 Processing new booking: 68709589166a7b076fd00955","service":"notification-service","timestamp":"2025-07-11T04:39:37.726Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 68709589166a7b076fd00955","service":"notification-service","timestamp":"2025-07-11T04:39:37.727Z"}
+{"level":"info","message":"📱 Sending notification to user: [object Object]","service":"notification-service","timestamp":"2025-07-11T04:39:37.797Z"}
+{"level":"info","message":"📋 Found 1 active devices for user [object Object]","service":"notification-service","timestamp":"2025-07-11T04:39:37.833Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-11T04:39:37.834Z"}
+{"level":"error","message":"❌ Error sending multicast message: messaging.sendMulticast is not a function","service":"notification-service","stack":"TypeError: messaging.sendMulticast is not a function\n    at FirebaseService.sendToMultipleTokens (D:\\hotel-reservation-app\\Nodejs\\services\\FirebaseService.js:109:40)\n    at FirebaseService.sendToUser (D:\\hotel-reservation-app\\Nodejs\\services\\FirebaseService.js:45:33)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async NotificationService.sendBookingSuccessNotification (D:\\hotel-reservation-app\\Nodejs\\services\\NotificationService.js:41:22)\n    at async handleBookingCreated (D:\\hotel-reservation-app\\Nodejs\\Controller\\bookingAutoController.js:294:4)\n    at async Immediate.<anonymous> (D:\\hotel-reservation-app\\Nodejs\\middleware\\notificationHook.js:19:11)","timestamp":"2025-07-11T04:39:37.854Z"}
+{"level":"error","message":"❌ Error sending to user [object Object]: messaging.sendMulticast is not a function","service":"notification-service","stack":"TypeError: messaging.sendMulticast is not a function\n    at FirebaseService.sendToMultipleTokens (D:\\hotel-reservation-app\\Nodejs\\services\\FirebaseService.js:109:40)\n    at FirebaseService.sendToUser (D:\\hotel-reservation-app\\Nodejs\\services\\FirebaseService.js:45:33)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async NotificationService.sendBookingSuccessNotification (D:\\hotel-reservation-app\\Nodejs\\services\\NotificationService.js:41:22)\n    at async handleBookingCreated (D:\\hotel-reservation-app\\Nodejs\\Controller\\bookingAutoController.js:294:4)\n    at async Immediate.<anonymous> (D:\\hotel-reservation-app\\Nodejs\\middleware\\notificationHook.js:19:11)","timestamp":"2025-07-11T04:39:37.855Z"}
+{"level":"error","message":"❌ Error sending booking success notification: messaging.sendMulticast is not a function","service":"notification-service","stack":"TypeError: messaging.sendMulticast is not a function\n    at FirebaseService.sendToMultipleTokens (D:\\hotel-reservation-app\\Nodejs\\services\\FirebaseService.js:109:40)\n    at FirebaseService.sendToUser (D:\\hotel-reservation-app\\Nodejs\\services\\FirebaseService.js:45:33)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async NotificationService.sendBookingSuccessNotification (D:\\hotel-reservation-app\\Nodejs\\services\\NotificationService.js:41:22)\n    at async handleBookingCreated (D:\\hotel-reservation-app\\Nodejs\\Controller\\bookingAutoController.js:294:4)\n    at async Immediate.<anonymous> (D:\\hotel-reservation-app\\Nodejs\\middleware\\notificationHook.js:19:11)","timestamp":"2025-07-11T04:39:37.856Z"}
+{"level":"error","message":"❌ Error processing booking notifications for 68709589166a7b076fd00955: messaging.sendMulticast is not a function","service":"notification-service","stack":"TypeError: messaging.sendMulticast is not a function\n    at FirebaseService.sendToMultipleTokens (D:\\hotel-reservation-app\\Nodejs\\services\\FirebaseService.js:109:40)\n    at FirebaseService.sendToUser (D:\\hotel-reservation-app\\Nodejs\\services\\FirebaseService.js:45:33)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async NotificationService.sendBookingSuccessNotification (D:\\hotel-reservation-app\\Nodejs\\services\\NotificationService.js:41:22)\n    at async handleBookingCreated (D:\\hotel-reservation-app\\Nodejs\\Controller\\bookingAutoController.js:294:4)\n    at async Immediate.<anonymous> (D:\\hotel-reservation-app\\Nodejs\\middleware\\notificationHook.js:19:11)","timestamp":"2025-07-11T04:39:37.856Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:40:59.208Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:41:29.392Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:42:13.098Z"}
+{"level":"info","message":"🎯 Processing new booking: 6870963909fd21eff9a7fac3","service":"notification-service","timestamp":"2025-07-11T04:42:33.090Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 6870963909fd21eff9a7fac3","service":"notification-service","timestamp":"2025-07-11T04:42:33.095Z"}
+{"level":"info","message":"📱 Sending notification to user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T04:42:33.178Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T04:42:33.219Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-11T04:42:33.221Z"}
+{"level":"error","message":"❌ Error sending multicast message: messaging.sendMulticast is not a function","service":"notification-service","stack":"TypeError: messaging.sendMulticast is not a function\n    at FirebaseService.sendToMultipleTokens (D:\\hotel-reservation-app\\Nodejs\\services\\FirebaseService.js:109:40)\n    at FirebaseService.sendToUser (D:\\hotel-reservation-app\\Nodejs\\services\\FirebaseService.js:45:33)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async NotificationService.sendBookingSuccessNotification (D:\\hotel-reservation-app\\Nodejs\\services\\NotificationService.js:41:22)\n    at async handleBookingCreated (D:\\hotel-reservation-app\\Nodejs\\Controller\\bookingAutoController.js:294:4)\n    at async Immediate.<anonymous> (D:\\hotel-reservation-app\\Nodejs\\middleware\\notificationHook.js:19:11)","timestamp":"2025-07-11T04:42:33.247Z"}
+{"level":"error","message":"❌ Error sending to user 68706bf516118815f39c8695: messaging.sendMulticast is not a function","service":"notification-service","stack":"TypeError: messaging.sendMulticast is not a function\n    at FirebaseService.sendToMultipleTokens (D:\\hotel-reservation-app\\Nodejs\\services\\FirebaseService.js:109:40)\n    at FirebaseService.sendToUser (D:\\hotel-reservation-app\\Nodejs\\services\\FirebaseService.js:45:33)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async NotificationService.sendBookingSuccessNotification (D:\\hotel-reservation-app\\Nodejs\\services\\NotificationService.js:41:22)\n    at async handleBookingCreated (D:\\hotel-reservation-app\\Nodejs\\Controller\\bookingAutoController.js:294:4)\n    at async Immediate.<anonymous> (D:\\hotel-reservation-app\\Nodejs\\middleware\\notificationHook.js:19:11)","timestamp":"2025-07-11T04:42:33.249Z"}
+{"level":"error","message":"❌ Error sending booking success notification: messaging.sendMulticast is not a function","service":"notification-service","stack":"TypeError: messaging.sendMulticast is not a function\n    at FirebaseService.sendToMultipleTokens (D:\\hotel-reservation-app\\Nodejs\\services\\FirebaseService.js:109:40)\n    at FirebaseService.sendToUser (D:\\hotel-reservation-app\\Nodejs\\services\\FirebaseService.js:45:33)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async NotificationService.sendBookingSuccessNotification (D:\\hotel-reservation-app\\Nodejs\\services\\NotificationService.js:41:22)\n    at async handleBookingCreated (D:\\hotel-reservation-app\\Nodejs\\Controller\\bookingAutoController.js:294:4)\n    at async Immediate.<anonymous> (D:\\hotel-reservation-app\\Nodejs\\middleware\\notificationHook.js:19:11)","timestamp":"2025-07-11T04:42:33.250Z"}
+{"level":"error","message":"❌ Error processing booking notifications for 6870963909fd21eff9a7fac3: messaging.sendMulticast is not a function","service":"notification-service","stack":"TypeError: messaging.sendMulticast is not a function\n    at FirebaseService.sendToMultipleTokens (D:\\hotel-reservation-app\\Nodejs\\services\\FirebaseService.js:109:40)\n    at FirebaseService.sendToUser (D:\\hotel-reservation-app\\Nodejs\\services\\FirebaseService.js:45:33)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async NotificationService.sendBookingSuccessNotification (D:\\hotel-reservation-app\\Nodejs\\services\\NotificationService.js:41:22)\n    at async handleBookingCreated (D:\\hotel-reservation-app\\Nodejs\\Controller\\bookingAutoController.js:294:4)\n    at async Immediate.<anonymous> (D:\\hotel-reservation-app\\Nodejs\\middleware\\notificationHook.js:19:11)","timestamp":"2025-07-11T04:42:33.250Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:43:44.445Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:43:48.466Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:43:52.984Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:46:25.750Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:46:28.822Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:47:00.267Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T04:48:12.756Z"}
+{"level":"info","message":"🎯 Processing new booking: 687097a1fbc0e673d0f957a6","service":"notification-service","timestamp":"2025-07-11T04:48:33.526Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 687097a1fbc0e673d0f957a6","service":"notification-service","timestamp":"2025-07-11T04:48:33.528Z"}
+{"level":"info","message":"📱 Sending notification to user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T04:48:33.625Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T04:48:33.681Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-11T04:48:33.682Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-11T04:48:34.554Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 687097a1fbc0e673d0f957a6","service":"notification-service","timestamp":"2025-07-11T04:48:34.555Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 687097a1fbc0e673d0f957a6","service":"notification-service","timestamp":"2025-07-11T04:48:34.555Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 687097a1fbc0e673d0f957a6","service":"notification-service","timestamp":"2025-07-11T04:48:34.556Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 687097a1fbc0e673d0f957a6","service":"notification-service","timestamp":"2025-07-11T04:48:34.557Z"}
+{"level":"warn","message":"⚠️ Check-in time is in the past, skipping: 2025-07-11T11:48:00+07:00","service":"notification-service","timestamp":"2025-07-11T04:48:34.632Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-11T12:48:00+07:00","service":"notification-service","timestamp":"2025-07-11T04:48:34.646Z"}
+{"level":"warn","message":"⚠️ Schedule time is in the past, skipping: 2025-07-11T10:48:00+07:00","service":"notification-service","timestamp":"2025-07-11T04:48:34.679Z"}
+{"level":"info","message":"✅ Scheduled 1 notifications, 0 failed for booking 687097a1fbc0e673d0f957a6","service":"notification-service","timestamp":"2025-07-11T04:48:34.680Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 687097a1fbc0e673d0f957a6","service":"notification-service","timestamp":"2025-07-11T04:48:34.681Z"}
+{"level":"info","message":"🎯 Processing new booking: 6870983dfbc0e673d0f957be","service":"notification-service","timestamp":"2025-07-11T04:51:09.332Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 6870983dfbc0e673d0f957be","service":"notification-service","timestamp":"2025-07-11T04:51:09.333Z"}
+{"level":"info","message":"📱 Sending notification to user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-11T04:51:09.489Z"}
+{"level":"warn","message":"⚠️ No active devices found for user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-11T04:51:09.555Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-11T04:51:09.638Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 6870983dfbc0e673d0f957be","service":"notification-service","timestamp":"2025-07-11T04:51:09.639Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 6870983dfbc0e673d0f957be","service":"notification-service","timestamp":"2025-07-11T04:51:09.639Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 6870983dfbc0e673d0f957be","service":"notification-service","timestamp":"2025-07-11T04:51:09.640Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 6870983dfbc0e673d0f957be","service":"notification-service","timestamp":"2025-07-11T04:51:09.641Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-11T12:52:00+07:00","service":"notification-service","timestamp":"2025-07-11T04:51:09.844Z"}
+{"level":"info","message":"✅ Check-in time notification scheduled for: 2025-07-11T11:52:00+07:00","service":"notification-service","timestamp":"2025-07-11T04:51:09.845Z"}
+{"level":"warn","message":"⚠️ Schedule time is in the past, skipping: 2025-07-11T10:52:00+07:00","service":"notification-service","timestamp":"2025-07-11T04:51:10.054Z"}
+{"level":"info","message":"✅ Scheduled 2 notifications, 0 failed for booking 6870983dfbc0e673d0f957be","service":"notification-service","timestamp":"2025-07-11T04:51:10.055Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 6870983dfbc0e673d0f957be","service":"notification-service","timestamp":"2025-07-11T04:51:10.055Z"}
+{"level":"info","message":"🎯 Processing new booking: 6870985afbc0e673d0f957d7","service":"notification-service","timestamp":"2025-07-11T04:51:38.346Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 6870985afbc0e673d0f957d7","service":"notification-service","timestamp":"2025-07-11T04:51:38.355Z"}
+{"level":"info","message":"📱 Sending notification to user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-11T04:51:38.536Z"}
+{"level":"warn","message":"⚠️ No active devices found for user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-11T04:51:38.602Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-11T04:51:38.671Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 6870985afbc0e673d0f957d7","service":"notification-service","timestamp":"2025-07-11T04:51:38.672Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 6870985afbc0e673d0f957d7","service":"notification-service","timestamp":"2025-07-11T04:51:38.674Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 6870985afbc0e673d0f957d7","service":"notification-service","timestamp":"2025-07-11T04:51:38.675Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 6870985afbc0e673d0f957d7","service":"notification-service","timestamp":"2025-07-11T04:51:38.675Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-11T13:52:00+07:00","service":"notification-service","timestamp":"2025-07-11T04:51:38.792Z"}
+{"level":"info","message":"✅ Check-in time notification scheduled for: 2025-07-11T12:52:00+07:00","service":"notification-service","timestamp":"2025-07-11T04:51:38.810Z"}
+{"level":"info","message":"✅ Before check-in notification scheduled for: 2025-07-11T11:52:00+07:00","service":"notification-service","timestamp":"2025-07-11T04:51:38.877Z"}
+{"level":"info","message":"✅ Scheduled 3 notifications, 0 failed for booking 6870985afbc0e673d0f957d7","service":"notification-service","timestamp":"2025-07-11T04:51:38.878Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 6870985afbc0e673d0f957d7","service":"notification-service","timestamp":"2025-07-11T04:51:38.878Z"}
+{"level":"info","message":"📱 Registering FCM token for user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T05:01:13.819Z"}
+{"level":"info","message":"📝 Registering FCM token for user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T05:01:13.824Z"}
+{"level":"info","message":"✅ FCM token registered successfully for user 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T05:01:13.888Z"}
+{"level":"info","message":"🎯 Processing new booking: 68709acafbc0e673d0f95876","service":"notification-service","timestamp":"2025-07-11T05:02:02.155Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 68709acafbc0e673d0f95876","service":"notification-service","timestamp":"2025-07-11T05:02:02.156Z"}
+{"level":"info","message":"📱 Sending notification to user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T05:02:02.236Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T05:02:02.294Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-11T05:02:02.296Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-11T05:02:02.839Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 68709acafbc0e673d0f95876","service":"notification-service","timestamp":"2025-07-11T05:02:02.840Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 68709acafbc0e673d0f95876","service":"notification-service","timestamp":"2025-07-11T05:02:02.840Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 68709acafbc0e673d0f95876","service":"notification-service","timestamp":"2025-07-11T05:02:02.840Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 68709acafbc0e673d0f95876","service":"notification-service","timestamp":"2025-07-11T05:02:02.841Z"}
+{"level":"info","message":"✅ Before check-in notification scheduled for: 2025-07-11T12:03:00+07:00","service":"notification-service","timestamp":"2025-07-11T05:02:02.972Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-11T14:03:00+07:00","service":"notification-service","timestamp":"2025-07-11T05:02:02.984Z"}
+{"level":"info","message":"✅ Check-in time notification scheduled for: 2025-07-11T13:03:00+07:00","service":"notification-service","timestamp":"2025-07-11T05:02:02.985Z"}
+{"level":"info","message":"✅ Scheduled 3 notifications, 0 failed for booking 68709acafbc0e673d0f95876","service":"notification-service","timestamp":"2025-07-11T05:02:02.985Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 68709acafbc0e673d0f95876","service":"notification-service","timestamp":"2025-07-11T05:02:02.986Z"}
+{"level":"info","message":"📱 Registering FCM token for user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T05:12:52.998Z"}
+{"level":"info","message":"📝 Registering FCM token for user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T05:12:53.010Z"}
+{"level":"info","message":"✅ FCM token registered successfully for user 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T05:12:53.097Z"}
+{"level":"info","message":"📱 Sending notification to user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-11T05:18:25.349Z"}
+{"level":"warn","message":"⚠️ No active devices found for user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-11T05:18:25.386Z"}
+{"level":"info","message":"📱 Registering FCM token for user: 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T05:21:35.833Z"}
+{"level":"info","message":"📝 Registering FCM token for user: 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T05:21:35.833Z"}
+{"level":"info","message":"✅ FCM token registered successfully for user 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T05:21:35.885Z"}
+{"level":"info","message":"🎯 Processing new booking: 68709ffffbc0e673d0f95933","service":"notification-service","timestamp":"2025-07-11T05:24:15.340Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 68709ffffbc0e673d0f95933","service":"notification-service","timestamp":"2025-07-11T05:24:15.341Z"}
+{"level":"info","message":"📱 Sending notification to user: 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T05:24:15.465Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T05:24:15.526Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-11T05:24:15.527Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-11T05:24:16.096Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 68709ffffbc0e673d0f95933","service":"notification-service","timestamp":"2025-07-11T05:24:16.096Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 68709ffffbc0e673d0f95933","service":"notification-service","timestamp":"2025-07-11T05:24:16.097Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 68709ffffbc0e673d0f95933","service":"notification-service","timestamp":"2025-07-11T05:24:16.097Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 68709ffffbc0e673d0f95933","service":"notification-service","timestamp":"2025-07-11T05:24:16.097Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-11T14:25:00+07:00","service":"notification-service","timestamp":"2025-07-11T05:24:16.229Z"}
+{"level":"info","message":"✅ Check-in time notification scheduled for: 2025-07-11T13:25:00+07:00","service":"notification-service","timestamp":"2025-07-11T05:24:16.281Z"}
+{"level":"info","message":"✅ Before check-in notification scheduled for: 2025-07-11T12:25:00+07:00","service":"notification-service","timestamp":"2025-07-11T05:24:16.287Z"}
+{"level":"info","message":"✅ Scheduled 3 notifications, 0 failed for booking 68709ffffbc0e673d0f95933","service":"notification-service","timestamp":"2025-07-11T05:24:16.287Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 68709ffffbc0e673d0f95933","service":"notification-service","timestamp":"2025-07-11T05:24:16.288Z"}
+{"level":"info","message":"🎯 Processing new booking: 6870a0d6fbc0e673d0f959d2","service":"notification-service","timestamp":"2025-07-11T05:27:50.549Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 6870a0d6fbc0e673d0f959d2","service":"notification-service","timestamp":"2025-07-11T05:27:50.550Z"}
+{"level":"info","message":"📱 Sending notification to user: 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T05:27:50.691Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T05:27:50.759Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-11T05:27:50.760Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-11T05:27:51.271Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 6870a0d6fbc0e673d0f959d2","service":"notification-service","timestamp":"2025-07-11T05:27:51.272Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 6870a0d6fbc0e673d0f959d2","service":"notification-service","timestamp":"2025-07-11T05:27:51.273Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 6870a0d6fbc0e673d0f959d2","service":"notification-service","timestamp":"2025-07-11T05:27:51.273Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 6870a0d6fbc0e673d0f959d2","service":"notification-service","timestamp":"2025-07-11T05:27:51.273Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-11T14:30:00+07:00","service":"notification-service","timestamp":"2025-07-11T05:27:51.396Z"}
+{"level":"info","message":"✅ Before check-in notification scheduled for: 2025-07-11T12:30:00+07:00","service":"notification-service","timestamp":"2025-07-11T05:27:51.467Z"}
+{"level":"info","message":"✅ Check-in time notification scheduled for: 2025-07-11T13:30:00+07:00","service":"notification-service","timestamp":"2025-07-11T05:27:51.476Z"}
+{"level":"info","message":"✅ Scheduled 3 notifications, 0 failed for booking 6870a0d6fbc0e673d0f959d2","service":"notification-service","timestamp":"2025-07-11T05:27:51.476Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 6870a0d6fbc0e673d0f959d2","service":"notification-service","timestamp":"2025-07-11T05:27:51.476Z"}
+{"level":"info","message":"📱 Registering FCM token for user: 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T05:48:36.091Z"}
+{"level":"info","message":"📝 Registering FCM token for user: 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T05:48:36.094Z"}
+{"level":"info","message":"✅ FCM token registered successfully for user 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T05:48:36.192Z"}
+{"level":"info","message":"🎯 Processing new booking: 6870a5e9fbc0e673d0f95a0c","service":"notification-service","timestamp":"2025-07-11T05:49:29.894Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 6870a5e9fbc0e673d0f95a0c","service":"notification-service","timestamp":"2025-07-11T05:49:29.894Z"}
+{"level":"info","message":"📱 Sending notification to user: 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T05:49:30.032Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T05:49:30.100Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-11T05:49:30.100Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-11T05:49:31.016Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 6870a5e9fbc0e673d0f95a0c","service":"notification-service","timestamp":"2025-07-11T05:49:31.016Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 6870a5e9fbc0e673d0f95a0c","service":"notification-service","timestamp":"2025-07-11T05:49:31.017Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 6870a5e9fbc0e673d0f95a0c","service":"notification-service","timestamp":"2025-07-11T05:49:31.017Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 6870a5e9fbc0e673d0f95a0c","service":"notification-service","timestamp":"2025-07-11T05:49:31.017Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-11T14:51:00+07:00","service":"notification-service","timestamp":"2025-07-11T05:49:31.157Z"}
+{"level":"info","message":"✅ Before check-in notification scheduled for: 2025-07-11T12:51:00+07:00","service":"notification-service","timestamp":"2025-07-11T05:49:31.221Z"}
+{"level":"info","message":"✅ Check-in time notification scheduled for: 2025-07-11T13:51:00+07:00","service":"notification-service","timestamp":"2025-07-11T05:49:31.528Z"}
+{"level":"info","message":"✅ Scheduled 3 notifications, 0 failed for booking 6870a5e9fbc0e673d0f95a0c","service":"notification-service","timestamp":"2025-07-11T05:49:31.528Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 6870a5e9fbc0e673d0f95a0c","service":"notification-service","timestamp":"2025-07-11T05:49:31.529Z"}
+{"level":"info","message":"🎯 Processing new booking: 6870a616fbc0e673d0f95a33","service":"notification-service","timestamp":"2025-07-11T05:50:15.068Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 6870a616fbc0e673d0f95a33","service":"notification-service","timestamp":"2025-07-11T05:50:15.069Z"}
+{"level":"info","message":"📱 Sending notification to user: 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T05:50:15.192Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T05:50:15.251Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-11T05:50:15.252Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-11T05:50:15.761Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 6870a616fbc0e673d0f95a33","service":"notification-service","timestamp":"2025-07-11T05:50:15.762Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 6870a616fbc0e673d0f95a33","service":"notification-service","timestamp":"2025-07-11T05:50:15.762Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 6870a616fbc0e673d0f95a33","service":"notification-service","timestamp":"2025-07-11T05:50:15.762Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 6870a616fbc0e673d0f95a33","service":"notification-service","timestamp":"2025-07-11T05:50:15.762Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-11T14:51:00+07:00","service":"notification-service","timestamp":"2025-07-11T05:50:15.909Z"}
+{"level":"info","message":"✅ Check-in time notification scheduled for: 2025-07-11T13:51:00+07:00","service":"notification-service","timestamp":"2025-07-11T05:50:15.980Z"}
+{"level":"info","message":"✅ Before check-in notification scheduled for: 2025-07-11T12:51:00+07:00","service":"notification-service","timestamp":"2025-07-11T05:50:16.256Z"}
+{"level":"info","message":"✅ Scheduled 3 notifications, 0 failed for booking 6870a616fbc0e673d0f95a33","service":"notification-service","timestamp":"2025-07-11T05:50:16.256Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 6870a616fbc0e673d0f95a33","service":"notification-service","timestamp":"2025-07-11T05:50:16.257Z"}
+{"level":"info","message":"🎯 Processing new booking: 6870a982fbc0e673d0f95a6b","service":"notification-service","timestamp":"2025-07-11T06:04:50.718Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 6870a982fbc0e673d0f95a6b","service":"notification-service","timestamp":"2025-07-11T06:04:50.726Z"}
+{"level":"info","message":"📱 Sending notification to user: 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T06:04:50.872Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T06:04:50.938Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-11T06:04:50.940Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-11T06:04:51.550Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 6870a982fbc0e673d0f95a6b","service":"notification-service","timestamp":"2025-07-11T06:04:51.551Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 6870a982fbc0e673d0f95a6b","service":"notification-service","timestamp":"2025-07-11T06:04:51.551Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 6870a982fbc0e673d0f95a6b","service":"notification-service","timestamp":"2025-07-11T06:04:51.551Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 6870a982fbc0e673d0f95a6b","service":"notification-service","timestamp":"2025-07-11T06:04:51.551Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-11T14:51:00+07:00","service":"notification-service","timestamp":"2025-07-11T06:04:51.680Z"}
+{"level":"info","message":"✅ Check-in time notification scheduled for: 2025-07-11T13:51:00+07:00","service":"notification-service","timestamp":"2025-07-11T06:04:51.757Z"}
+{"level":"warn","message":"⚠️ Schedule time is in the past, skipping: 2025-07-11T12:51:00+07:00","service":"notification-service","timestamp":"2025-07-11T06:04:52.262Z"}
+{"level":"info","message":"✅ Scheduled 2 notifications, 0 failed for booking 6870a982fbc0e673d0f95a6b","service":"notification-service","timestamp":"2025-07-11T06:04:52.264Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 6870a982fbc0e673d0f95a6b","service":"notification-service","timestamp":"2025-07-11T06:04:52.264Z"}
+{"level":"info","message":"🚀 Manual trigger for sending scheduled notifications","service":"notification-service","timestamp":"2025-07-11T06:09:10.325Z"}
+{"level":"info","message":"📬 Processing 11 scheduled notifications","service":"notification-service","timestamp":"2025-07-11T06:09:10.465Z"}
+{"level":"info","message":"📱 Sending notification to user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-11T06:09:10.532Z"}
+{"level":"warn","message":"⚠️ No active devices found for user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-11T06:09:10.594Z"}
+{"level":"warn","message":"❌ Failed to send notification: den_gio_nhan_phong for booking 6870983dfbc0e673d0f957be","service":"notification-service","timestamp":"2025-07-11T06:09:10.690Z"}
+{"level":"info","message":"📱 Sending notification to user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-11T06:09:11.054Z"}
+{"level":"warn","message":"⚠️ No active devices found for user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-11T06:09:11.115Z"}
+{"level":"warn","message":"❌ Failed to send notification: truoc_nhan_phong_1h for booking 6870985afbc0e673d0f957d7","service":"notification-service","timestamp":"2025-07-11T06:09:11.187Z"}
+{"level":"info","message":"📱 Sending notification to user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T06:09:11.248Z"}
+{"level":"warn","message":"⚠️ No active devices found for user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T06:09:11.311Z"}
+{"level":"warn","message":"❌ Failed to send notification: truoc_nhan_phong_1h for booking 68709acafbc0e673d0f95876","service":"notification-service","timestamp":"2025-07-11T06:09:11.421Z"}
+{"level":"info","message":"📱 Sending notification to user: 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T06:09:11.486Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T06:09:11.551Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-11T06:09:11.551Z"}
+{"level":"info","message":"✅ Sent notification: truoc_nhan_phong_1h for booking 68709ffffbc0e673d0f95933","service":"notification-service","timestamp":"2025-07-11T06:09:12.071Z"}
+{"level":"info","message":"📱 Sending notification to user: 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T06:09:12.138Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T06:09:12.203Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-11T06:09:12.203Z"}
+{"level":"info","message":"✅ Sent notification: truoc_nhan_phong_1h for booking 6870a0d6fbc0e673d0f959d2","service":"notification-service","timestamp":"2025-07-11T06:09:13.107Z"}
+{"level":"info","message":"📱 Sending notification to user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T06:09:13.169Z"}
+{"level":"warn","message":"⚠️ No active devices found for user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T06:09:13.232Z"}
+{"level":"warn","message":"❌ Failed to send notification: tre_nhan_phong_1h for booking 687097a1fbc0e673d0f957a6","service":"notification-service","timestamp":"2025-07-11T06:09:13.324Z"}
+{"level":"info","message":"📱 Sending notification to user: 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T06:09:13.392Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T06:09:13.460Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-11T06:09:13.460Z"}
+{"level":"info","message":"✅ Sent notification: truoc_nhan_phong_1h for booking 6870a5e9fbc0e673d0f95a0c","service":"notification-service","timestamp":"2025-07-11T06:09:14.400Z"}
+{"level":"info","message":"📱 Sending notification to user: 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T06:09:14.495Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T06:09:14.583Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-11T06:09:14.588Z"}
+{"level":"info","message":"✅ Sent notification: truoc_nhan_phong_1h for booking 6870a616fbc0e673d0f95a33","service":"notification-service","timestamp":"2025-07-11T06:09:14.925Z"}
+{"level":"info","message":"📱 Sending notification to user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-11T06:09:14.994Z"}
+{"level":"warn","message":"⚠️ No active devices found for user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-11T06:09:15.065Z"}
+{"level":"warn","message":"❌ Failed to send notification: tre_nhan_phong_1h for booking 6870983dfbc0e673d0f957be","service":"notification-service","timestamp":"2025-07-11T06:09:15.136Z"}
+{"level":"info","message":"📱 Sending notification to user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-11T06:09:15.202Z"}
+{"level":"warn","message":"⚠️ No active devices found for user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-11T06:09:15.279Z"}
+{"level":"warn","message":"❌ Failed to send notification: den_gio_nhan_phong for booking 6870985afbc0e673d0f957d7","service":"notification-service","timestamp":"2025-07-11T06:09:15.352Z"}
+{"level":"info","message":"📱 Sending notification to user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T06:09:15.419Z"}
+{"level":"warn","message":"⚠️ No active devices found for user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T06:09:15.768Z"}
+{"level":"warn","message":"❌ Failed to send notification: den_gio_nhan_phong for booking 68709acafbc0e673d0f95876","service":"notification-service","timestamp":"2025-07-11T06:09:15.861Z"}
+{"level":"info","message":"📊 Processed 11 notifications: 4 success, 7 failed","service":"notification-service","timestamp":"2025-07-11T06:09:15.861Z"}
+{"level":"info","message":"🎯 Processing new booking: 6870ab66fbc0e673d0f95ab1","service":"notification-service","timestamp":"2025-07-11T06:12:54.356Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 6870ab66fbc0e673d0f95ab1","service":"notification-service","timestamp":"2025-07-11T06:12:54.356Z"}
+{"level":"info","message":"📱 Sending notification to user: 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T06:12:54.506Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T06:12:54.572Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-11T06:12:54.572Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-11T06:12:55.082Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 6870ab66fbc0e673d0f95ab1","service":"notification-service","timestamp":"2025-07-11T06:12:55.083Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 6870ab66fbc0e673d0f95ab1","service":"notification-service","timestamp":"2025-07-11T06:12:55.084Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 6870ab66fbc0e673d0f95ab1","service":"notification-service","timestamp":"2025-07-11T06:12:55.084Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 6870ab66fbc0e673d0f95ab1","service":"notification-service","timestamp":"2025-07-11T06:12:55.085Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-11T15:15:00+07:00","service":"notification-service","timestamp":"2025-07-11T06:12:55.220Z"}
+{"level":"info","message":"✅ Before check-in notification scheduled for: 2025-07-11T13:15:00+07:00","service":"notification-service","timestamp":"2025-07-11T06:12:55.290Z"}
+{"level":"info","message":"✅ Check-in time notification scheduled for: 2025-07-11T14:15:00+07:00","service":"notification-service","timestamp":"2025-07-11T06:12:55.573Z"}
+{"level":"info","message":"✅ Scheduled 3 notifications, 0 failed for booking 6870ab66fbc0e673d0f95ab1","service":"notification-service","timestamp":"2025-07-11T06:12:55.573Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 6870ab66fbc0e673d0f95ab1","service":"notification-service","timestamp":"2025-07-11T06:12:55.574Z"}
+{"level":"info","message":"🎯 Processing new booking: 6870ac20fbc0e673d0f95ad6","service":"notification-service","timestamp":"2025-07-11T06:16:00.387Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 6870ac20fbc0e673d0f95ad6","service":"notification-service","timestamp":"2025-07-11T06:16:00.388Z"}
+{"level":"info","message":"📱 Sending notification to user: 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T06:16:00.820Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T06:16:00.893Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-11T06:16:00.893Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-11T06:16:01.422Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 6870ac20fbc0e673d0f95ad6","service":"notification-service","timestamp":"2025-07-11T06:16:01.423Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 6870ac20fbc0e673d0f95ad6","service":"notification-service","timestamp":"2025-07-11T06:16:01.423Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 6870ac20fbc0e673d0f95ad6","service":"notification-service","timestamp":"2025-07-11T06:16:01.424Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 6870ac20fbc0e673d0f95ad6","service":"notification-service","timestamp":"2025-07-11T06:16:01.424Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-11T15:17:00+07:00","service":"notification-service","timestamp":"2025-07-11T06:16:01.557Z"}
+{"level":"info","message":"✅ Check-in time notification scheduled for: 2025-07-11T14:17:00+07:00","service":"notification-service","timestamp":"2025-07-11T06:16:01.630Z"}
+{"level":"info","message":"✅ Before check-in notification scheduled for: 2025-07-11T13:17:00+07:00","service":"notification-service","timestamp":"2025-07-11T06:16:01.932Z"}
+{"level":"info","message":"✅ Scheduled 3 notifications, 0 failed for booking 6870ac20fbc0e673d0f95ad6","service":"notification-service","timestamp":"2025-07-11T06:16:01.933Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 6870ac20fbc0e673d0f95ad6","service":"notification-service","timestamp":"2025-07-11T06:16:01.933Z"}
+{"level":"info","message":"📱 Registering FCM token for user: 6870af18fbc0e673d0f95af6","service":"notification-service","timestamp":"2025-07-11T06:30:27.588Z"}
+{"level":"info","message":"📝 Registering FCM token for user: 6870af18fbc0e673d0f95af6","service":"notification-service","timestamp":"2025-07-11T06:30:27.593Z"}
+{"level":"info","message":"✅ FCM token registered successfully for user 6870af18fbc0e673d0f95af6","service":"notification-service","timestamp":"2025-07-11T06:30:27.661Z"}
+{"level":"info","message":"🎯 Processing new booking: 6870afb1fbc0e673d0f95b14","service":"notification-service","timestamp":"2025-07-11T06:31:13.651Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 6870afb1fbc0e673d0f95b14","service":"notification-service","timestamp":"2025-07-11T06:31:13.652Z"}
+{"level":"info","message":"📱 Sending notification to user: 6870af18fbc0e673d0f95af6","service":"notification-service","timestamp":"2025-07-11T06:31:13.797Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 6870af18fbc0e673d0f95af6","service":"notification-service","timestamp":"2025-07-11T06:31:13.874Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-11T06:31:13.874Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-11T06:31:14.447Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 6870afb1fbc0e673d0f95b14","service":"notification-service","timestamp":"2025-07-11T06:31:14.447Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 6870afb1fbc0e673d0f95b14","service":"notification-service","timestamp":"2025-07-11T06:31:14.447Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 6870afb1fbc0e673d0f95b14","service":"notification-service","timestamp":"2025-07-11T06:31:14.448Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 6870afb1fbc0e673d0f95b14","service":"notification-service","timestamp":"2025-07-11T06:31:14.448Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-11T15:33:00+07:00","service":"notification-service","timestamp":"2025-07-11T06:31:14.587Z"}
+{"level":"info","message":"✅ Check-in time notification scheduled for: 2025-07-11T14:33:00+07:00","service":"notification-service","timestamp":"2025-07-11T06:31:14.648Z"}
+{"level":"info","message":"✅ Before check-in notification scheduled for: 2025-07-11T13:33:00+07:00","service":"notification-service","timestamp":"2025-07-11T06:31:14.654Z"}
+{"level":"info","message":"✅ Scheduled 3 notifications, 0 failed for booking 6870afb1fbc0e673d0f95b14","service":"notification-service","timestamp":"2025-07-11T06:31:14.654Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 6870afb1fbc0e673d0f95b14","service":"notification-service","timestamp":"2025-07-11T06:31:14.654Z"}
+{"level":"info","message":"🚀 Manual trigger for sending scheduled notifications","service":"notification-service","timestamp":"2025-07-11T06:39:51.473Z"}
+{"level":"info","message":"📬 Processing 12 scheduled notifications","service":"notification-service","timestamp":"2025-07-11T06:39:51.636Z"}
+{"level":"info","message":"📱 Sending notification to user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-11T06:39:51.986Z"}
+{"level":"warn","message":"⚠️ No active devices found for user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-11T06:39:52.047Z"}
+{"level":"warn","message":"❌ Failed to send notification: den_gio_nhan_phong for booking 6870983dfbc0e673d0f957be","service":"notification-service","timestamp":"2025-07-11T06:39:52.121Z"}
+{"level":"info","message":"📱 Sending notification to user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-11T06:39:52.183Z"}
+{"level":"warn","message":"⚠️ No active devices found for user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-11T06:39:52.235Z"}
+{"level":"warn","message":"❌ Failed to send notification: truoc_nhan_phong_1h for booking 6870985afbc0e673d0f957d7","service":"notification-service","timestamp":"2025-07-11T06:39:52.300Z"}
+{"level":"info","message":"📱 Sending notification to user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T06:39:52.360Z"}
+{"level":"warn","message":"⚠️ No active devices found for user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T06:39:52.418Z"}
+{"level":"warn","message":"❌ Failed to send notification: truoc_nhan_phong_1h for booking 68709acafbc0e673d0f95876","service":"notification-service","timestamp":"2025-07-11T06:39:52.478Z"}
+{"level":"info","message":"📱 Sending notification to user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T06:39:52.529Z"}
+{"level":"warn","message":"⚠️ No active devices found for user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T06:39:52.592Z"}
+{"level":"warn","message":"❌ Failed to send notification: tre_nhan_phong_1h for booking 687097a1fbc0e673d0f957a6","service":"notification-service","timestamp":"2025-07-11T06:39:52.657Z"}
+{"level":"info","message":"📱 Sending notification to user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-11T06:39:52.713Z"}
+{"level":"warn","message":"⚠️ No active devices found for user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-11T06:39:52.771Z"}
+{"level":"warn","message":"❌ Failed to send notification: tre_nhan_phong_1h for booking 6870983dfbc0e673d0f957be","service":"notification-service","timestamp":"2025-07-11T06:39:52.838Z"}
+{"level":"info","message":"📱 Sending notification to user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-11T06:39:53.175Z"}
+{"level":"warn","message":"⚠️ No active devices found for user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-11T06:39:53.234Z"}
+{"level":"warn","message":"❌ Failed to send notification: den_gio_nhan_phong for booking 6870985afbc0e673d0f957d7","service":"notification-service","timestamp":"2025-07-11T06:39:53.303Z"}
+{"level":"info","message":"📱 Sending notification to user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T06:39:53.367Z"}
+{"level":"warn","message":"⚠️ No active devices found for user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-11T06:39:53.426Z"}
+{"level":"warn","message":"❌ Failed to send notification: den_gio_nhan_phong for booking 68709acafbc0e673d0f95876","service":"notification-service","timestamp":"2025-07-11T06:39:53.482Z"}
+{"level":"info","message":"📱 Sending notification to user: 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T06:39:53.533Z"}
+{"level":"warn","message":"⚠️ No active devices found for user: 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T06:39:53.587Z"}
+{"level":"warn","message":"❌ Failed to send notification: truoc_nhan_phong_1h for booking 6870ab66fbc0e673d0f95ab1","service":"notification-service","timestamp":"2025-07-11T06:39:53.649Z"}
+{"level":"info","message":"📱 Sending notification to user: 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T06:39:53.702Z"}
+{"level":"warn","message":"⚠️ No active devices found for user: 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T06:39:53.763Z"}
+{"level":"warn","message":"❌ Failed to send notification: truoc_nhan_phong_1h for booking 6870ac20fbc0e673d0f95ad6","service":"notification-service","timestamp":"2025-07-11T06:39:53.831Z"}
+{"level":"info","message":"📱 Sending notification to user: 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T06:39:53.883Z"}
+{"level":"warn","message":"⚠️ No active devices found for user: 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T06:39:53.939Z"}
+{"level":"warn","message":"❌ Failed to send notification: den_gio_nhan_phong for booking 68709ffffbc0e673d0f95933","service":"notification-service","timestamp":"2025-07-11T06:39:53.999Z"}
+{"level":"info","message":"📱 Sending notification to user: 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T06:39:54.059Z"}
+{"level":"warn","message":"⚠️ No active devices found for user: 68500473b5cc051685979c19","service":"notification-service","timestamp":"2025-07-11T06:39:54.119Z"}
+{"level":"warn","message":"❌ Failed to send notification: den_gio_nhan_phong for booking 6870a0d6fbc0e673d0f959d2","service":"notification-service","timestamp":"2025-07-11T06:39:54.188Z"}
+{"level":"info","message":"📱 Sending notification to user: 6870af18fbc0e673d0f95af6","service":"notification-service","timestamp":"2025-07-11T06:39:54.253Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 6870af18fbc0e673d0f95af6","service":"notification-service","timestamp":"2025-07-11T06:39:54.335Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-11T06:39:54.335Z"}
+{"level":"info","message":"✅ Sent notification: truoc_nhan_phong_1h for booking 6870afb1fbc0e673d0f95b14","service":"notification-service","timestamp":"2025-07-11T06:39:54.857Z"}
+{"level":"info","message":"📊 Processed 12 notifications: 1 success, 11 failed","service":"notification-service","timestamp":"2025-07-11T06:39:54.857Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T11:43:28.575Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T11:57:39.998Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T12:02:11.010Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-11T12:02:13.702Z"}
+{"level":"info","message":"🎯 Processing new booking: 6870fd8773f541bd1c8c5841","service":"notification-service","timestamp":"2025-07-11T12:03:19.703Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 6870fd8773f541bd1c8c5841","service":"notification-service","timestamp":"2025-07-11T12:03:19.705Z"}
+{"level":"info","message":"📱 Sending notification to user: 6870af18fbc0e673d0f95af6","service":"notification-service","timestamp":"2025-07-11T12:03:19.796Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 6870af18fbc0e673d0f95af6","service":"notification-service","timestamp":"2025-07-11T12:03:19.834Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-11T12:03:19.835Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-11T12:03:20.444Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 6870fd8773f541bd1c8c5841","service":"notification-service","timestamp":"2025-07-11T12:03:20.445Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 6870fd8773f541bd1c8c5841","service":"notification-service","timestamp":"2025-07-11T12:03:20.445Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 6870fd8773f541bd1c8c5841","service":"notification-service","timestamp":"2025-07-11T12:03:20.447Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 6870fd8773f541bd1c8c5841","service":"notification-service","timestamp":"2025-07-11T12:03:20.448Z"}
+{"level":"warn","message":"⚠️ Schedule time is in the past, skipping: 2025-07-11T13:00:00+07:00","service":"notification-service","timestamp":"2025-07-11T12:03:20.572Z"}
+{"level":"warn","message":"⚠️ Check-in time is in the past, skipping: 2025-07-11T14:00:00+07:00","service":"notification-service","timestamp":"2025-07-11T12:03:20.618Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-11T15:00:00+07:00","service":"notification-service","timestamp":"2025-07-11T12:03:20.892Z"}
+{"level":"info","message":"✅ Scheduled 1 notifications, 0 failed for booking 6870fd8773f541bd1c8c5841","service":"notification-service","timestamp":"2025-07-11T12:03:20.893Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 6870fd8773f541bd1c8c5841","service":"notification-service","timestamp":"2025-07-11T12:03:20.894Z"}

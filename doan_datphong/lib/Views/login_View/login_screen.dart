@@ -12,6 +12,7 @@ import 'package:doan_datphong/generated/l10n.dart';
 import 'package:doan_datphong/Views/components/NotificationDialog.dart';
 
 import '../../Data/Provider/auth_provider.dart';
+import '../../test_messagefirebase.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -262,6 +263,18 @@ class _LoginState extends State<LoginScreen> {
                           ),
 
                           const SizedBox(height: 30),
+
+
+                          // FloatingActionButton(
+                          //   onPressed: () {
+                          //     Navigator.push(
+                          //       context,
+                          //       MaterialPageRoute(builder: (context) => FirebaseTestScreen()),
+                          //     );
+                          //   },
+                          //   child: Icon(Icons.notification_important),
+                          //   tooltip: 'Test Firebase',
+                          // ),
 
                           // ✅ Remember me checkbox - disable khi loading
                           Column(

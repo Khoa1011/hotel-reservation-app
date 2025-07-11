@@ -19,6 +19,7 @@ import 'package:doan_datphong/Data/Repository/logout_Repository/logout_repo.dart
 import 'package:doan_datphong/Data/Repository/payment_Repository/payment_repo.dart';
 import 'package:doan_datphong/Data/Repository/register_Repository/register_repo.dart';
 import 'package:doan_datphong/Data/Repository/updateProfile_Repository/updateProfile_repo.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -39,15 +40,53 @@ import 'Data/Repository/review_Repository/review_repo.dart';
 import 'Data/Repository/searchHotels_Repository/searchHotels_repo.dart';
 import 'LanguageProvider.dart';
 import 'SplashScreen.dart';
-import 'generated/l10n.dart'; // Sử dụng file generated
+import 'firebase_options.dart';
+import 'generated/l10n.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'notification_service.dart';
 
+
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print("📱 Background message: ${message.notification?.title}");
+}
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // ✅ THÊM: Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // ✅ THÊM: Set background message handler
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // ✅ Initialize Notification Service
+  await NotificationService.initialize();
+  NotificationService.setNavigatorKey(navigatorKey);
+
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+
+}
+
+class _MyAppState extends State<MyApp> {
+
+  @override
+  void initState() {
+    super.initState();
+    // ✅ Setup Firebase Messaging khi app khởi động
+    NotificationService.setupFirebaseMessaging();
+  }
 
   void _handleLogout() async {
     final prefs = await SharedPreferences.getInstance();
@@ -56,9 +95,24 @@ class MyApp extends StatelessWidget {
     await prefs.clear();
   }
 
+  // // ✅ THÊM METHOD SETUP FIREBASE MESSAGING
+  // void _setupFirebaseMessaging() {
+  //   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+  //     print('📱 Foreground message: ${message.notification?.title}');
+  //     // TODO: Show local notification hoặc in-app notification
+  //   });
+  //
+  //   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+  //     print('📱 App opened from notification: ${message.notification?.title}');
+  //     // TODO: Navigate to specific screen
+  //   });
+  // }
+
 
   @override
   Widget build(BuildContext context) {
+
+    // _setupFirebaseMessaging();
     return MultiProvider(
 
       providers: [
@@ -72,7 +126,7 @@ class MyApp extends StatelessWidget {
 
         // Các BLoC providers
         BlocProvider(create: (context) => LoginBloc(
-            loginRepository: LoginRepository(),
+          loginRepository: LoginRepository(),
           authProvider: context.read<UserAuthProvider>(),
 
         )),
@@ -96,6 +150,7 @@ class MyApp extends StatelessWidget {
       child: Consumer<LanguageProvider>(
         builder: (context, languageProvider, child) {
           return MaterialApp(
+            navigatorKey: navigatorKey,
             title: 'Staytion',
 
             // Cấu hình theme
@@ -146,6 +201,9 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+
+
 
 
 class LanguageTestWidget extends StatelessWidget {

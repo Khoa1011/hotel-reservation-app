@@ -3,7 +3,11 @@ const Booking = require("../Model/Booking/Booking");
 const User = require("../Model/User/User");
 const moment = require('moment-timezone');
 const cron = require('node-cron');
+const logger = require('../config/logger');
+const NotificationService = require('../services/NotificationService');
+const NotificationLog = require('../Model/Notification');
 const bookingAutoRouter = express.Router();
+
 
 // ✅ 1. CRON JOB - Chạy mỗi 30 phút để kiểm tra booking quá hạn
 cron.schedule('*/30 * * * *', async () => {
@@ -278,4 +282,94 @@ bookingAutoRouter.post('/admin/unban-user/:userId', async (req, res) => {
     }
 });
 
-module.exports = bookingAutoRouter;
+/**
+* 🎯 Hook để tự động xử lý notifications khi booking được tạo
+* Thêm vào existing bookingController của bạn
+*/
+const handleBookingCreated = async (bookingId) => {
+ try {
+   logger.info(`🎯 Processing new booking: ${bookingId}`);
+
+   // 1. Gửi thông báo đặt phòng thành công ngay lập tức
+   await NotificationService.sendBookingSuccessNotification(bookingId);
+
+   // 2. Lên lịch các thông báo tiếp theo
+   await NotificationService.scheduleAllNotifications(bookingId);
+
+   logger.info(`✅ Booking notifications processed successfully for: ${bookingId}`);
+
+ } catch (error) {
+   logger.error(`❌ Error processing booking notifications for ${bookingId}:`, error);
+   // Không throw error để không ảnh hưởng đến booking process
+ }
+};
+
+/**
+* 📝 API để xử lý booking đã tạo (backup method)
+* POST /api/booking-auto/process/:bookingId
+*/
+bookingAutoRouter.post('/process/:bookingId', async (req, res) => {
+ try {
+   const { bookingId } = req.params;
+
+   await handleBookingCreated(bookingId);
+
+   res.status(200).json({
+     success: true,
+     message: 'Booking notifications processed successfully'
+   });
+
+ } catch (error) {
+   logger.error('❌ Error in booking auto process:', error);
+   res.status(500).json({
+     success: false,
+     message: 'Lỗi khi xử lý booking notifications',
+     error: error.message
+   });
+ }
+});
+
+/**
+* 📊 Lấy status notifications của booking
+* GET /api/booking-auto/status/:bookingId
+*/
+bookingAutoRouter.get('/status/:bookingId', async (req, res) => {
+ try {
+   const { bookingId } = req.params;
+
+   const notifications = await NotificationLog.find({
+     maDatPhong: bookingId
+   }).sort({ createdAt: 1 });
+
+   const status = {
+     bookingId,
+     totalNotifications: notifications.length,
+     notifications: notifications.map(notif => ({
+       type: notif.loaiThongBao,
+       status: notif.trangThai,
+       scheduledFor: notif.henGio,
+       sentAt: notif.thoiGianGui,
+       title: notif.tieuDe
+     }))
+   };
+
+   res.status(200).json({
+     success: true,
+     data: status
+   });
+
+ } catch (error) {
+   logger.error('❌ Error getting booking notification status:', error);
+   res.status(500).json({
+     success: false,
+     message: 'Lỗi khi lấy status notifications',
+     error: error.message
+   });
+ }
+});
+
+
+module.exports = {
+  router: bookingAutoRouter,
+  handleBookingCreated
+};

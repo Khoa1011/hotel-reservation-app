@@ -9,9 +9,10 @@ const moment = require('moment-timezone');
 const bookingRouter = express.Router();
 const crypto = require('crypto');
 const axios = require('axios');
+const notificationHook = require('../middleware/notificationHook');
 
 
-bookingRouter.post('/addbooking', async (req, res) => {
+bookingRouter.post('/addbooking',notificationHook, async (req, res) => {
   try {
     console.log('📝 Creating new booking:', req.body);
     

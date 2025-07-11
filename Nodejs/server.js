@@ -7,6 +7,9 @@ const upload = require("./config/upload");
 const pathUrl = require("./Router/pathUrl");
 const app = express();
 const ngrok = require('ngrok');
+const { initializeFirebase } = require('./config/firebase');
+
+initializeFirebase();
 
 app.use(express.json());
 app.use(cookieParser());
@@ -34,21 +37,14 @@ mongoose
         next();
     });
 
-    
-// const userRouter = require("./Controller/userController"); 
-// app.use("/api/users", userRouter); 
-// const hotelRouter = require("./Controller/hotelController");
-// app.use("/api/hotels",hotelRouter);
-// const bookingRouter = require("./Controller/bookingController");
-// app.use("/api/bookings",bookingRouter);
-// const roomTypeRouter = require("./Controller/roomTypeController");
-// app.use("/api/roomtypes",roomTypeRouter);
-// const roomRouter = require("./Controller/roomController");
-// app.use("/api/rooms",roomRouter);
+
 
 pathUrl(app);
 
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT,console.log(`Server Run With Port ${PORT}`));
-
+app.listen(PORT, () => {
+    console.log(`Server Run With Port ${PORT}`);
+    console.log('🔥 Firebase initialized and ready');
+});
+// app.listen(PORT,console.log(`Server Run With Port ${PORT}`));

@@ -147,7 +147,7 @@ router.post('/:hotelId/search-roomtypes', async (req, res) => {
         });
 
         // ✅ Validation nâng cao cho đặt nhiều phòng
-        const validation = validateMultiRoomSearchInput({
+        const validation = await validateMultiRoomSearchInput({
             hotelId, bookingType, checkInDate, checkOutDate,
             checkInTime, checkOutTime, guests, requestedRooms
         });
@@ -371,10 +371,60 @@ router.post('/:hotelId/search-roomtypes', async (req, res) => {
     }
 });
 
+async function getRealRoomCapacity(roomTypeId) {
+    try {
+        // Lấy tất cả phòng thuộc loại này
+        const rooms = await Room.find({ 
+            maLoaiPhong: roomTypeId,
+            trangThaiPhong: true // Chỉ lấy phòng hoạt động
+        }).select('soLuongNguoiToiDa');
 
-function validateMultiRoomSearchInput({
+        if (!rooms || rooms.length === 0) {
+            // Fallback về roomType nếu không có phòng
+            const roomType = await RoomType.findById(roomTypeId);
+            return {
+                averageCapacity: roomType?.soLuongKhach || 2,
+                minCapacity: roomType?.soLuongKhach || 2,
+                maxCapacity: roomType?.soLuongKhach || 2,
+                totalRooms: 0,
+                capacitySource: 'roomType_fallback'
+            };
+        }
+
+        // Tính toán capacity từ phòng thực tế
+        const capacities = rooms.map(room => room.soLuongNguoiToiDa || 2);
+        const averageCapacity = Math.round(capacities.reduce((sum, cap) => sum + cap, 0) / capacities.length);
+        const minCapacity = Math.min(...capacities);
+        const maxCapacity = Math.max(...capacities);
+
+        return {
+            averageCapacity,
+            minCapacity,
+            maxCapacity,
+            totalRooms: rooms.length,
+            capacitySource: 'actual_rooms',
+            capacityBreakdown: capacities.reduce((acc, cap) => {
+                acc[cap] = (acc[cap] || 0) + 1;
+                return acc;
+            }, {})
+        };
+
+    } catch (error) {
+        console.error('❌ Lỗi lấy capacity phòng:', error);
+        return {
+            averageCapacity: 2,
+            minCapacity: 2,
+            maxCapacity: 2,
+            totalRooms: 0,
+            capacitySource: 'error_fallback'
+        };
+    }
+}
+
+
+async function validateMultiRoomSearchInput({
     hotelId, bookingType, checkInDate, checkOutDate,
-    checkInTime, checkOutTime, guests, requestedRooms
+    checkInTime, checkOutTime, guests, requestedRooms, roomTypeId
 }) {
     // Validation cơ bản
     if (!mongoose.Types.ObjectId.isValid(hotelId)) {
@@ -398,6 +448,7 @@ function validateMultiRoomSearchInput({
         };
     }
 
+    // ✅ SỬA: Di chuyển totalGuests lên trước
     const totalGuests = (guests?.adults || 0) + (guests?.children || 0);
     if (totalGuests < 1 || totalGuests > 50) {
         return {
@@ -416,18 +467,43 @@ function validateMultiRoomSearchInput({
         };
     }
 
-    // ✅ Kiểm tra logic: Quá ít phòng cho nhóm đông (giả sử tối đa 4 người/phòng)
-    const maxGuestsWithCurrentRooms = requestedRooms * 4; // Giả sử tối đa 4 khách/phòng
-    if (totalGuests > maxGuestsWithCurrentRooms) {
-        const minRoomsNeeded = Math.ceil(totalGuests / 4);
-        return {
-            valid: false,
-            message: `${requestedRooms} phòng không đủ cho ${totalGuests} khách!`,
-            suggestion: `Đề xuất: Cần ít nhất ${minRoomsNeeded} phòng cho ${totalGuests} khách`
-        };
+    // ✅ SỬA: Validation dựa trên capacity thực tế (nếu có roomTypeId)
+    if (roomTypeId && mongoose.Types.ObjectId.isValid(roomTypeId)) {
+        try {
+            const capacityInfo = await getRealRoomCapacity(roomTypeId);
+            const maxGuestsWithCurrentRooms = requestedRooms * capacityInfo.maxCapacity;
+            
+            if (totalGuests > maxGuestsWithCurrentRooms) {
+                const minRoomsNeeded = Math.ceil(totalGuests / capacityInfo.averageCapacity);
+                return {
+                    valid: false,
+                    message: `${requestedRooms} phòng không đủ cho ${totalGuests} khách!`,
+                    suggestion: `Loại phòng này chứa tối đa ${capacityInfo.maxCapacity} khách/phòng. Cần ít nhất ${minRoomsNeeded} phòng.`,
+                    capacityInfo
+                };
+            }
+        } catch (error) {
+            console.error('❌ Lỗi validate capacity:', error);
+            // Fallback về validation cũ nếu có lỗi
+        }
+    } else {
+        // ✅ SỬA: Fallback validation khi không có roomTypeId cụ thể
+        // Giả sử tối đa 4 khách/phòng (có thể điều chỉnh)
+        const assumedMaxCapacity = 4;
+        const maxGuestsWithCurrentRooms = requestedRooms * assumedMaxCapacity;
+        
+        if (totalGuests > maxGuestsWithCurrentRooms) {
+            const minRoomsNeeded = Math.ceil(totalGuests / assumedMaxCapacity);
+            return {
+                valid: false,
+                message: `${requestedRooms} phòng có thể không đủ cho ${totalGuests} khách!`,
+                suggestion: `Giả sử tối đa ${assumedMaxCapacity} khách/phòng, cần ít nhất ${minRoomsNeeded} phòng.`,
+                note: "Validation chính xác sẽ được thực hiện khi chọn loại phòng cụ thể."
+            };
+        }
     }
 
-    // Booking type specific validations (same as before)
+    // Booking type specific validations
     const checkInMoment = moment(checkInDate);
     const checkOutMoment = checkOutDate ? moment(checkOutDate) : null;
 
@@ -435,6 +511,11 @@ function validateMultiRoomSearchInput({
         case 'theo_gio':
             if (!checkInTime || !checkOutTime) {
                 return { valid: false, message: "Đặt theo giờ cần có giờ nhận và giờ trả!" };
+            }
+            // ✅ MỚI: Validation thời gian hợp lệ
+            if (!moment(checkInTime, 'HH:mm', true).isValid() || 
+                !moment(checkOutTime, 'HH:mm', true).isValid()) {
+                return { valid: false, message: "Định dạng giờ không hợp lệ! (HH:MM)" };
             }
             break;
 
@@ -456,7 +537,27 @@ function validateMultiRoomSearchInput({
             if (longDiff < 2) {
                 return { valid: false, message: "Đặt dài ngày tối thiểu 2 ngày!" };
             }
+            // ✅ MỚI: Giới hạn tối đa
+            if (longDiff > 365) {
+                return { valid: false, message: "Đặt dài ngày tối đa 365 ngày!" };
+            }
             break;
+    }
+
+    // ✅ MỚI: Validation ngày trong quá khứ
+    if (checkInMoment.isBefore(moment().startOf('day'))) {
+        return { 
+            valid: false, 
+            message: "Ngày nhận phòng không được trong quá khứ!" 
+        };
+    }
+
+    // ✅ MỚI: Validation ngày trả sau ngày nhận
+    if (checkOutDate && checkOutMoment.isSameOrBefore(checkInMoment)) {
+        return { 
+            valid: false, 
+            message: "Ngày trả phòng phải sau ngày nhận phòng!" 
+        };
     }
 
     return { valid: true, message: "Input hợp lệ" };

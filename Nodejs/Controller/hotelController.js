@@ -95,9 +95,7 @@ router.get("/getHotelList", async (req, res) => {
                     email: hotel.email,
 
                     hinhAnh: hotel.hinhAnh,
-
-                    // ✅ Thuộc tính mới - Giá theo đêm
-                    giaTheoNgay: giaTheoNgay  // Giá khởi điểm theo đêm
+                    giaTheoNgay: giaTheoNgay 
                 };
             } catch (error) {
                 console.error(`Lỗi xử lý khách sạn ${hotel._id}:`, error);
@@ -439,7 +437,7 @@ async function validateMultiRoomSearchInput({
         return { valid: false, message: "Ngày nhận phòng không hợp lệ!" };
     }
 
-    // ✅ Validation đặc biệt cho nhiều phòng
+    // Validation đặc biệt cho nhiều phòng
     if (requestedRooms < 1 || requestedRooms > 20) {
         return {
             valid: false,
@@ -448,7 +446,7 @@ async function validateMultiRoomSearchInput({
         };
     }
 
-    // ✅ SỬA: Di chuyển totalGuests lên trước
+    //Di chuyển totalGuests lên trước
     const totalGuests = (guests?.adults || 0) + (guests?.children || 0);
     if (totalGuests < 1 || totalGuests > 50) {
         return {
@@ -458,7 +456,7 @@ async function validateMultiRoomSearchInput({
         };
     }
 
-    // ✅ Kiểm tra logic: Quá nhiều phòng so với khách
+    // Kiểm tra logic: Quá nhiều phòng so với khách
     if (requestedRooms > totalGuests) {
         return {
             valid: false,
@@ -467,7 +465,6 @@ async function validateMultiRoomSearchInput({
         };
     }
 
-    // ✅ SỬA: Validation dựa trên capacity thực tế (nếu có roomTypeId)
     if (roomTypeId && mongoose.Types.ObjectId.isValid(roomTypeId)) {
         try {
             const capacityInfo = await getRealRoomCapacity(roomTypeId);
@@ -487,7 +484,7 @@ async function validateMultiRoomSearchInput({
             // Fallback về validation cũ nếu có lỗi
         }
     } else {
-        // ✅ SỬA: Fallback validation khi không có roomTypeId cụ thể
+        // Fallback validation khi không có roomTypeId cụ thể
         // Giả sử tối đa 4 khách/phòng (có thể điều chỉnh)
         const assumedMaxCapacity = 4;
         const maxGuestsWithCurrentRooms = requestedRooms * assumedMaxCapacity;
@@ -544,21 +541,21 @@ async function validateMultiRoomSearchInput({
             break;
     }
 
-    // ✅ MỚI: Validation ngày trong quá khứ
-    if (checkInMoment.isBefore(moment().startOf('day'))) {
-        return { 
-            valid: false, 
-            message: "Ngày nhận phòng không được trong quá khứ!" 
-        };
-    }
+    // // ✅ MỚI: Validation ngày trong quá khứ
+    // if (checkInMoment.isBefore(moment().startOf('day'))) {
+    //     return { 
+    //         valid: false, 
+    //         message: "Ngày nhận phòng không được trong quá khứ!" 
+    //     };
+    // }
 
-    // ✅ MỚI: Validation ngày trả sau ngày nhận
-    if (checkOutDate && checkOutMoment.isSameOrBefore(checkInMoment)) {
-        return { 
-            valid: false, 
-            message: "Ngày trả phòng phải sau ngày nhận phòng!" 
-        };
-    }
+    // // ✅ MỚI: Validation ngày trả sau ngày nhận
+    // if (checkOutDate && checkOutMoment.isSameOrBefore(checkInMoment)) {
+    //     return { 
+    //         valid: false, 
+    //         message: "Ngày trả phòng phải sau ngày nhận phòng!" 
+    //     };
+    // }
 
     return { valid: true, message: "Input hợp lệ" };
 }
@@ -1509,63 +1506,63 @@ router.get('/:hotelId/room-type/:roomTypeId/details', async (req, res) => {
 });
 
 // API kiểm tra availability nhanh cho 1 loại phòng
-router.post('/:hotelId/room-type/:roomTypeId/check-availability', async (req, res) => {
-    try {
-        const { hotelId, roomTypeId } = req.params;
-        const { bookingType, checkInDate, checkOutDate, checkInTime, checkOutTime } = req.body;
+// router.post('/:hotelId/room-type/:roomTypeId/check-availability', async (req, res) => {
+//     try {
+//         const { hotelId, roomTypeId } = req.params;
+//         const { bookingType, checkInDate, checkOutDate, checkInTime, checkOutTime } = req.body;
 
-        if (!mongoose.Types.ObjectId.isValid(roomTypeId)) {
-            return res.status(400).json({
-                msgBody: "Mã loại phòng không hợp lệ!",
-                msgError: true
-            });
-        }
+//         if (!mongoose.Types.ObjectId.isValid(roomTypeId)) {
+//             return res.status(400).json({
+//                 msgBody: "Mã loại phòng không hợp lệ!",
+//                 msgError: true
+//             });
+//         }
 
-        const availability = await checkRoomTypeAvailability({
-            hotelId,
-            roomTypeId,
-            bookingType,
-            checkInDate,
-            checkOutDate,
-            checkInTime,
-            checkOutTime
-        });
+//         const availability = await checkRoomTypeAvailability({
+//             hotelId,
+//             roomTypeId,
+//             bookingType,
+//             checkInDate,
+//             checkOutDate,
+//             checkInTime,
+//             checkOutTime
+//         });
 
-        const roomType = await RoomType.findById(roomTypeId);
-        const pricing = calculatePricing({
-            roomType,
-            bookingType,
-            checkInDate,
-            checkOutDate,
-            checkInTime,
-            checkOutTime
-        });
+//         const roomType = await RoomType.findById(roomTypeId);
+//         const pricing = calculatePricing({
+//             roomType,
+//             bookingType,
+//             checkInDate,
+//             checkOutDate,
+//             checkInTime,
+//             checkOutTime
+//         });
 
-        return res.status(200).json({
-            message: availability.isAvailable ? "Phòng có sẵn!" : "Phòng không có sẵn!",
-            availability: {
-                ...availability,
-                roomTypeName: roomType?.tenLoaiPhong || "Unknown"
-            },
-            pricing: pricing,
-            searchParams: {
-                bookingType,
-                checkInDate,
-                checkOutDate,
-                checkInTime,
-                checkOutTime
-            }
-        });
+//         return res.status(200).json({
+//             message: availability.isAvailable ? "Phòng có sẵn!" : "Phòng không có sẵn!",
+//             availability: {
+//                 ...availability,
+//                 roomTypeName: roomType?.tenLoaiPhong || "Unknown"
+//             },
+//             pricing: pricing,
+//             searchParams: {
+//                 bookingType,
+//                 checkInDate,
+//                 checkOutDate,
+//                 checkInTime,
+//                 checkOutTime
+//             }
+//         });
 
-    } catch (error) {
-        return res.status(500).json({
-            msgBody: "Lỗi kiểm tra availability!",
-            msgError: true,
-            messageError: error.message
-        });
-    }
+//     } catch (error) {
+//         return res.status(500).json({
+//             msgBody: "Lỗi kiểm tra availability!",
+//             msgError: true,
+//             messageError: error.message
+//         });
+//     }
 
-});
+// });
 
 // ✅ API LẤY TẤT CẢ ĐÁNH GIÁ CỦA KHÁCH SẠN
 router.get('/:hotelId/reviews', async (req, res) => {

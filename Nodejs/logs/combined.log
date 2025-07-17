@@ -343,3 +343,187 @@
 {"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-11T15:00:00+07:00","service":"notification-service","timestamp":"2025-07-11T12:03:20.892Z"}
 {"level":"info","message":"✅ Scheduled 1 notifications, 0 failed for booking 6870fd8773f541bd1c8c5841","service":"notification-service","timestamp":"2025-07-11T12:03:20.893Z"}
 {"level":"info","message":"✅ Booking notifications processed successfully for: 6870fd8773f541bd1c8c5841","service":"notification-service","timestamp":"2025-07-11T12:03:20.894Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-12T02:27:35.447Z"}
+{"level":"info","message":"📱 Registering FCM token for user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-12T02:34:55.475Z"}
+{"level":"info","message":"📝 Registering FCM token for user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-12T02:34:55.479Z"}
+{"level":"info","message":"✅ FCM token registered successfully for user 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-12T02:34:55.532Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-12T02:37:14.215Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-12T02:37:20.087Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-12T02:37:22.272Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-12T02:37:26.035Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-12T02:37:28.169Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-12T02:38:37.918Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-12T02:38:40.376Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-12T02:42:26.409Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-12T02:44:16.600Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-12T02:44:18.393Z"}
+{"level":"info","message":"🎯 Processing new booking: 6871cc7aa276401e9352c2da","service":"notification-service","timestamp":"2025-07-12T02:46:18.979Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 6871cc7aa276401e9352c2da","service":"notification-service","timestamp":"2025-07-12T02:46:18.981Z"}
+{"level":"info","message":"📱 Sending notification to user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-12T02:46:19.038Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-12T02:46:19.070Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-12T02:46:19.071Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-12T02:46:19.553Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 6871cc7aa276401e9352c2da","service":"notification-service","timestamp":"2025-07-12T02:46:19.554Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 6871cc7aa276401e9352c2da","service":"notification-service","timestamp":"2025-07-12T02:46:19.555Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 6871cc7aa276401e9352c2da","service":"notification-service","timestamp":"2025-07-12T02:46:19.555Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 6871cc7aa276401e9352c2da","service":"notification-service","timestamp":"2025-07-12T02:46:19.556Z"}
+{"level":"info","message":"✅ Check-in time notification scheduled for: 2025-07-12T10:47:00+07:00","service":"notification-service","timestamp":"2025-07-12T02:46:19.661Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-12T11:47:00+07:00","service":"notification-service","timestamp":"2025-07-12T02:46:19.665Z"}
+{"level":"info","message":"✅ Before check-in notification scheduled for: 2025-07-12T09:47:00+07:00","service":"notification-service","timestamp":"2025-07-12T02:46:19.900Z"}
+{"level":"info","message":"✅ Scheduled 3 notifications, 0 failed for booking 6871cc7aa276401e9352c2da","service":"notification-service","timestamp":"2025-07-12T02:46:19.900Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 6871cc7aa276401e9352c2da","service":"notification-service","timestamp":"2025-07-12T02:46:19.901Z"}
+{"level":"info","message":"🎯 Processing new booking: 6871ce38a276401e9352c349","service":"notification-service","timestamp":"2025-07-12T02:53:44.419Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 6871ce38a276401e9352c349","service":"notification-service","timestamp":"2025-07-12T02:53:44.420Z"}
+{"level":"info","message":"📱 Sending notification to user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-12T02:53:44.502Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-12T02:53:44.538Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-12T02:53:44.538Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-12T02:53:44.781Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 6871ce38a276401e9352c349","service":"notification-service","timestamp":"2025-07-12T02:53:44.782Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 6871ce38a276401e9352c349","service":"notification-service","timestamp":"2025-07-12T02:53:44.782Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 6871ce38a276401e9352c349","service":"notification-service","timestamp":"2025-07-12T02:53:44.783Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 6871ce38a276401e9352c349","service":"notification-service","timestamp":"2025-07-12T02:53:44.783Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-12T15:00:00+07:00","service":"notification-service","timestamp":"2025-07-12T02:53:44.891Z"}
+{"level":"info","message":"✅ Check-in time notification scheduled for: 2025-07-12T14:00:00+07:00","service":"notification-service","timestamp":"2025-07-12T02:53:44.892Z"}
+{"level":"info","message":"✅ Before check-in notification scheduled for: 2025-07-12T13:00:00+07:00","service":"notification-service","timestamp":"2025-07-12T02:53:44.892Z"}
+{"level":"info","message":"✅ Scheduled 3 notifications, 0 failed for booking 6871ce38a276401e9352c349","service":"notification-service","timestamp":"2025-07-12T02:53:44.892Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 6871ce38a276401e9352c349","service":"notification-service","timestamp":"2025-07-12T02:53:44.893Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-12T04:01:17.887Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-12T19:14:00.541Z"}
+{"level":"info","message":"🎯 Processing new booking: 6872b636872be285da0892a2","service":"notification-service","timestamp":"2025-07-12T19:23:34.496Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 6872b636872be285da0892a2","service":"notification-service","timestamp":"2025-07-12T19:23:34.503Z"}
+{"level":"info","message":"📱 Sending notification to user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-12T19:23:34.586Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-12T19:23:34.629Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-12T19:23:34.631Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-12T19:23:35.552Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 6872b636872be285da0892a2","service":"notification-service","timestamp":"2025-07-12T19:23:35.553Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 6872b636872be285da0892a2","service":"notification-service","timestamp":"2025-07-12T19:23:35.556Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 6872b636872be285da0892a2","service":"notification-service","timestamp":"2025-07-12T19:23:35.557Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 6872b636872be285da0892a2","service":"notification-service","timestamp":"2025-07-12T19:23:35.560Z"}
+{"level":"warn","message":"⚠️ Schedule time is in the past, skipping: 2025-07-13T01:23:00+07:00","service":"notification-service","timestamp":"2025-07-12T19:23:35.645Z"}
+{"level":"warn","message":"⚠️ Check-in time is in the past, skipping: 2025-07-13T02:23:00+07:00","service":"notification-service","timestamp":"2025-07-12T19:23:35.651Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-13T03:23:00+07:00","service":"notification-service","timestamp":"2025-07-12T19:23:35.671Z"}
+{"level":"info","message":"✅ Scheduled 1 notifications, 0 failed for booking 6872b636872be285da0892a2","service":"notification-service","timestamp":"2025-07-12T19:23:35.671Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 6872b636872be285da0892a2","service":"notification-service","timestamp":"2025-07-12T19:23:35.671Z"}
+{"level":"info","message":"🎯 Processing new booking: 6872b762872be285da089415","service":"notification-service","timestamp":"2025-07-12T19:28:34.977Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 6872b762872be285da089415","service":"notification-service","timestamp":"2025-07-12T19:28:34.978Z"}
+{"level":"info","message":"📱 Sending notification to user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-12T19:28:35.042Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-12T19:28:35.074Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-12T19:28:35.074Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-12T19:28:35.511Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 6872b762872be285da089415","service":"notification-service","timestamp":"2025-07-12T19:28:35.512Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 6872b762872be285da089415","service":"notification-service","timestamp":"2025-07-12T19:28:35.512Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 6872b762872be285da089415","service":"notification-service","timestamp":"2025-07-12T19:28:35.512Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 6872b762872be285da089415","service":"notification-service","timestamp":"2025-07-12T19:28:35.513Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-14T00:00:00+07:00","service":"notification-service","timestamp":"2025-07-12T19:28:35.608Z"}
+{"level":"info","message":"✅ Check-in time notification scheduled for: 2025-07-13T23:00:00+07:00","service":"notification-service","timestamp":"2025-07-12T19:28:35.613Z"}
+{"level":"info","message":"✅ Before check-in notification scheduled for: 2025-07-13T22:00:00+07:00","service":"notification-service","timestamp":"2025-07-12T19:28:35.619Z"}
+{"level":"info","message":"✅ Scheduled 3 notifications, 0 failed for booking 6872b762872be285da089415","service":"notification-service","timestamp":"2025-07-12T19:28:35.619Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 6872b762872be285da089415","service":"notification-service","timestamp":"2025-07-12T19:28:35.619Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-12T19:29:35.141Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-13T17:02:02.983Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-13T19:24:53.045Z"}
+{"level":"info","message":"📱 Registering FCM token for user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-13T19:26:40.477Z"}
+{"level":"info","message":"📝 Registering FCM token for user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-13T19:26:40.478Z"}
+{"level":"info","message":"✅ FCM token registered successfully for user 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-13T19:26:40.577Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-13T21:57:30.138Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-14T04:32:56.140Z"}
+{"level":"info","message":"📱 Registering FCM token for user: 6851584f60309b9d1cb1436f","service":"notification-service","timestamp":"2025-07-14T04:35:09.273Z"}
+{"level":"info","message":"📝 Registering FCM token for user: 6851584f60309b9d1cb1436f","service":"notification-service","timestamp":"2025-07-14T04:35:09.276Z"}
+{"level":"info","message":"✅ FCM token registered successfully for user 6851584f60309b9d1cb1436f","service":"notification-service","timestamp":"2025-07-14T04:35:09.358Z"}
+{"level":"info","message":"📱 Registering FCM token for user: 6851584f60309b9d1cb1436f","service":"notification-service","timestamp":"2025-07-14T04:40:02.327Z"}
+{"level":"info","message":"📝 Registering FCM token for user: 6851584f60309b9d1cb1436f","service":"notification-service","timestamp":"2025-07-14T04:40:02.330Z"}
+{"level":"info","message":"✅ FCM token registered successfully for user 6851584f60309b9d1cb1436f","service":"notification-service","timestamp":"2025-07-14T04:40:02.390Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-14T07:49:17.052Z"}
+{"level":"info","message":"🎯 Processing new booking: 6874b81e857d2c25a9fb7e34","service":"notification-service","timestamp":"2025-07-14T07:56:15.059Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 6874b81e857d2c25a9fb7e34","service":"notification-service","timestamp":"2025-07-14T07:56:15.060Z"}
+{"level":"info","message":"📱 Sending notification to user: 6851584f60309b9d1cb1436f","service":"notification-service","timestamp":"2025-07-14T07:56:15.139Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 6851584f60309b9d1cb1436f","service":"notification-service","timestamp":"2025-07-14T07:56:15.174Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-14T07:56:15.175Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-14T07:56:16.062Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 6874b81e857d2c25a9fb7e34","service":"notification-service","timestamp":"2025-07-14T07:56:16.068Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 6874b81e857d2c25a9fb7e34","service":"notification-service","timestamp":"2025-07-14T07:56:16.069Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 6874b81e857d2c25a9fb7e34","service":"notification-service","timestamp":"2025-07-14T07:56:16.070Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 6874b81e857d2c25a9fb7e34","service":"notification-service","timestamp":"2025-07-14T07:56:16.070Z"}
+{"level":"info","message":"✅ Before check-in notification scheduled for: 2025-07-18T21:00:00+07:00","service":"notification-service","timestamp":"2025-07-14T07:56:16.190Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-18T23:00:00+07:00","service":"notification-service","timestamp":"2025-07-14T07:56:16.194Z"}
+{"level":"info","message":"✅ Check-in time notification scheduled for: 2025-07-18T22:00:00+07:00","service":"notification-service","timestamp":"2025-07-14T07:56:16.712Z"}
+{"level":"info","message":"✅ Scheduled 3 notifications, 0 failed for booking 6874b81e857d2c25a9fb7e34","service":"notification-service","timestamp":"2025-07-14T07:56:16.712Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 6874b81e857d2c25a9fb7e34","service":"notification-service","timestamp":"2025-07-14T07:56:16.713Z"}
+{"level":"info","message":"📱 Registering FCM token for user: 6874b854857d2c25a9fb7e5d","service":"notification-service","timestamp":"2025-07-14T07:57:17.845Z"}
+{"level":"info","message":"📝 Registering FCM token for user: 6874b854857d2c25a9fb7e5d","service":"notification-service","timestamp":"2025-07-14T07:57:17.847Z"}
+{"level":"info","message":"✅ FCM token registered successfully for user 6874b854857d2c25a9fb7e5d","service":"notification-service","timestamp":"2025-07-14T07:57:17.897Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-15T23:30:31.213Z"}
+{"level":"info","message":"📱 Registering FCM token for user: 6851584f60309b9d1cb1436f","service":"notification-service","timestamp":"2025-07-15T23:32:43.063Z"}
+{"level":"info","message":"📝 Registering FCM token for user: 6851584f60309b9d1cb1436f","service":"notification-service","timestamp":"2025-07-15T23:32:43.064Z"}
+{"level":"info","message":"✅ FCM token registered successfully for user 6851584f60309b9d1cb1436f","service":"notification-service","timestamp":"2025-07-15T23:32:43.133Z"}
+{"level":"info","message":"📱 Registering FCM token for user: 6851584f60309b9d1cb1436f","service":"notification-service","timestamp":"2025-07-15T23:36:19.912Z"}
+{"level":"info","message":"📝 Registering FCM token for user: 6851584f60309b9d1cb1436f","service":"notification-service","timestamp":"2025-07-15T23:36:19.914Z"}
+{"level":"info","message":"✅ FCM token registered successfully for user 6851584f60309b9d1cb1436f","service":"notification-service","timestamp":"2025-07-15T23:36:19.963Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-16T01:56:49.192Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-16T06:28:54.105Z"}
+{"level":"info","message":"📱 Registering FCM token for user: 687748208f56b69e11aadf88","service":"notification-service","timestamp":"2025-07-16T06:35:22.016Z"}
+{"level":"info","message":"📝 Registering FCM token for user: 687748208f56b69e11aadf88","service":"notification-service","timestamp":"2025-07-16T06:35:22.017Z"}
+{"level":"info","message":"✅ FCM token registered successfully for user 687748208f56b69e11aadf88","service":"notification-service","timestamp":"2025-07-16T06:35:22.057Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-16T10:29:51.033Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T09:34:32.303Z"}
+{"level":"info","message":"📱 Registering FCM token for user: 687748208f56b69e11aadf88","service":"notification-service","timestamp":"2025-07-17T09:44:46.950Z"}
+{"level":"info","message":"📝 Registering FCM token for user: 687748208f56b69e11aadf88","service":"notification-service","timestamp":"2025-07-17T09:44:46.967Z"}
+{"level":"info","message":"✅ FCM token registered successfully for user 687748208f56b69e11aadf88","service":"notification-service","timestamp":"2025-07-17T09:44:47.083Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T10:16:14.857Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T10:19:01.715Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T10:19:06.316Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T10:19:20.372Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T10:19:35.122Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T10:19:36.970Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T10:22:02.573Z"}
+{"level":"info","message":"🎯 Processing new booking: 6878d359888074d7bd9344ce","service":"notification-service","timestamp":"2025-07-17T10:41:29.151Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 6878d359888074d7bd9344ce","service":"notification-service","timestamp":"2025-07-17T10:41:29.152Z"}
+{"level":"info","message":"📱 Sending notification to user: 687748208f56b69e11aadf88","service":"notification-service","timestamp":"2025-07-17T10:41:29.223Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 687748208f56b69e11aadf88","service":"notification-service","timestamp":"2025-07-17T10:41:29.273Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-17T10:41:29.274Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-17T10:41:30.128Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 6878d359888074d7bd9344ce","service":"notification-service","timestamp":"2025-07-17T10:41:30.129Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 6878d359888074d7bd9344ce","service":"notification-service","timestamp":"2025-07-17T10:41:30.130Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 6878d359888074d7bd9344ce","service":"notification-service","timestamp":"2025-07-17T10:41:30.131Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 6878d359888074d7bd9344ce","service":"notification-service","timestamp":"2025-07-17T10:41:30.131Z"}
+{"level":"info","message":"✅ Check-in time notification scheduled for: 2025-07-17T23:00:00+07:00","service":"notification-service","timestamp":"2025-07-17T10:41:30.300Z"}
+{"level":"info","message":"✅ Before check-in notification scheduled for: 2025-07-17T22:00:00+07:00","service":"notification-service","timestamp":"2025-07-17T10:41:30.306Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-18T00:00:00+07:00","service":"notification-service","timestamp":"2025-07-17T10:41:30.311Z"}
+{"level":"info","message":"✅ Scheduled 3 notifications, 0 failed for booking 6878d359888074d7bd9344ce","service":"notification-service","timestamp":"2025-07-17T10:41:30.311Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 6878d359888074d7bd9344ce","service":"notification-service","timestamp":"2025-07-17T10:41:30.312Z"}
+{"level":"info","message":"📱 Registering FCM token for user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-17T11:00:05.399Z"}
+{"level":"info","message":"📝 Registering FCM token for user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-17T11:00:05.400Z"}
+{"level":"info","message":"✅ FCM token registered successfully for user 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-17T11:00:05.459Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T11:07:13.919Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T11:30:12.554Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T11:30:15.726Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T11:30:18.754Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T11:31:17.769Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T11:31:23.270Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T11:31:33.548Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T11:35:51.793Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T11:42:19.629Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T11:42:44.725Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T11:55:31.865Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T11:57:54.070Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T11:58:00.864Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T12:01:49.472Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T12:01:51.098Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T12:02:58.819Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T12:09:46.665Z"}
+{"level":"info","message":"🎯 Processing new booking: 6878eab9a70eb6c3975096cb","service":"notification-service","timestamp":"2025-07-17T12:21:13.189Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 6878eab9a70eb6c3975096cb","service":"notification-service","timestamp":"2025-07-17T12:21:13.190Z"}
+{"level":"info","message":"📱 Sending notification to user: 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-17T12:21:13.276Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 685da83b6617162afb90eed5","service":"notification-service","timestamp":"2025-07-17T12:21:13.311Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-17T12:21:13.313Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-17T12:21:14.104Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 6878eab9a70eb6c3975096cb","service":"notification-service","timestamp":"2025-07-17T12:21:14.105Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 6878eab9a70eb6c3975096cb","service":"notification-service","timestamp":"2025-07-17T12:21:14.105Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 6878eab9a70eb6c3975096cb","service":"notification-service","timestamp":"2025-07-17T12:21:14.106Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 6878eab9a70eb6c3975096cb","service":"notification-service","timestamp":"2025-07-17T12:21:14.107Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-18T00:00:00+07:00","service":"notification-service","timestamp":"2025-07-17T12:21:14.235Z"}
+{"level":"info","message":"✅ Check-in time notification scheduled for: 2025-07-17T23:00:00+07:00","service":"notification-service","timestamp":"2025-07-17T12:21:14.242Z"}
+{"level":"info","message":"✅ Before check-in notification scheduled for: 2025-07-17T22:00:00+07:00","service":"notification-service","timestamp":"2025-07-17T12:21:14.242Z"}
+{"level":"info","message":"✅ Scheduled 3 notifications, 0 failed for booking 6878eab9a70eb6c3975096cb","service":"notification-service","timestamp":"2025-07-17T12:21:14.243Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 6878eab9a70eb6c3975096cb","service":"notification-service","timestamp":"2025-07-17T12:21:14.243Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-17T12:24:07.491Z"}

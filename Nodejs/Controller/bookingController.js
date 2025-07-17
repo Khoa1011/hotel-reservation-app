@@ -401,6 +401,502 @@ bookingRouter.delete("/delete/:id", async (req, res) => {
 });
 
 
+
+//5 khách sạn gần nhất cho homescreen
+bookingRouter.get("/recent-bookings/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { limit = 3 } = req.query; // Default 5 items cho home screen
+
+    // Lấy các booking đã hoàn thành gần đây
+    const recentBookings = await Booking.find({ 
+      maNguoiDung: new mongoose.Types.ObjectId(userId),
+      trangThai: { $in: ["da_tra_phong", "da_hoan_thanh"] } // Chỉ lấy booking đã hoàn thành
+    })
+    .populate({
+      path: "maKhachSan",
+      select: "tenKhachSan diaChiDayDu hinhAnh soSao giaCa diaChi"
+    })
+    .populate({
+      path: "maLoaiPhong", 
+      select: "tenLoaiPhong"
+    })
+    .sort({ thoiGianTaoDon: -1 }) // Sắp xếp theo thời gian đặt mới nhất
+    .limit(parseInt(limit));
+
+    // Helper function để tính rating từ số sao
+    const calculateRating = (soSao) => {
+      return soSao ? parseFloat(soSao.toFixed(1)) : 4.0;
+    };
+
+    // Helper function để format địa chỉ
+    const formatAddress = (hotel) => {
+      if (hotel.diaChiDayDu) return hotel.diaChiDayDu;
+      
+      const diaChi = hotel.diaChi || {};
+      return [diaChi.quan, diaChi.tinhThanh].filter(Boolean).join(', ') || "Địa chỉ không rõ";
+    };
+
+    // Helper function để tính giá theo đêm
+    const calculatePricePerNight = (booking) => {
+      const thongTinGia = booking.thongTinGia || {};
+      
+      if (thongTinGia.donVi === "dem") {
+        return thongTinGia.donGia || 0;
+      } else if (thongTinGia.donVi === "ngay") {
+        return thongTinGia.donGia || 0;
+      } else {
+        // Cho booking theo giờ, estimate price per night
+        return (thongTinGia.donGia || 0) * 8; // Giả sử 8 giờ = 1 đêm
+      }
+    };
+
+    // Format data cho frontend
+    const formattedBookings = recentBookings.map(booking => ({
+      bookingId: booking._id,
+      hotel: {
+        _id: booking.maKhachSan?._id,
+        tenKhachSan: booking.maKhachSan?.tenKhachSan || "Unknown Hotel",
+        diaChiDayDu: booking.maKhachSan.diaChiDayDu,
+        hinhAnh: booking.maKhachSan?.hinhAnh || "/images/default-hotel.jpg",
+        soSao: calculateRating(booking.maKhachSan?.soSao),
+        totalReviews: 8215 // Mock data - có thể tính từ reviews thực tế
+      },
+      room: {
+        type: booking.maLoaiPhong?.tenLoaiPhong || "Standard Room"
+      },
+      booking: {
+        type: booking.loaiDatPhong,
+        checkInDate: booking.ngayNhanPhong,
+        checkOutDate: booking.ngayTraPhong,
+        checkInTime: booking.gioNhanPhong,
+        checkOutTime: booking.gioTraPhong,
+        totalAmount: booking.thongTinGia?.tongDonDat || 0,
+        createdAt: booking.thoiGianTaoDon,
+        status: booking.trangThai
+      },
+      pricing: {
+        pricePerNight: calculatePricePerNight(booking),
+        currency: "VND",
+        displayPrice: `${(calculatePricePerNight(booking) / 1000).toFixed(0)}k` // Format: 29k
+      }
+    }));
+
+    return res.status(200).json({
+      success: true,
+      message: `Tìm thấy ${formattedBookings.length} khách sạn đã đặt gần đây`,
+      data: formattedBookings,
+      count: formattedBookings.length
+    });
+
+  } catch (error) {
+    console.error("❌ Lỗi lấy recent bookings:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ khi lấy danh sách khách sạn đã đặt",
+      error: error.message
+    });
+  }
+});
+
+// API lấy danh sách khách sạn đã đặt gần đây (grouped by hotel)
+bookingRouter.get("/recent-hotels/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { limit = 10 } = req.query;
+
+    console.log(`🔍 Fetching recent hotels for user: ${userId}`);
+
+    // Validate userId
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Mã người dùng không hợp lệ!"
+      });
+    }
+
+    // Lấy booking đã hoàn thành, sắp xếp theo thời gian tạo mới nhất
+    const completedBookings = await Booking.find({ 
+      maNguoiDung: new mongoose.Types.ObjectId(userId),
+      trangThai: { $in: ["da_tra_phong", "da_hoan_thanh"] }
+    })
+    .populate({
+      path: "maKhachSan",
+      select: "tenKhachSan diaChiDayDu hinhAnh soSao diaChi soDienThoai email moTa loaiKhachSan trangThai"
+    })
+    .populate({
+      path: "maLoaiPhong",
+      select: "tenLoaiPhong giaTheoNgay giaTheoGio giaQuaDem"
+    })
+    .sort({ thoiGianTaoDon: -1 });
+
+    console.log(`📊 Found ${completedBookings.length} completed bookings`);
+
+    if (completedBookings.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: "Chưa có khách sạn nào được đặt",
+        data: [],
+        count: 0
+      });
+    }
+
+    // Nhóm theo khách sạn, giữ thứ tự booking mới nhất
+    const hotelBookingsMap = new Map();
+    const hotelIds = new Set();
+    
+    completedBookings.forEach(booking => {
+      const hotelId = booking.maKhachSan?._id?.toString();
+      if (!hotelId) return;
+
+      hotelIds.add(hotelId);
+
+      if (!hotelBookingsMap.has(hotelId)) {
+        hotelBookingsMap.set(hotelId, {
+          hotel: booking.maKhachSan,
+          roomType: booking.maLoaiPhong,
+          bookings: []
+        });
+      }
+      
+      hotelBookingsMap.get(hotelId).bookings.push(booking);
+    });
+
+    console.log(`🏨 Grouped into ${hotelBookingsMap.size} unique hotels`);
+
+    // ✅ Lấy thông tin review cho tất cả khách sạn cùng lúc (batch processing)
+    const reviewsData = await Promise.all(
+      Array.from(hotelIds).map(async (hotelId) => {
+        try {
+          const reviewStats = await mongoose.model("danhGia").aggregate([
+            // Lookup booking để filter theo hotel
+            {
+              $lookup: {
+                from: "dondatphongs",
+                localField: "maDatPhong",
+                foreignField: "_id",
+                as: "booking"
+              }
+            },
+            // Filter theo hotel ID
+            {
+              $match: {
+                "booking.maKhachSan": new mongoose.Types.ObjectId(hotelId)
+              }
+            },
+            { $unwind: "$booking" },
+            // Group để tính statistics
+            {
+              $group: {
+                _id: null,
+                averageRating: { $avg: "$soSao" },
+                totalReviews: { $sum: 1 },
+                ratingDistribution: { $push: "$soSao" }
+              }
+            }
+          ]);
+
+          if (reviewStats.length > 0) {
+            const stats = reviewStats[0];
+            
+            // Tính phân bổ rating
+            let ratingBreakdown = { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 };
+            if (stats.ratingDistribution) {
+              stats.ratingDistribution.forEach(rating => {
+                ratingBreakdown[rating.toString()] = (ratingBreakdown[rating.toString()] || 0) + 1;
+              });
+            }
+
+            return {
+              hotelId,
+              totalReviews: stats.totalReviews,
+              averageRating: Math.round(stats.averageRating * 10) / 10,
+              ratingBreakdown
+            };
+          }
+
+          return {
+            hotelId,
+            totalReviews: 0,
+            averageRating: 0,
+            ratingBreakdown: { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 }
+          };
+        } catch (error) {
+          console.warn(`⚠️ Lỗi lấy review cho hotel ${hotelId}:`, error);
+          return {
+            hotelId,
+            totalReviews: 0,
+            averageRating: 0,
+            ratingBreakdown: { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 }
+          };
+        }
+      })
+    );
+
+    // Tạo map để lookup review data nhanh
+    const reviewsMap = new Map();
+    reviewsData.forEach(review => {
+      reviewsMap.set(review.hotelId, review);
+    });
+
+    // ✅ Format data cho frontend
+    const recentHotels = Array.from(hotelBookingsMap.values()).map(({hotel, roomType, bookings}) => {
+      const latestBooking = bookings[0]; // Booking mới nhất
+      const totalSpent = bookings.reduce((sum, b) => sum + (b.thongTinGia?.tongDonDat || 0), 0);
+      
+      // Tính giá display
+      const pricePerNight = latestBooking.thongTinGia?.donGia || 0;
+      const displayPrice = pricePerNight >= 1000000 
+        ? `${(pricePerNight / 1000000).toFixed(1)}M`
+        : `${Math.round(pricePerNight / 1000)}k`;
+
+      // Lấy review data từ map
+      const reviewData = reviewsMap.get(hotel._id.toString()) || {
+        totalReviews: 0,
+        averageRating: hotel.soSao || 4.0,
+        ratingBreakdown: { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 }
+      };
+
+      return {
+        bookingId: latestBooking._id,
+        
+        // ✅ Khớp với KhachSan model fields
+        hotel: {
+          _id: hotel._id,
+          tenKhachSan: hotel.tenKhachSan || "Unknown Hotel",
+          diaChiDayDu: hotel.diaChiDayDu || `${hotel.diaChi?.quan}, ${hotel.diaChi?.tinhThanh}` || "Unknown Address",
+          hinhAnh: hotel.hinhAnh || "",
+          soSao: reviewData.averageRating || hotel.soSao || 4.0,
+          soDienThoai: hotel.soDienThoai || "",
+          email: hotel.email || "",
+          moTa: hotel.moTa || "",
+          diaChi: hotel.diaChi || {},
+          loaiKhachSan: hotel.loaiKhachSan || "khachSan",
+          trangThai: hotel.trangThai || "hoatDong",
+          giaTheoNgay: roomType?.giaTheoNgay || pricePerNight,
+          thanhPho: hotel.diaChi?.thanhPho || "",
+          // ✅ Thông tin review từ database thực tế
+          totalReviews: reviewData.totalReviews,
+          averageRating: reviewData.averageRating,
+          ratingBreakdown: reviewData.ratingBreakdown
+        },
+        
+        // ✅ Thông tin pricing
+        pricing: {
+          pricePerNight: pricePerNight,
+          currency: "VND",
+          displayPrice: displayPrice
+        },
+        
+        // ✅ Thống kê booking
+        stats: {
+          totalBookings: bookings.length,
+          totalSpent: totalSpent,
+          lastBookingDate: latestBooking.thoiGianTaoDon,
+          firstBookingDate: bookings[bookings.length - 1].thoiGianTaoDon
+        },
+        
+        // ✅ Thông tin room và booking
+        room: {
+          type: roomType?.tenLoaiPhong || "Standard Room"
+        },
+        
+        booking: {
+          type: latestBooking.loaiDatPhong,
+          checkInDate: latestBooking.ngayNhanPhong,
+          checkOutDate: latestBooking.ngayTraPhong,
+          checkInTime: latestBooking.gioNhanPhong || "14:00",
+          checkOutTime: latestBooking.gioTraPhong || "12:00",
+          totalAmount: latestBooking.thongTinGia?.tongDonDat || 0,
+          createdAt: latestBooking.thoiGianTaoDon,
+          status: latestBooking.trangThai
+        }
+      };
+    });
+
+    // Sort by latest booking và slice theo limit
+    const sortedHotels = recentHotels
+      .sort((a, b) => new Date(b.stats.lastBookingDate) - new Date(a.stats.lastBookingDate))
+      .slice(0, parseInt(limit));
+
+    console.log(`✅ Returning ${sortedHotels.length} recent hotels with review data`);
+
+    return res.status(200).json({
+      success: true,
+      message: `Tìm thấy ${sortedHotels.length} khách sạn đã đặt gần đây`,
+      data: sortedHotels,
+      count: sortedHotels.length
+    });
+
+  } catch (error) {
+    console.error("❌ Lỗi lấy recent hotels:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ khi lấy danh sách khách sạn đã đặt",
+      error: error.message
+    });
+  }
+});
+
+// API lấy chi tiết lịch sử đặt phòng của 1 khách sạn
+bookingRouter.get("/hotel-booking-history/:userId/:hotelId", async (req, res) => {
+  try {
+    const { userId, hotelId } = req.params;
+
+    // Validate IDs
+    if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(hotelId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Mã người dùng hoặc mã khách sạn không hợp lệ!"
+      });
+    }
+
+    // Lấy tất cả booking của user tại khách sạn này
+    const hotelBookings = await Booking.find({
+      maNguoiDung: new mongoose.Types.ObjectId(userId),
+      maKhachSan: new mongoose.Types.ObjectId(hotelId)
+    })
+    .populate({
+      path: "maKhachSan",
+      select: "tenKhachSan diaChiDayDu hinhAnh soSao diaChi"
+    })
+    .populate({
+      path: "maLoaiPhong",
+      select: "tenLoaiPhong giaTheoNgay giaTheoGio giaQuaDem"
+    })
+    .sort({ thoiGianTaoDon: -1 });
+
+    if (hotelBookings.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy lịch sử đặt phòng cho khách sạn này"
+      });
+    }
+
+    // Lấy thông tin review của khách sạn
+    const hotelReviewStats = await mongoose.model("danhGia").aggregate([
+      {
+        $lookup: {
+          from: "dondatphongs",
+          localField: "maDatPhong",
+          foreignField: "_id",
+          as: "booking"
+        }
+      },
+      {
+        $match: {
+          "booking.maKhachSan": new mongoose.Types.ObjectId(hotelId)
+        }
+      },
+      { $unwind: "$booking" },
+      {
+        $group: {
+          _id: null,
+          averageRating: { $avg: "$soSao" },
+          totalReviews: { $sum: 1 },
+          ratingDistribution: { $push: "$soSao" }
+        }
+      }
+    ]);
+
+    // Format booking history
+    const formattedBookings = hotelBookings.map(booking => ({
+      id: booking._id,
+      roomType: booking.maLoaiPhong?.tenLoaiPhong || "Standard Room",
+      checkInDate: booking.ngayNhanPhong,
+      checkOutDate: booking.ngayTraPhong,
+      checkInTime: booking.gioNhanPhong || "14:00",
+      checkOutTime: booking.gioTraPhong || "12:00",
+      totalAmount: booking.thongTinGia?.tongDonDat || 0,
+      bookingType: booking.loaiDatPhong,
+      status: booking.trangThai,
+      createdAt: booking.thoiGianTaoDon
+    }));
+
+    // Tính tổng chi tiêu và thống kê
+    const totalSpent = formattedBookings.reduce((sum, b) => sum + b.totalAmount, 0);
+    const completedBookings = formattedBookings.filter(b => 
+      ['da_tra_phong', 'da_hoan_thanh'].includes(b.status)
+    ).length;
+
+    // Format hotel info với review data
+    const hotel = hotelBookings[0].maKhachSan;
+    let reviewData = {
+      totalReviews: 0,
+      averageRating: hotel.soSao || 4.0,
+      ratingBreakdown: { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 }
+    };
+
+    if (hotelReviewStats.length > 0) {
+      const stats = hotelReviewStats[0];
+      reviewData.totalReviews = stats.totalReviews;
+      reviewData.averageRating = Math.round(stats.averageRating * 10) / 10;
+      
+      // Tính phân bổ rating
+      let ratingBreakdown = { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 };
+      if (stats.ratingDistribution) {
+        stats.ratingDistribution.forEach(rating => {
+          ratingBreakdown[rating.toString()] = (ratingBreakdown[rating.toString()] || 0) + 1;
+        });
+      }
+      reviewData.ratingBreakdown = ratingBreakdown;
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Lấy lịch sử đặt phòng thành công",
+      data: {
+        hotel: {
+          _id: hotel._id,
+          tenKhachSan: hotel.tenKhachSan,
+          diaChiDayDu: hotel.diaChiDayDu,
+          hinhAnh: hotel.hinhAnh,
+          soSao: reviewData.averageRating,
+          diaChi: hotel.diaChi,
+          totalReviews: reviewData.totalReviews,
+          averageRating: reviewData.averageRating,
+          ratingBreakdown: reviewData.ratingBreakdown
+        },
+        bookings: formattedBookings,
+        stats: {
+          totalBookings: formattedBookings.length,
+          completedBookings: completedBookings,
+          totalSpent: totalSpent,
+          averageSpentPerBooking: formattedBookings.length > 0 ? Math.round(totalSpent / formattedBookings.length) : 0,
+          firstBookingDate: formattedBookings[formattedBookings.length - 1]?.createdAt,
+          lastBookingDate: formattedBookings[0]?.createdAt
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Lỗi lấy hotel booking history:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ khi lấy lịch sử đặt phòng",
+      error: error.message
+    });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // --------------------------------------------------------------------------------------------------
 
 bookingRouter.get("/hotelowner/bookings", authorizeRoles("chuKhachSan", "nhanVien"), async (req, res) => {

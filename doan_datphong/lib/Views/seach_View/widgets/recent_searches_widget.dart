@@ -18,7 +18,7 @@ class RecentSearchesWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Recent',
+            'Có thể bạn cần',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,

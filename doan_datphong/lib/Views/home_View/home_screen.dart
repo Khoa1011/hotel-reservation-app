@@ -3,6 +3,8 @@ import 'package:doan_datphong/Data/Provider/auth_provider.dart';
 import 'package:doan_datphong/Views/components/bottom_navigation_bar.dart';
 import 'package:doan_datphong/Views/home_View/listHotelView.dart';
 import 'package:doan_datphong/Views/home_View/listHotelView_type.dart';
+import 'package:doan_datphong/Views/home_View/recentlyBookedHotel_widget.dart';
+import 'package:doan_datphong/Views/home_View/reservationTypes_widget.dart';
 import 'package:doan_datphong/Views/home_View/searchView.dart';
 import 'package:doan_datphong/Views/listBooking_View/listBooking_screen.dart';
 import 'package:doan_datphong/Views/profile_View/profile_screen.dart';
@@ -32,7 +34,7 @@ class _HomePageState extends State<HomeScreen> {
 
   bool iconBookMarkPressed = false;
   bool iconBookMarkRecentlyPressed = false;
-
+  ReservationType? selectedReservationType;
 
   @override
   void initState() {
@@ -105,9 +107,7 @@ class _HomePageState extends State<HomeScreen> {
             child: Column(
               children: [
                 Consumer<UserAuthProvider>(
-
                     builder: (context, authProvider ,child){
-                      // ✅ Debug để kiểm tra trạng thái auth_provider
                       print("🏠 HomeScreen - User: ${authProvider.userName}");
                       print("🏠 HomeScreen - IsLoggedIn: ${authProvider.isLoggedIn}");
                       print("🏠 HomeScreen - UserId: ${authProvider.userId}");
@@ -280,180 +280,47 @@ class _HomePageState extends State<HomeScreen> {
                 ),
 
 
+                // ReservationTypeWidget(
+                //   onTypeSelected: (ReservationType type) {
+                //     setState(() {
+                //       selectedReservationType = type;
+                //     });
+                //
+                //     // ✅ Xử lý logic khi chọn loại đặt phòng
+                //     _handleReservationTypeSelected(type);
+                //   },
+                // ),
+
+
                 HotelViewSwitcher(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      S.of(context).recentlyBooked,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {},
-                      child: Text(
-                        S.of(context).seeAll,
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Color(0xFF1565C0),
-                          fontWeight: FontWeight.bold,
-
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
                 const SizedBox(height: 15),
-                SizedBox(
-                  height: 160,
-                  width: MediaQuery.of(context).size.width * 0.95,
-                  child: PageView.builder(
-                    itemBuilder: (context, index) {
-                      return Padding(
-                        padding: EdgeInsets.all(8),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Card(
-                            elevation: 5,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // PHẦN HÌNH ẢNH (BÊN TRÁI)
-                                Expanded(
-                                  flex: 3, // Chia tỷ lệ
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(
-                                        10,
-                                      ), // Bo góc hình ảnh
-                                      child: Image.asset(
-                                        'assets/images/hotels/p13.jpg',
-                                        width: double.infinity,
-                                        height:double.infinity,
-                                        fit:
-                                            BoxFit.cover, // Căn chỉnh hình ảnh
-                                      ),
-                                    ),
-                                  ),
+                Consumer<UserAuthProvider>(
+                  builder: (context, authProvider, child) {
+                    if (authProvider.isLoggedIn && authProvider.userId != null) {
+                      return RecentBookingsWidget(userId: authProvider.userId!);
+                    } else {
+                      return Container(
+                        height: 200,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.login, size: 50, color: Colors.grey[400]),
+                              SizedBox(height: 10),
+                              Text(
+                                'Đăng nhập để xem khách sạn đã đặt',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 16,
                                 ),
-
-                                // PHẦN THÔNG TIN (BÊN PHẢI)
-                                Expanded(
-                                  flex: 5,
-                                  child: Padding(
-                                    padding: const EdgeInsets.fromLTRB(8.0,12.0,12.0,12.0),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
-                                      children: [
-                                        Text(
-                                          "Milan Hotels",
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Text(
-                                          "7 Distric, Ho Chi Minh city",
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontStyle: FontStyle.italic
-                                          ),
-                                        ),
-                                        Row(
-
-                                          children: [
-                                            Icon(FontAwesomeIcons.solidStar,
-                                                color: Colors.yellowAccent.shade700,
-                                                size: 25
-                                            ),
-                                            const SizedBox(width: 4,),
-                                            Text("4.7",
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                                color: Color(0xFF1565C0),
-                                                fontWeight: FontWeight.bold,
-
-
-                                              ),
-                                            ),
-                                            const SizedBox(width: 5,),
-                                            Text("(8.215)",
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                fontStyle: FontStyle.italic,
-
-                                              ),
-                                            ),
-                                          ],
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  flex: 2,
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(right: 8.0,top: 12.0),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.center,
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text("\$29",
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-
-                                            fontSize: 25,
-                                            color: Color(0xFF1565C0)
-                                          ),),
-                                          Text("/ ${S.of(context).perNight}",
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontStyle: FontStyle.italic
-                                          ),),
-                                          Padding(
-                                            padding: const EdgeInsets.only(bottom: 2.0),
-                                            child: IconButton(
-                                              onPressed: () {
-                                                setState(() {
-                                                  iconBookMarkRecentlyPressed = !iconBookMarkRecentlyPressed;
-                                                });
-                                              },
-                                              icon: AnimatedSwitcher(
-                                                duration: Duration(milliseconds: 300),
-                                                transitionBuilder: (Widget child, Animation<double> animation) {
-                                                  return ScaleTransition(scale: animation, child: child);
-                                                },
-                                                child: Icon(
-                                                  iconBookMarkRecentlyPressed
-                                                      ? Icons.bookmark_added
-                                                      : Icons.bookmark_add_outlined,
-                                                  key: ValueKey<bool>(iconBookMarkRecentlyPressed),
-                                                  size: 40,
-                                                  color: Color(0xFF525150),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ))
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       );
-                    },
-                  ),
-                ),
+                    }
+                  },
+                )
               ],
             ),
           ),
@@ -464,7 +331,82 @@ class _HomePageState extends State<HomeScreen> {
     );
   }
 
-  // void _handleUserNotFound() {
+  // ✅ Hàm xử lý khi chọn loại đặt phòng
+  void _handleReservationTypeSelected(ReservationType type) {
+    print("🏨 Selected reservation type: ${type.displayName}");
+
+    switch (type) {
+      case ReservationType.gan_ban:
+      // Xử lý tìm khách sạn gần
+        _findNearbyHotels();
+        break;
+      case ReservationType.theo_gio:
+      // Xử lý đặt phòng theo giờ
+        _navigateToHourlyBooking();
+        break;
+      case ReservationType.qua_dem:
+      // Xử lý đặt phòng qua đêm
+        _navigateToOvernightBooking();
+        break;
+      case ReservationType.dai_ngay:
+      // Xử lý đặt phòng dài ngày
+        _navigateToLongStayBooking();
+        break;
+    }
+  }
+
+  // ✅ Các hàm xử lý navigation
+  void _findNearbyHotels() {
+    // TODO: Implement tìm khách sạn gần
+    // Có thể navigate đến SearchView với filter location
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SearchView(
+          // initialFilter: FilterType.nearby,
+        ),
+      ),
+    );
+  }
+
+  void _navigateToHourlyBooking() {
+    // TODO: Implement navigation đến trang đặt phòng theo giờ
+    // Navigator.push(
+    //   context,
+    //   MaterialPageRoute(
+    //     builder: (context) => ListHotelViewType(
+    //       bookingType: "theo_gio",
+    //     ),
+    //   ),
+    // );
+  }
+
+  void _navigateToOvernightBooking() {
+    // TODO: Implement navigation đến trang đặt phòng qua đêm
+    // Navigator.push(
+    //   context,
+    //   MaterialPageRoute(
+    //     builder: (context) => ListHotelViewType(
+    //       bookingType: "qua_dem",
+    //     ),
+    //   ),
+    // );
+  }
+
+  void _navigateToLongStayBooking() {
+    // TODO: Implement navigation đến trang đặt phòng dài ngày
+    // Navigator.push(
+    //   context,
+    //   MaterialPageRoute(
+    //     builder: (context) => ListHotelViewType(
+    //       bookingType: "dai_ngay",
+    //     ),
+    //   ),
+    // );
+  }
+
+
+// void _handleUserNotFound() {
   //   showDialog(
   //     context: context,
   //     builder: (BuildContext context) {

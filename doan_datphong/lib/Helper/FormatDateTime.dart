@@ -22,11 +22,7 @@ class DateTimeHelper{
   }
 
   static DateTime? formatStringToDateTime(String date) {
-    try {
       return DateTime.parse(date);
-    } catch (e) {
-      return null;
-    }
   }
   static DateTime? smartParse(String dateString) {
     if (dateString.isEmpty) return null;

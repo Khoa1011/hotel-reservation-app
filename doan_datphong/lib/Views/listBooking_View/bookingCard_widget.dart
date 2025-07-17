@@ -381,6 +381,11 @@ class BookingCard extends StatelessWidget {
     String statusText;
 
     switch (status) {
+      case BookingStatusFilter.all:
+        bgColor = const Color(0xFF1565C0).withOpacity(0.1);
+        textColor = const Color(0xFF1565C0);
+        statusText = "Tất cả";
+        break;
       case BookingStatusFilter.ongoing:
         bgColor = const Color(0xFF1565C0).withOpacity(0.1);
         textColor = const Color(0xFF1565C0);

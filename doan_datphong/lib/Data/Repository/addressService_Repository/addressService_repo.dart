@@ -4,15 +4,17 @@ import 'dart:convert';
 // ✅ CẬP NHẬT: Province model theo esgoo.net API
 class Province {
   final String id;
-  final String name;
+  late final String name;
   final String nameEn;
+
+
 
   Province({required this.id, required this.name, required this.nameEn});
 
   factory Province.fromJson(Map<String, dynamic> json) {
     return Province(
       id: json['id']?.toString() ?? '',
-      name: json['name'] ?? '',
+      name: json['full_name'] ?? '',
       nameEn: json['name_en'] ?? '',
     );
   }
@@ -33,12 +35,13 @@ class District {
   final String name;
   final String nameEn;
 
+
   District({required this.id, required this.name, required this.nameEn});
 
   factory District.fromJson(Map<String, dynamic> json) {
     return District(
       id: json['id']?.toString() ?? '',
-      name: json['name'] ?? '',
+      name: json['full_name'] ?? '',
       nameEn: json['name_en'] ?? '',
     );
   }
@@ -53,7 +56,6 @@ class District {
   int get hashCode => id.hashCode;
 }
 
-// ✅ CẬP NHẬT: Ward model theo esgoo.net API
 class Ward {
   final String id;
   final String name;
@@ -64,7 +66,7 @@ class Ward {
   factory Ward.fromJson(Map<String, dynamic> json) {
     return Ward(
       id: json['id']?.toString() ?? '',
-      name: json['name'] ?? '',
+      name: json['full_name'] ?? '',
       nameEn: json['name_en'] ?? '',
     );
   }

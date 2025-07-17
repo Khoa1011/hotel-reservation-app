@@ -13,10 +13,10 @@ class FilterChipsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<String> filters = [
-      'All Hotel',
-      'Recommended',
-      'Popular',
-      'Trending',
+      'Tất cả',
+      'Đề xuất',
+      'Phổ biến',
+      'Xu hướng',
     ];
 
     return Container(

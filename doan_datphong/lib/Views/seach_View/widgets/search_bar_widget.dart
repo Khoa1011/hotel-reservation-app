@@ -63,7 +63,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget>{
                 controller: widget.controller,
                 onChanged: widget.onChanged,
                 decoration: InputDecoration(
-                  hintText: 'Hotel',
+                  hintText: 'Tìm kiếm ...',
                   hintStyle: const TextStyle(
                     color: Colors.grey,
                     fontSize: 16,

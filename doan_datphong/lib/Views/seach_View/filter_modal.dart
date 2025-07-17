@@ -25,7 +25,11 @@ class FilterModal extends StatefulWidget {
 class _FilterModalState extends State<FilterModal> {
   late Map<String, dynamic> _filters;
 
-  final List<String> _sortOptions = ['Highest Popularity', 'Highest Price', 'Lowest Price'];
+  final List<String> _sortOptions = [
+    'Highest Popularity',
+    'Highest Price',
+    'Lowest Price',
+  ];
 
   // Filter values
   int _adults = 2;
@@ -35,9 +39,15 @@ class _FilterModalState extends State<FilterModal> {
   DateTime? checkOutDate;
   String? _bookingType;
 
-  // ✅ CẬP NHẬT: Location theo cấu trúc mới
-  Province? _selectedProvince;    // Thành phố
-  District? _selectedDistrict;    // Quận/Huyện
+  Province? _selectedProvince; // Thành phố
+  District? _selectedDistrict; // Quận/Huyện
+  String provinceFromSearchScreen = "";
+  String districtsFromSearchScreen = "";
+  double priceMin = 0.0;
+  double priceMax = 0.0;
+
+  late Map<String, dynamic> priceRangeFromSearchScreen;
+
   List<Province> provinces = [];
   List<District> districts = [];
 
@@ -52,22 +62,55 @@ class _FilterModalState extends State<FilterModal> {
     super.initState();
     loadProvinces();
     _filters = Map.from(widget.currentFilters);
+    print("Giá trị từ search Screen $_filters");
 
     // Initialize price range
-    _filters['priceRange'] ??= {'min': 50000.0, 'max': 2000000.0};
+    _filters['priceRange'] ??= {'min': 50000.0, 'max': 5000000.0};
+
+    if (_filters['maxPrice'] != null && _filters['minPrice'] != null) {
+      print("giâca 🦋");
+      priceMax = _filters['maxPrice'];
+      priceMin = _filters['minPrice'];
+      _filters['priceRange'] =
+      {'min':priceMin, 'max':priceMax};
+    }
+
 
     // Initialize from currentFilters
-    _adults = _filters['guests'] ?? 2;
+    _adults = _filters['guests1'] ?? 2;
     _children = _filters['children'] ?? 0;
     _rooms = _filters['rooms'] ?? 1;
+
+    if (_filters['thanhPho'] != null) {
+      print("Thafnh pho 🦋");
+      provinceFromSearchScreen = _filters['thanhPho'];
+    }
+    if (_filters['quan'] != null) {
+      print("Quan 🦋");
+      districtsFromSearchScreen = _filters['quan'];
+    }
+
     if (_filters['checkIn'] != null && _filters['checkIn'] is String) {
-      checkInDate = DateTimeHelper.formatStringToDateTime(_filters['checkIn']);
+      print("Check in 🦋");
+      checkInDate = DateTimeHelper.smartParse(_filters['checkIn']);
     }
 
     if (_filters['checkOut'] != null && _filters['checkOut'] is String) {
-      checkOutDate = DateTimeHelper.formatStringToDateTime(_filters['checkOut']);
+      print("Check out 🦋");
+      checkOutDate = DateTimeHelper.smartParse(_filters['checkOut']);
     }
     _bookingType = _filters['bookingType'];
+
+    print(
+      "🪷🪷🪷🪷🪷Kiểm tra giá trị đã gán chưa: (${provinceFromSearchScreen}, "
+      "${districtsFromSearchScreen}, ${checkInDate},"
+      "${checkOutDate},"
+      "${_adults},"
+      "${_children},"
+      "${_rooms},"
+      "${priceMin},"
+      "${priceMax})",
+    );
   }
 
   Future<void> loadProvinces() async {
@@ -82,6 +125,15 @@ class _FilterModalState extends State<FilterModal> {
         provinces = loadedProvinces;
         isLoadingProvinces = false;
       });
+      if (provinceFromSearchScreen.isNotEmpty) {
+        for (var province in provinces) {
+          if (province.name == provinceFromSearchScreen) {
+            _selectedProvince = province;
+            loadDistricts(province.id);
+            break;
+          }
+        }
+      }
     } catch (e) {
       setState(() {
         isLoadingProvinces = false;
@@ -105,6 +157,15 @@ class _FilterModalState extends State<FilterModal> {
         districts = loadedDistricts;
         isLoadingDistricts = false;
       });
+
+      if (districtsFromSearchScreen.isNotEmpty) {
+        for (var districst in districts) {
+          if (districst.name == districtsFromSearchScreen) {
+            _selectedDistrict = districst;
+            break;
+          }
+        }
+      }
     } catch (e) {
       setState(() {
         isLoadingDistricts = false;
@@ -143,10 +204,7 @@ class _FilterModalState extends State<FilterModal> {
 
           const Text(
             'Bộ lọc tìm kiếm',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
 
           const SizedBox(height: 20),
@@ -233,7 +291,8 @@ class _FilterModalState extends State<FilterModal> {
 
   // ✅ Widget preview filter parameters (không gọi API)
   Widget _buildFilterPreview() {
-    final hasFilters = _selectedProvince != null ||
+    final hasFilters =
+        _selectedProvince != null ||
         checkInDate != null ||
         checkOutDate != null ||
         _adults + _children > 2 ||
@@ -249,11 +308,7 @@ class _FilterModalState extends State<FilterModal> {
         ),
         child: Row(
           children: [
-            Icon(
-              Icons.tune,
-              color: Colors.grey[600],
-              size: 20,
-            ),
+            Icon(Icons.tune, color: Colors.grey[600], size: 20),
             SizedBox(width: 8),
             Expanded(
               child: Column(
@@ -270,10 +325,7 @@ class _FilterModalState extends State<FilterModal> {
                   SizedBox(height: 4),
                   Text(
                     'Thiết lập các tiêu chí tìm kiếm ở trên',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
                   ),
                 ],
               ),
@@ -295,11 +347,7 @@ class _FilterModalState extends State<FilterModal> {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.preview,
-                color: Color(0xFF1565C0),
-                size: 20,
-              ),
+              Icon(Icons.preview, color: Color(0xFF1565C0), size: 20),
               SizedBox(width: 8),
               Text(
                 'Bộ lọc đã chọn',
@@ -326,7 +374,8 @@ class _FilterModalState extends State<FilterModal> {
             _buildPreviewItem(
               icon: Icons.calendar_today,
               label: 'Thời gian',
-              value: '${DateTimeHelper.formatDateToString2(checkInDate?? DateTime.now())} - ${DateTimeHelper.formatDateToString2(checkOutDate?? DateTime.now())}',
+              value:
+                  '${DateTimeHelper.formatDateToString2(checkInDate ?? DateTime.now())} - ${DateTimeHelper.formatDateToString2(checkOutDate ?? DateTime.now())}',
             ),
 
           // Guests preview
@@ -370,10 +419,7 @@ class _FilterModalState extends State<FilterModal> {
           Expanded(
             child: Text(
               value,
-              style: TextStyle(
-                color: Color(0xFF1565C0),
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Color(0xFF1565C0), fontSize: 12),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -408,17 +454,14 @@ class _FilterModalState extends State<FilterModal> {
   }
 
   Widget _buildPriceRangeSection() {
-    final priceRange = _filters['priceRange'] as Map<String, double>;
 
+    final priceRange = _filters['priceRange'] as Map<String, double>;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           S.of(context).priceRange,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 16),
         Row(
@@ -430,7 +473,7 @@ class _FilterModalState extends State<FilterModal> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                CurrencyHelper.formatVND(priceRange['min']!),
+                CurrencyHelper.formatVND(priceRange['min']!) ,
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
@@ -464,10 +507,7 @@ class _FilterModalState extends State<FilterModal> {
           inactiveColor: Colors.grey[300],
           onChanged: (values) {
             setState(() {
-              _filters['priceRange'] = {
-                'min': values.start,
-                'max': values.end,
-              };
+              _filters['priceRange'] = {'min': values.start, 'max': values.end};
             });
           },
         ),
@@ -476,8 +516,14 @@ class _FilterModalState extends State<FilterModal> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('50k', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-              Text('5M', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+              Text(
+                '50k',
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
+              Text(
+                '5M',
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
             ],
           ),
         ),
@@ -558,7 +604,11 @@ class _FilterModalState extends State<FilterModal> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.location_on_outlined, color: Color(0xFF1565C0), size: 16),
+                  Icon(
+                    Icons.location_on_outlined,
+                    color: Color(0xFF1565C0),
+                    size: 16,
+                  ),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -572,7 +622,11 @@ class _FilterModalState extends State<FilterModal> {
                   ),
                   GestureDetector(
                     onTap: _clearLocationSelection,
-                    child: Icon(Icons.clear, color: Color(0xFF1565C0), size: 18),
+                    child: Icon(
+                      Icons.clear,
+                      color: Color(0xFF1565C0),
+                      size: 18,
+                    ),
                   ),
                 ],
               ),
@@ -610,7 +664,13 @@ class _FilterModalState extends State<FilterModal> {
   }) {
     return DropdownButtonFormField<T>(
       value: value,
-      hint: Text(hint, style: TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.w500)),
+      hint: Text(
+        hint,
+        style: TextStyle(
+          fontStyle: FontStyle.italic,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
       decoration: InputDecoration(
         filled: true,
         fillColor: enabled ? Color(0xFFF1F1F1) : Colors.grey[200],
@@ -627,25 +687,30 @@ class _FilterModalState extends State<FilterModal> {
           borderSide: BorderSide(color: Colors.red),
         ),
         errorText: errorText,
-        suffixIcon: isLoading
-            ? SizedBox(
-          width: 20,
-          height: 20,
-          child: Padding(
-            padding: EdgeInsets.all(12),
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        )
-            : null,
+        suffixIcon:
+            isLoading
+                ? SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: Padding(
+                    padding: EdgeInsets.all(12),
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+                : null,
       ),
-      items: enabled && !isLoading
-          ? items.map((item) {
-        return DropdownMenuItem<T>(
-          value: item,
-          child: Text(getLabel(item), style: TextStyle(fontWeight: FontWeight.normal)),
-        );
-      }).toList()
-          : [],
+      items:
+          enabled && !isLoading
+              ? items.map((item) {
+                return DropdownMenuItem<T>(
+                  value: item,
+                  child: Text(
+                    getLabel(item),
+                    style: TextStyle(fontWeight: FontWeight.normal),
+                  ),
+                );
+              }).toList()
+              : [],
       onChanged: enabled && !isLoading ? onChanged : null,
     );
   }
@@ -661,10 +726,7 @@ class _FilterModalState extends State<FilterModal> {
           children: [
             Text(
               S.of(context).checkInDate,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -707,10 +769,7 @@ class _FilterModalState extends State<FilterModal> {
           children: [
             Text(
               S.of(context).checkOutDate,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -749,7 +808,7 @@ class _FilterModalState extends State<FilterModal> {
         if (checkInDate != null && checkOutDate != null)
           Container(
             width: double.infinity,
-            margin: EdgeInsets.only(top: 10,left: 20,right: 20),
+            margin: EdgeInsets.only(top: 10, left: 20, right: 20),
             padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Color(0xFF1565C0).withOpacity(0.1),
@@ -793,9 +852,10 @@ class _FilterModalState extends State<FilterModal> {
   }
 
   Future<void> _selectCheckOutDate(BuildContext context) async {
-    DateTime firstDate = checkInDate != null
-        ? checkInDate!.add(Duration(days: 1))
-        : DateTime.now().add(Duration(days: 1));
+    DateTime firstDate =
+        checkInDate != null
+            ? checkInDate!.add(Duration(days: 1))
+            : DateTime.now().add(Duration(days: 1));
 
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -842,7 +902,6 @@ class _FilterModalState extends State<FilterModal> {
   Map<String, dynamic> _buildSearchParams() {
     final params = <String, dynamic>{};
 
-    // ✅ Location - đổi từ tinhThanh/phuongXa sang thanhPho/quan
     if (_selectedProvince != null) {
       params['thanhPho'] = _selectedProvince!.name;
     }
@@ -865,11 +924,15 @@ class _FilterModalState extends State<FilterModal> {
 
     // Dates
     if (checkInDate != null) {
-      String formatedCheckInDate = DateTimeHelper.formatDateToString2(checkInDate!);
+      String formatedCheckInDate = DateTimeHelper.formatDateToString2(
+        checkInDate!,
+      );
       params['checkIn'] = formatedCheckInDate;
     }
     if (checkOutDate != null) {
-      String formatedCheckOutDate = DateTimeHelper.formatDateToString2(checkOutDate!);
+      String formatedCheckOutDate = DateTimeHelper.formatDateToString2(
+        checkOutDate!,
+      );
       params['checkOut'] = formatedCheckOutDate;
     }
     if (_bookingType != null) params['bookingType'] = _bookingType;
@@ -883,7 +946,7 @@ class _FilterModalState extends State<FilterModal> {
   void _resetFilters() {
     setState(() {
       _filters = {
-        'priceRange': {'min': 100000.0, 'max': 2000000.0},
+        'priceRange': {'min': 100000.0, 'max': 5000000.0},
       };
       _selectedProvince = null;
       _selectedDistrict = null;

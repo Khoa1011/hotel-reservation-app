@@ -25,17 +25,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'Blocs/Hotel_Blocs/hotel_bloc.dart';
 import 'Blocs/checkLogin_Blocs/checkLogin_bloc.dart';
 import 'Blocs/getAmenities_Blocs/getAmenities_bloc.dart';
 import 'Blocs/getReviewByHotel_Blocs/getReviewByHotel_bloc.dart';
 import 'Blocs/logout_bloc/logout_event.dart';
+import 'Blocs/recentlyBookedHotels_Blocs/recentlyBookedHotels_bloc.dart';
 import 'Blocs/searchHotels_Blocs/searchHotels_bloc.dart';
 import 'Data/Provider/auth_provider.dart';
 import 'Data/Repository/fillProfile_Repository/fillProfile_repo.dart';
 import 'Data/Repository/getAmenities_Repository/getAmenities_repo.dart';
 import 'Data/Repository/getReviewByHotel_Repository/getReviewByHotel_repo.dart';
+import 'Data/Repository/recentlyBookedHotels_Repository/recentlyBookedHotels_repo.dart';
 import 'Data/Repository/review_Repository/review_repo.dart';
 import 'Data/Repository/searchHotels_Repository/searchHotels_repo.dart';
 import 'LanguageProvider.dart';
@@ -111,7 +112,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-
+    // _handleLogout();
     // _setupFirebaseMessaging();
     return MultiProvider(
 
@@ -146,6 +147,7 @@ class _MyAppState extends State<MyApp> {
         BlocProvider(create: (context) => BookingCheckBloc(repository: BookingCheckRepository())),
         BlocProvider(create: (context) => ReviewBloc(reviewRepository: ReviewRepository())),
         BlocProvider(create: (context) => HotelReviewBloc(hotelReviewRepository: HotelReviewRepository())),
+        BlocProvider(create: (context) => RecentBookingsBloc(repository: RecentBookingsRepository())),
       ],
       child: Consumer<LanguageProvider>(
         builder: (context, languageProvider, child) {

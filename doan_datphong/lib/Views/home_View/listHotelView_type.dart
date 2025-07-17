@@ -158,9 +158,9 @@ class _HotelViewSwitcherState extends State<HotelViewSwitcher> {
             child: Row(
               children: [
                 Text(
-                  "View",
+                  "Hiển thị",
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 18,
                     fontWeight: FontWeight.w500,
                     color: Colors.grey[700],
                   ),
@@ -171,19 +171,19 @@ class _HotelViewSwitcherState extends State<HotelViewSwitcher> {
                     _buildViewButton(
                       icon: Icons.view_carousel,
                       viewType: ViewType.card,
-                      label: "Card",
+                      label: "Thẻ",
                     ),
                     const SizedBox(width: 10,),
                     _buildViewButton(
                       icon: Icons.view_list,
                       viewType: ViewType.list,
-                      label: "List",
+                      label: "Danh sách",
                     ),
                     const SizedBox(width: 10,),
                     _buildViewButton(
                       icon: Icons.grid_view,
                       viewType: ViewType.grid,
-                      label: "Grid",
+                      label: "Lưới",
                     ),
                   ],
                 ),

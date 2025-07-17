@@ -1,5 +1,5 @@
-Màu chính: 0xFF1565C0
-Màu icon: 0xFF525150
+Màu chính: 0xFF 1565C0
+Màu icon: 0xFF 525150
 Màu dịch vụ:
 Màu tên khách sạn: 0xFFFF8F00
 Màu giá khách sạn: 0xFFFFD700

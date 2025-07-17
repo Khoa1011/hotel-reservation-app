@@ -19,7 +19,7 @@ import 'bookingDetails_screen.dart';
 import 'cancelBooking_widget.dart';
 
 // Enum cho booking status filter
-enum BookingStatusFilter { ongoing, completed, canceled, noCheckIn}
+enum BookingStatusFilter { all,ongoing, completed, canceled, noCheckIn}
 
 class ListBookingScreen extends StatefulWidget {
   const ListBookingScreen({super.key});
@@ -30,7 +30,7 @@ class ListBookingScreen extends StatefulWidget {
 
 class _ListBookingScreenState extends State<ListBookingScreen> {
   int currentIndex = 2;
-  BookingStatusFilter selectedStatus = BookingStatusFilter.ongoing;
+  BookingStatusFilter selectedStatus = BookingStatusFilter.all;
   NguoiDung? currentUser;
   bool isLoading = true;
   // ✅ Map để track booking nào đã được review
@@ -321,6 +321,8 @@ class _ListBookingScreenState extends State<ListBookingScreen> {
         physics: const BouncingScrollPhysics(),
         child: Row(
           children: [
+            _buildFilterChip("Tất cả", BookingStatusFilter.all),
+            const SizedBox(width: 12),
             _buildFilterChip(S.of(context).ongoing, BookingStatusFilter.ongoing),
             const SizedBox(width: 12),
             _buildFilterChip(S.of(context).completed, BookingStatusFilter.completed),
@@ -413,6 +415,8 @@ class _ListBookingScreenState extends State<ListBookingScreen> {
   List<BookingWithHotel> _getFilteredBookings(List<BookingWithHotel> bookings) {
     return bookings.where((booking) {
       switch (selectedStatus) {
+        case BookingStatusFilter.all:
+          return true;
         case BookingStatusFilter.ongoing:
           return booking.status == 'ongoing';
         case BookingStatusFilter.completed:

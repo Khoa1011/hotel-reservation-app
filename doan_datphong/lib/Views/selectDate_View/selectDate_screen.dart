@@ -353,7 +353,6 @@ print("ket qua da chon: ${result}");
           title: Text(
             S.of(context).selectDatesAndTimeCheckIn,
             style: TextStyle(
-              fontFamily: 'Lato',
               fontSize: 25,
               fontWeight: FontWeight.bold,
             ),

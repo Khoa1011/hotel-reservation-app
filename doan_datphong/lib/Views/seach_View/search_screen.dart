@@ -12,7 +12,6 @@ import '../../Blocs/searchHotels_Blocs/searchHotels_bloc.dart';
 import '../../Blocs/searchHotels_Blocs/searchHotels_event.dart';
 import '../../Blocs/searchHotels_Blocs/searchHotels_state.dart';
 import '../detail_View/detail_screen.dart';
-import '../selectDate_View/selectDate_screen.dart';
 
 class SearchView extends StatefulWidget {
   final NguoiDung? user;
@@ -28,7 +27,7 @@ class _SearchViewState extends State<SearchView> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  String _selectedFilter = 'All Hotel';
+  String _selectedFilter = '';
   bool _showResults = false;
 
   // ✅ Lưu trữ filter parameters hiện tại
@@ -36,10 +35,9 @@ class _SearchViewState extends State<SearchView> {
 
   // Recent searches (có thể lưu vào SharedPreferences)
   final List<String> _recentSearches = [
-    'Đà Nẵng',
-    'Hồ Chí Minh',
-    'Hà Nội',
-    'Nha Trang',
+    'Thành phố Đà Nẵng',
+    'Thành phố Hồ Chí Minh',
+    'Thành phố Hà Nội',
     'Phú Quốc',
     'Sapa',
   ];
@@ -61,7 +59,6 @@ class _SearchViewState extends State<SearchView> {
     // Load more logic if needed
   }
 
-  // ✅ Xử lý tìm kiếm khi user nhập text hoặc submit
   void _performSearch({
     String? tenKhachSan,
     String? loaiLoc,
@@ -71,7 +68,6 @@ class _SearchViewState extends State<SearchView> {
       SearchHotels(
         tenKhachSan: tenKhachSan,
         loaiLoc: useCurrentFilters ? _currentFilters['sortBy'] : null,
-        // ✅ CẬP NHẬT: Đổi từ tinhThanh/phuongXa sang thanhPho/quan
         thanhPho: useCurrentFilters ? _currentFilters['thanhPho'] : null,
         quan: useCurrentFilters ? _currentFilters['quan'] : null,
         minPrice: useCurrentFilters ? _currentFilters['minPrice']?.toDouble() : null,
@@ -128,16 +124,16 @@ class _SearchViewState extends State<SearchView> {
     bool shouldSearch = true;
 
     switch (filter) {
-      case 'All Hotel':
+      case 'Tất cả':
         filterType = 'all';
         break;
-      case 'Recommended':
+      case 'Đề xuất':
         filterType = 'recommend';
         break;
-      case 'Popular':
+      case 'Phổ biến':
         filterType = 'popular';
         break;
-      case 'Trending':
+      case 'Xu hướng':
         filterType = 'trending';
         break;
       default:
@@ -173,7 +169,7 @@ class _SearchViewState extends State<SearchView> {
             _showResults = true;
           });
 
-          // ✅ CẬP NHẬT: Đổi từ tinhThanh/phuongXa sang thanhPho/quan
+
           context.read<HotelSearchBloc>().add(
             SearchHotels(
               tenKhachSan: _searchController.text.isNotEmpty ? _searchController.text : null,
@@ -532,14 +528,30 @@ class _SearchViewState extends State<SearchView> {
     }
 
     // Guests filter
-    if (_currentFilters['guests'] != null && _currentFilters['guests'] > 2) {
+    if (_currentFilters['guests1'] != null && _currentFilters['guests1'] > 2) {
       activeFilters.add(
         _buildFilterChip(
-          label: '${_currentFilters['guests']} khách',
+          label: '${_currentFilters['guests1']} khách',
           icon: Icons.people,
           onRemove: () {
             setState(() {
-              _currentFilters.remove('guests');
+              _currentFilters.remove('guests1');
+            });
+            _refreshSearch();
+          },
+        ),
+      );
+    }
+
+    // Children filter
+    if (_currentFilters['children'] != null && _currentFilters['children'] > 0) {
+      activeFilters.add(
+        _buildFilterChip(
+          label: '${_currentFilters['children']} trẻ em',
+          icon: Icons.child_friendly,
+          onRemove: () {
+            setState(() {
+              _currentFilters.remove('children');
             });
             _refreshSearch();
           },
@@ -722,11 +734,12 @@ class _SearchViewState extends State<SearchView> {
                 ),
               ),
               SizedBox(height: 12),
-
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: ['Đà Nẵng', 'Hà Nội', 'Hồ Chí Minh'].map((suggestion) {
+                children: ['Thành phố Đà Nẵng',
+                  'Thành phố Hà Nội',
+                  'Thành phố Hồ Chí Minh'].map((suggestion) {
                   return GestureDetector(
                     onTap: () {
                       _searchController.text = suggestion;

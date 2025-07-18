@@ -6,7 +6,14 @@ const JWT_SECRET = process.env.JWT_SECRET || "ThuKhoa";
 // Middleware kiểm tra token và vai trò
 const authorizeRoles = (...allowedRoles) => {
     return (req, res, next) => {
-        const token = req.cookies.token;
+        let token = req.cookies.token;
+
+        if (!token) {
+            const authHeader = req.headers.authorization;
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+                token = authHeader.substring(7); // Loại bỏ "Bearer "
+            }
+        }
 
         if (!token) {
             return res.status(401).json({ message: "Chưa đăng nhập!" });

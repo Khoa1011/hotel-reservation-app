@@ -26,6 +26,7 @@ import {
 import Cookies from 'js-cookie';
 import axios from '../utils/axiosConfig';
 import moment from 'moment-timezone';
+import { toast } from 'react-toastify';
 
 const HotelManagement = () => {
     const [activeMenu, setActiveMenu] = useState('bookings');
@@ -107,7 +108,8 @@ const HotelManagement = () => {
                 toast.error('Không tìm thấy token. Vui lòng đăng nhập lại.');
                 return;
             }
-            const response = await axios.get(`${baseUrl}/bookings/hotelowner/bookings`, {
+            const response = await axios.get(`${baseUrl}/api/booking-hotel/hotelowner/bookings`, {
+                
                 withCredentials: true
             });
             if (response.status === 404) {
@@ -118,6 +120,7 @@ const HotelManagement = () => {
             setBookings(response.data);
         } catch (error) {
             console.error('Lỗi khi lấy danh sách đặt phòng:', error.response?.data || error.message);
+            console.error('Kiểm tra token trong homepage:', token);
             setError('Không thể lấy danh sách đặt phòng. Vui lòng thử lại.');
             toast.error('Không thể lấy danh sách đặt phòng. Vui lòng thử lại.');
         } finally {

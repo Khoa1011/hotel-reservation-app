@@ -19,7 +19,7 @@ import 'bookingDetails_screen.dart';
 import 'cancelBooking_widget.dart';
 
 // Enum cho booking status filter
-enum BookingStatusFilter { all,ongoing, completed, canceled, noCheckIn}
+enum BookingStatusFilter { all,ongoing, completed, canceled, noCheckIn,}
 
 class ListBookingScreen extends StatefulWidget {
   const ListBookingScreen({super.key});

@@ -8,6 +8,7 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
   const [editServices, setEditServices] = useState(booking?.additionalServices || []);
   const [newService, setNewService] = useState({ name: '', price: '', quantity: 1 });
   const [paymentMethod, setPaymentMethod] = useState(booking?.paymentMethod || '');
+  const [selectedStatus, setSelectedStatus] = useState(booking.status);
 
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -25,11 +26,11 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
 
   // Danh sách phương thức thanh toán
   const paymentMethods = [
-    { value: 'cash', label: 'Tiền mặt' },
-    { value: 'card', label: 'Thẻ tín dụng' },
-    { value: 'bank_transfer', label: 'Chuyển khoản' },
-    { value: 'momo', label: 'MoMo' },
-    { value: 'vnpay', label: 'VNPay' },
+    { value: 'tien_mat', label: 'Tiền mặt' },
+    { value: 'the_tin_dung', label: 'Thẻ tín dụng' },
+    { value: 'ZaloPay', label: 'Zalo pay' },
+    { value: 'Momo', label: 'MoMo' },
+    { value: 'VNPay', label: 'VNPay' },
   ];
 
   // Hàm định dạng tiền tệ
@@ -38,6 +39,59 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
       style: 'currency',
       currency: 'VND',
     }).format(amount);
+  };
+
+  const updateBookingStatus = async (newStatus) => {
+    try {
+      const response = await axios.put(
+        `${baseUrl}/api/booking-hotel/hotelowner/update/${booking.bookingId}`,
+        { status: newStatus },
+        { withCredentials: true }
+      );
+
+
+      if (response.data?.message?.msgError === false) {
+        // Update local state
+        const updatedBooking = { ...booking, status: newStatus };
+        setLocalBookings((prev) =>
+          prev.map((b) => b.bookingId === booking.bookingId ? updatedBooking : b)
+        );
+        setBookings((prev) =>
+          prev.map((b) => b.bookingId === booking.bookingId ? updatedBooking : b)
+        );
+        toast.success("Cập nhật trạng thái thành công!");
+      } else {
+        toast.error(response.data?.message?.msgBody || "Cập nhật thất bại!");
+      }
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái:", error);
+      toast.error("Lỗi khi cập nhật trạng thái!", error);
+    }
+  };
+
+  // Helper function để hiển thị tên status
+  const getVietnameseStatusText = (status) => {
+    const statusTexts = {
+      'dang_cho': 'Đang chờ',
+      'da_xac_nhan': 'Đã xác nhận',
+      'da_huy': 'Đã hủy',
+      'da_nhan_phong': 'Đã nhận phòng',
+      'dang_su_dung': 'Đang sử dụng',
+      'da_tra_phong': 'Đã trả phòng'
+    };
+    return statusTexts[status] || status;
+  };
+  const getVietnameseStatusColor = (status) => {
+    const statusColors = {
+      'dang_cho': 'text-yellow-600 bg-yellow-100',
+      'da_xac_nhan': 'text-green-600 bg-green-100',
+      'da_huy': 'text-red-600 bg-red-100',
+      'da_nhan_phong': 'text-blue-600 bg-blue-100',
+      'dang_su_dung': 'text-purple-600 bg-purple-100',
+      'da_tra_phong': 'text-gray-600 bg-gray-100',
+      'khong_nhan_phong': 'text-red-600 bg-red-100'
+    };
+    return statusColors[status] || 'text-gray-600 bg-gray-100';
   };
 
   // Tính tổng tiền dịch vụ
@@ -88,43 +142,58 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
   };
 
   // Hàm cập nhật dịch vụ và thanh toán
-  const updateBookingServices = async (bookingId, services, paymentMethod) => {
-    try {
-      const response = await axios.put(
-        `${baseUrl}/bookings/hotelowner/update-services/${bookingId}`,
-        {
-          additionalServices: services,
-          paymentMethod: paymentMethod,
-        },
-        {
-          withCredentials: true,
-        }
-      );
+const updateBookingServices = async (bookingId, services, paymentMethod, bookingStatus) => {
+  try {
+    const updateData = {
+      ...(services && services.length > 0 && { service: services }),
+      ...(paymentMethod && { paymentMethod }),
+      ...(bookingStatus && { status: bookingStatus })
+    };
 
-      if (response.data?.message?.msgError === false) {
-        const updatedBooking = response.data.booking;
-        setLocalBookings((prev) =>
-          prev.map((b) =>
-            b.bookingId === bookingId ? { ...b, ...updatedBooking } : b
-          )
+    const response = await axios.put(
+      `${baseUrl}/api/booking-hotel/hotelowner/update/${bookingId}`,
+      updateData,
+      { withCredentials: true }
+    );
+
+    if (response.data?.message?.msgError === false) {
+      // Cập nhật state ngay lập tức với dữ liệu local trước
+      const updatedBooking = {
+        ...booking,
+        additionalServices: services || booking.additionalServices,
+        paymentMethod: paymentMethod || booking.paymentMethod,
+        status: bookingStatus || booking.status
+      };
+      
+      setLocalBookings(prev =>
+        prev.map(b => b.bookingId === bookingId ? updatedBooking : b)
+      );
+      setBookings(prev =>
+        prev.map(b => b.bookingId === bookingId ? updatedBooking : b)
+      );
+      
+      // Nếu có dữ liệu từ server thì cập nhật lại
+      if (response.data.booking) {
+        setLocalBookings(prev =>
+          prev.map(b => b.bookingId === bookingId ? response.data.booking : b)
         );
-        setBookings((prev) =>
-          prev.map((b) =>
-            b.bookingId === bookingId ? { ...b, ...updatedBooking } : b
-          )
+        setBookings(prev =>
+          prev.map(b => b.bookingId === bookingId ? response.data.booking : b)
         );
-        toast.success('Cập nhật dịch vụ thành công!');
-        return { success: true };
-      } else {
-        toast.error(response.data?.message?.msgBody || 'Cập nhật thất bại!');
-        return { success: false };
       }
-    } catch (error) {
-      console.error('Lỗi khi cập nhật dịch vụ:', error.message);
-      toast.error('Lỗi khi cập nhật dịch vụ!');
+      
+      toast.success('Cập nhật dịch vụ thành công!');
+      return { success: true };
+    } else {
+      toast.error(response.data?.message?.msgBody || 'Cập nhật thất bại!');
       return { success: false };
     }
-  };
+  } catch (error) {
+    console.error('Lỗi khi cập nhật dịch vụ:', error);
+    toast.error('Lỗi khi cập nhật dịch vụ!');
+    return { success: false };
+  }
+};
 
   // Hàm lưu thay đổi
   const saveChanges = async () => {
@@ -138,16 +207,31 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
       return;
     }
 
-    const result = await updateBookingServices(
-      booking.bookingId,
-      editServices,
-      paymentMethod
-    );
+
+    // const result =
+    //   await updateBookingStatus(selectedStatus);
+    const result =
+      await updateBookingServices(
+        booking.bookingId,
+        editServices || '',
+        paymentMethod || '',
+        selectedStatus || ''
+      );
+
 
     if (result.success) {
       onClose();
     }
   };
+
+  const calculateTotal = () => {
+    const roomAmount = booking.totalAmount || 0;
+    const servicesAmount = calculateServicesTotal(editServices);
+    return roomAmount + servicesAmount;
+  };
+
+
+
 
   if (!booking) return null;
 
@@ -177,11 +261,11 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
                 <span className="ml-2 font-medium">{booking.roomType}</span>
               </div>
               <div>
-                <span className="text-gray-600">Check-in:</span>
+                <span className="text-gray-600">Thời gian nhận:</span>
                 <span className="ml-2 font-medium">{booking.checkInDate}</span>
               </div>
               <div>
-                <span className="text-gray-600">Check-out:</span>
+                <span className="text-gray-600">Thời gian trả:</span>
                 <span className="ml-2 font-medium">{booking.checkOutDate}</span>
               </div>
             </div>
@@ -202,6 +286,45 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
                 </option>
               ))}
             </select>
+          </div>
+
+
+          {/* Cập nhật trạng thái đơn đặt */}
+          {/* Cập nhật trạng thái đơn đặt */}
+          <div>
+            <h3 className="font-semibold text-gray-800 mb-3">Cập nhật trạng thái đơn đặt</h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Select trạng thái */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Chọn trạng thái mới
+                </label>
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="dang_cho">Đang chờ</option>
+                  <option value="da_xac_nhan">Đã xác nhận</option>
+                  <option value="da_huy">Đã hủy</option>
+                  <option value="da_nhan_phong">Đã nhận phòng</option>
+                  <option value="dang_su_dung">Đang sử dụng</option>
+                  <option value="da_tra_phong">Đã trả phòng</option>
+                  <option value="khong_nhan_phong">Không nhận phòng</option>
+                </select>
+              </div>
+
+              {/* Hiển thị trạng thái hiện tại */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Trạng thái hiện tại
+                </label>
+                <div className={`px-3 py-2 rounded-lg border text-sm font-medium ${getVietnameseStatusColor(booking.status)}`}>
+                  {getVietnameseStatusText(booking.status)}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Quản lý dịch vụ */}
@@ -342,7 +465,7 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
                 <span className="text-blue-600">
                   {formatCurrency(
                     (booking.roomAmount || booking.totalAmount) +
-                      calculateServicesTotal(editServices)
+                    calculateServicesTotal(editServices)
                   )}
                 </span>
               </div>

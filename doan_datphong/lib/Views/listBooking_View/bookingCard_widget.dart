@@ -16,6 +16,9 @@ class BookingCard extends StatelessWidget {
   final Function(int rating, String comment)? onSubmitReview;
   final bool hasReviewed;
 
+  // ✅ THÊM: Trạng thái thực tế từ dữ liệu (linh hoạt)
+  final String? originalStatus;
+
   const BookingCard({
     super.key,
     required this.booking,
@@ -24,24 +27,136 @@ class BookingCard extends StatelessWidget {
     required this.onViewTicket,
     this.onSubmitReview,
     this.hasReviewed = false,
+    // ✅ THÊM: Tham số linh hoạt cho trạng thái
+    this.originalStatus,
   });
+
+  // ✅ Lấy trạng thái ưu tiên (originalStatus -> booking.originalStatus -> fallback)
+  String get _effectiveStatus {
+    return originalStatus ?? booking.originalStatus ?? 'dang_cho';
+  }
+
+  // ✅ Mapping trạng thái từ backend sang BookingStatusFilter
+  BookingStatusFilter _getActualBookingStatus() {
+    switch (_effectiveStatus) {
+      case 'dang_cho':
+      case 'da_xac_nhan':
+      case 'da_nhan_phong':
+      case 'dang_su_dung':
+        return BookingStatusFilter.ongoing;
+      case 'da_tra_phong':
+        return BookingStatusFilter.completed;
+      case 'da_huy':
+        return BookingStatusFilter.canceled;
+      case 'khong_nhan_phong':
+        return BookingStatusFilter.noCheckIn;
+      default:
+        return status; // Fallback về status hiện tại
+    }
+  }
+
+  // ✅ Lấy text trạng thái chi tiết
+  String _getDetailedStatusText(BuildContext context) {
+    switch (_effectiveStatus) {
+      case 'dang_cho':
+        return 'Đang chờ xác nhận';
+      case 'da_xac_nhan':
+        return 'Đã xác nhận';
+      case 'da_nhan_phong':
+        return 'Đã nhận phòng';
+      case 'dang_su_dung':
+        return 'Đang sử dụng';
+      case 'da_tra_phong':
+        return S.of(context).completed;
+      case 'da_huy':
+        return S.of(context).canceled;
+      case 'khong_nhan_phong':
+        return S.of(context).noCheckIn;
+      default:
+        return _getStatusText(context, status);
+    }
+  }
+
+  // ✅ Lấy màu trạng thái chi tiết
+  Color _getDetailedStatusColor() {
+    switch (_effectiveStatus) {
+      case 'dang_cho':
+        return const Color(0xFFF59E0B); // Vàng - chờ xác nhận
+      case 'da_xac_nhan':
+        return const Color(0xFF3B82F6); // Xanh dương - đã xác nhận
+      case 'da_nhan_phong':
+        return const Color(0xFF8B5CF6); // Tím - đã nhận phòng
+      case 'dang_su_dung':
+        return const Color(0xFF10B981); // Xanh lá - đang sử dụng
+      case 'da_tra_phong':
+        return const Color(0xFF10B981); // Xanh lá - hoàn thành
+      case 'da_huy':
+        return const Color(0xFFEF4444); // Đỏ - đã hủy
+      case 'khong_nhan_phong':
+        return const Color(0xFF6B7280); // Xám - không nhận phòng
+      default:
+        return _getStatusColor(status);
+    }
+  }
+
+  // ✅ Helper methods cho trạng thái fallback
+  String _getStatusText(BuildContext context, BookingStatusFilter status) {
+    switch (status) {
+      case BookingStatusFilter.all:
+        return "Tất cả";
+      case BookingStatusFilter.ongoing:
+        return S.of(context).ongoing;
+      case BookingStatusFilter.completed:
+        return S.of(context).completed;
+      case BookingStatusFilter.canceled:
+        return S.of(context).canceled;
+      case BookingStatusFilter.noCheckIn:
+        return S.of(context).noCheckIn;
+    }
+  }
+
+  Color _getStatusColor(BookingStatusFilter status) {
+    switch (status) {
+      case BookingStatusFilter.all:
+        return const Color(0xFF1565C0);
+      case BookingStatusFilter.ongoing:
+        return const Color(0xFF1565C0);
+      case BookingStatusFilter.completed:
+        return const Color(0xFF10B981);
+      case BookingStatusFilter.canceled:
+        return const Color(0xFFEF4444);
+      case BookingStatusFilter.noCheckIn:
+        return const Color(0xFF292828);
+    }
+  }
+
+  // ✅ Kiểm tra có thể hủy không (dựa trên originalStatus)
+  bool _canCancelBooking() {
+    return ['dang_cho', 'da_xac_nhan'].contains(_effectiveStatus);
+  }
+
+  // ✅ Kiểm tra có thể đánh giá không
+  bool _canReview() {
+    final actualBookingStatus = _getActualBookingStatus();
+    return actualBookingStatus == BookingStatusFilter.completed &&
+        checkDeadlineReview() &&
+        !hasReviewed;
+  }
 
   // ✅ Kiểm tra deadline đánh giá (2 ngày sau check-out)
   bool checkDeadlineReview() {
-    if (status != BookingStatusFilter.completed) return false;
+    final actualBookingStatus = _getActualBookingStatus();
+    if (actualBookingStatus != BookingStatusFilter.completed) return false;
 
     try {
-      // ✅ Parse string thành DateTime
-      DateTime checkOutDate;
-      checkOutDate = DateTime.parse(booking.checkOutDate);
-
+      DateTime checkOutDate = DateTime.parse(booking.checkOutDate);
       final now = DateTime.now();
       final deadline = checkOutDate.add(Duration(days: 2));
 
-      // Kiểm tra xem hiện tại có vượt quá deadline không
       bool isWithinDeadline = now.isBefore(deadline);
 
       print("🔍 Review deadline check:");
+      print("   - Original Status: $_effectiveStatus");
       print("   - Check-out: ${checkOutDate.toString()}");
       print("   - Deadline: ${deadline.toString()}");
       print("   - Now: ${now.toString()}");
@@ -56,18 +171,15 @@ class BookingCard extends StatelessWidget {
 
   // ✅ Tính số ngày còn lại để đánh giá
   int getDaysLeftToReview() {
-    if (status != BookingStatusFilter.completed) return 0;
+    final actualBookingStatus = _getActualBookingStatus();
+    if (actualBookingStatus != BookingStatusFilter.completed) return 0;
 
     try {
-      // ✅ Parse string thành DateTime
-      DateTime checkOutDate;
-      checkOutDate = DateTime.parse(booking.checkOutDate);
-
+      DateTime checkOutDate = DateTime.parse(booking.checkOutDate);
       final now = DateTime.now();
       final deadline = checkOutDate.add(Duration(days: 2));
 
       if (now.isAfter(deadline)) return 0;
-
       return deadline.difference(now).inDays;
     } catch (e) {
       print("❌ Error calculating days left: $e");
@@ -94,10 +206,7 @@ class BookingCard extends StatelessWidget {
         children: [
           _buildHotelInfo(context),
           _buildBookingDetails(context),
-          if (status == BookingStatusFilter.ongoing) _buildOngoingActions(context),
-          if (status == BookingStatusFilter.completed) _buildCompletedActions(context),
-          if (status == BookingStatusFilter.canceled) _buildCanceledStatus(context),
-          if (status == BookingStatusFilter.noCheckIn) _buildNoCheckInStatus(context),
+          _buildActionButtons(context),
         ],
       ),
     );
@@ -361,7 +470,7 @@ class BookingCard extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                _getPaymentStatusText(context,booking.paymentStatus),
+                _getPaymentStatusText(context, booking.paymentStatus),
                 style: TextStyle(
                   fontSize: 13,
                   color: _getPaymentStatusColor(booking.paymentStatus),
@@ -376,48 +485,19 @@ class BookingCard extends StatelessWidget {
   }
 
   Widget _buildStatusBadge(BuildContext context) {
-    Color bgColor;
-    Color textColor;
-    String statusText;
-
-    switch (status) {
-      case BookingStatusFilter.all:
-        bgColor = const Color(0xFF1565C0).withOpacity(0.1);
-        textColor = const Color(0xFF1565C0);
-        statusText = "Tất cả";
-        break;
-      case BookingStatusFilter.ongoing:
-        bgColor = const Color(0xFF1565C0).withOpacity(0.1);
-        textColor = const Color(0xFF1565C0);
-        statusText = S.of(context).ongoing;
-        break;
-      case BookingStatusFilter.completed:
-        bgColor = const Color(0xFF10B981).withOpacity(0.1);
-        textColor = const Color(0xFF10B981);
-        statusText = S.of(context).completed;
-        break;
-      case BookingStatusFilter.canceled:
-        bgColor = const Color(0xFFEF4444).withOpacity(0.1);
-        textColor = const Color(0xFFEF4444);
-        statusText = S.of(context).canceled;
-        break;
-      case BookingStatusFilter.noCheckIn:
-        bgColor = const Color(0xFF292828).withOpacity(0.1);
-        textColor = const Color(0xFF292828);
-        statusText = S.of(context).noCheckIn;
-        break;
-    }
+    final statusColor = _getDetailedStatusColor();
+    final statusText = _getDetailedStatusText(context);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: bgColor,
+        color: statusColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         statusText,
         style: TextStyle(
-          color: textColor,
+          color: statusColor,
           fontSize: 12,
           fontWeight: FontWeight.w600,
         ),
@@ -425,32 +505,53 @@ class BookingCard extends StatelessWidget {
     );
   }
 
+  // ✅ Xây dựng action buttons dựa trên trạng thái thực tế
+  Widget _buildActionButtons(BuildContext context) {
+    final actualBookingStatus = _getActualBookingStatus();
+
+    switch (actualBookingStatus) {
+      case BookingStatusFilter.ongoing:
+        return _buildOngoingActions(context);
+      case BookingStatusFilter.completed:
+        return _buildCompletedActions(context);
+      case BookingStatusFilter.canceled:
+        return _buildCanceledStatus(context);
+      case BookingStatusFilter.noCheckIn:
+        return _buildNoCheckInStatus(context);
+      default:
+        return _buildOngoingActions(context);
+    }
+  }
+
   Widget _buildOngoingActions(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Row(
         children: [
-          Expanded(
-            child: OutlinedButton(
-              onPressed: onCancelBooking,
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF1565C0), width: 1.5),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
+          // ✅ Chỉ hiển thị nút hủy nếu có thể hủy
+          if (_canCancelBooking()) ...[
+            Expanded(
+              child: OutlinedButton(
+                onPressed: onCancelBooking,
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFF1565C0), width: 1.5),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-              child: Text(
-                S.of(context).cancelBooking,
-                style: TextStyle(
-                  color: Color(0xFF1565C0),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
+                child: Text(
+                  S.of(context).cancelBooking,
+                  style: TextStyle(
+                    color: Color(0xFF1565C0),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
+            const SizedBox(width: 12),
+          ],
           Expanded(
             child: ElevatedButton(
               onPressed: onViewTicket,
@@ -494,7 +595,7 @@ class BookingCard extends StatelessWidget {
 
   Widget _buildCompletedActions(BuildContext context) {
     // ✅ Kiểm tra deadline và trạng thái review
-    final canReview = checkDeadlineReview();
+    final canReview = _canReview();
     final daysLeft = getDaysLeftToReview();
 
     return Padding(
@@ -707,7 +808,7 @@ class BookingCard extends StatelessWidget {
     );
   }
 
-  Widget _buildNoCheckInStatus(BuildContext context){
+  Widget _buildNoCheckInStatus(BuildContext context) {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       padding: const EdgeInsets.all(12),
@@ -736,7 +837,7 @@ class BookingCard extends StatelessWidget {
     );
   }
 
-  String _getPaymentStatusText(BuildContext context,String? status) {
+  String _getPaymentStatusText(BuildContext context, String? status) {
     if (status == null) return 'N/A';
     switch (status) {
       case 'da_thanh_toan':

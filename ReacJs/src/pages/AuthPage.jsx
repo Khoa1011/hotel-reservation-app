@@ -31,7 +31,7 @@ const AuthPage = () => {
         e.preventDefault();
         if (isLogin) {
             try {
-                const response = await fetch(`${baseUrl}/users/hotelowner/login`, {
+                const response = await fetch(`${baseUrl}/api/user-hotel/hotelowner/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -42,9 +42,10 @@ const AuthPage = () => {
                     }),
                     credentials: 'include'
                 });
+                console.log('Đường dẫn: ',formData.email, formData.password);
 
                 const data = await response.json();
-                console.log(data);
+                console.log('Data trả về: ',data);
                 if (!data.msgError && data.token) {
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user)); // lưu thông tin user

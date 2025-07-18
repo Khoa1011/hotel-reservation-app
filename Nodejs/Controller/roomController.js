@@ -224,32 +224,7 @@ roomRouter.get("/details/:roomId", async (req, res) => {
 
 
 // /--------------------------------------------------------------------------
-roomRouter.get("/hotelowner/getRoomInHotel/:hotelId",authorizeRoles("chuKhachSan", "nhanVien"),async (req,res) => {
-    const {hotelId} = req.params;
-    try {
-        const rooms = await Room.find({maKhachsan: hotelId}).populate('maLoaiPhong');
 
-        if(!rooms){
-            return res.status(400).json({
-                msgBody: "Không có phòng nào trong khách sạn này!",
-                msgError: true
-            });
-        }
-        const result = rooms.map(room => ({
-            roomId: room._id,
-            roomTypeId: room.maLoaiPhong._id,
-            roomTypeName: room.maLoaiPhong.tenLoaiPhong,
-            roomTypePrice : room.maLoaiPhong.giaCa
-        }));
-        return res.status(200).json(result);
-    } catch (error) {
-        return res.status(400).json({
-            msgBody: "Lỗi truy xuất phòng trong khách sạn!",
-            msgError: true,
-            messageError: error
-        });
-    }
-});
 
 
 module.exports = roomRouter;

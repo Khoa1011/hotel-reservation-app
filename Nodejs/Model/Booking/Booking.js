@@ -120,6 +120,30 @@ const BookingSchema = new mongoose.Schema({
     // }],
     ghiChuPhong: String
   }],
+
+  dichVuBoSung: [{
+    tenDichVu: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    donGia: {
+      type: Number,
+      required: true,
+      min: 0
+    },
+    soLuong: {
+      type: Number,
+      required: true,
+      min: 1,
+      default: 1
+    },
+    thanhTien: {
+      type: Number,
+      required: true,
+      min: 0
+    }
+  }],
   
     thongTinGia: {
     
@@ -267,6 +291,31 @@ BookingSchema.index({ 'thongTinThanhToan.zaloPayData.zp_trans_id': 1 });
 BookingSchema.index({ trangThaiThanhToan: 1, thoiGianTaoDon: -1 });
 BookingSchema.index({ maNguoiDung: 1, trangThai: 1 });
 BookingSchema.index({ maKhachSan: 1, ngayNhanPhong: 1 });
+
+BookingSchema.methods.tinhPhiDichVu = function() {
+  const tongPhi = this.dichVuBoSung.reduce((total, service) => {
+    return total + service.thanhTien;
+  }, 0);
+  
+  this.thongTinGia.phiDichVu = tongPhi;
+  this.thongTinGia.tongDonDat = this.thongTinGia.tongTienPhong + tongPhi;
+  
+  return this.save();
+};
+
+// ✅ THÊM: Middleware tự động tính phí
+BookingSchema.pre('save', function(next) {
+  if (this.isModified('dichVuBoSung')) {
+    const tongPhiDichVu = this.dichVuBoSung.reduce((total, service) => {
+      return total + service.thanhTien;
+    }, 0);
+    
+    this.thongTinGia.phiDichVu = tongPhiDichVu;
+    this.thongTinGia.tongDonDat = this.thongTinGia.tongTienPhong + tongPhiDichVu;
+  }
+  
+  next();
+});
 
 // chinhSach: {
 //     // For hourly bookings

@@ -45,7 +45,7 @@ const AddRoomTypeModal = ({ showModal, onClose, onSubmit }) => {
       if (response.data?.success === true) {
         toast.success(response.data.message || 'Tạo loại phòng thành công!');
         
-        // Gọi onSubmit để cập nhật state thay vì reload
+        
         if (onSubmit) {
           onSubmit(response.data.loaiPhong); // Pass data từ API response
         }

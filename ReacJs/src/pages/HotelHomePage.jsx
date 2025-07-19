@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Booking from './Booking/Bookings';
 import Rooms from './Room/Rooms';
 import { rooms, stats } from '../services/dataTest';
@@ -28,16 +28,33 @@ import axios from '../utils/axiosConfig';
 import moment from 'moment-timezone';
 import { toast } from 'react-toastify';
 import RoomManagementTabs from '../components/RoomManagementTabs';
+import HotelSelector from '../components/HotelSelector'; // Import component mới
 
 const HotelManagement = () => {
-    const [activeMenu, setActiveMenu] = useState('bookings');
+    const [activeMenu, setActiveMenu] = useState(() => {
+        // ✅ Load từ localStorage hoặc mặc định 'bookings'
+        const savedMenu = localStorage.getItem('activeMenu');
+        console.log('🏨 Loading saved menu:', savedMenu);
+        return savedMenu || 'bookings';
+    });
     const [bookings, setBookings] = useState([]);
     const [expandedBooking, setExpandedBooking] = useState(null);
     const baseUrl = import.meta.env.VITE_API_BASE_URL;
     const [loading, setLoading] = useState(false);
     const token = localStorage.getItem('token');
     const [error, setError] = useState(null);
-
+    
+    // State cho hotel selector - ✅ Initialize từ localStorage
+    const [selectedHotelId, setSelectedHotelId] = useState(() => {
+        const saved = localStorage.getItem("selectedHotelId") || '';
+        console.log('🏨 HotelManagement: Initializing selectedHotelId with:', saved);
+        return saved;
+    });
+    const [selectedHotelName, setSelectedHotelName] = useState(() => {
+        const saved = localStorage.getItem("selectedHotelName") || '';
+        console.log('🏨 HotelManagement: Initializing selectedHotelName with:', saved);
+        return saved;
+    });
 
     const menuItems = [
         { id: 'bookings', label: 'Đơn Đặt Phòng', icon: Calendar },
@@ -48,6 +65,19 @@ const HotelManagement = () => {
         { id: 'settings', label: 'Cài Đặt', icon: Settings }
     ];
 
+    // Handle hotel selection change
+    const handleHotelChange = (hotelId, hotelName) => {
+        setSelectedHotelId(hotelId);
+        setSelectedHotelName(hotelName);
+        
+        // Có thể trigger refresh data cho menu hiện tại
+        console.log('Selected hotel changed:', hotelId, hotelName);
+        
+        // Nếu đang ở tab bookings, có thể filter lại
+        if (activeMenu === 'bookings') {
+            // Có thể gọi function để filter bookings theo hotel
+        }
+    };
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -95,10 +125,10 @@ const HotelManagement = () => {
     };
 
     const formatDate = (dateString) => {
-    return moment(dateString)
-        .tz('Asia/Ho_Chi_Minh')
-        .format('HH:mm DD/MM/YYYY');
-};
+        return moment(dateString)
+            .tz('Asia/Ho_Chi_Minh')
+            .format('HH:mm DD/MM/YYYY');
+    };
 
     // Fetch bookings khi component mount
     const fetchBookings = async () => {
@@ -110,7 +140,6 @@ const HotelManagement = () => {
                 return;
             }
             const response = await axios.get(`${baseUrl}/api/booking-hotel/hotelowner/bookings`, {
-            
                 withCredentials: true
             });
             if (response.status === 404) {
@@ -131,19 +160,19 @@ const HotelManagement = () => {
 
     useEffect(() => {
         fetchBookings();
+        // ✅ Bỏ phần load saved hotel selection vì đã có trong useState
     }, []);
-
 
     const renderRooms = () => {
         if (rooms && rooms.length > 0) {
-            getRoomStatusColor, getRoomStatusText, formatCurrency, formatDate
             return (
                 <Rooms
                     rooms={rooms}
                     getRoomStatusColor={getRoomStatusColor}
                     formatCurrency={formatCurrency}
                     formatDate={formatDate}
-                    getRoomStatusText={getRoomStatusText} />
+                    getRoomStatusText={getRoomStatusText} 
+                />
             );
         } else {
             return (
@@ -155,7 +184,6 @@ const HotelManagement = () => {
             );
         }
     };
-
 
     const renderBookings = () => {
         if (loading) {
@@ -185,51 +213,29 @@ const HotelManagement = () => {
                 formatDate={formatDate}
                 getStatusColor={getStatusColor}
                 getStatusText={getStatusText}
+                selectedHotelId={selectedHotelId}
             />
         );
     };
-
-
-    // const renderBookings = () => {
-
-    //     // if () {
-    //     return (
-    //         <Booking
-    //             bookings={bookings}
-    //             setBookings={setBookings}
-    //             expandedBooking={expandedBooking}
-    //             setExpandedBooking={setExpandedBooking}
-    //             formatCurrency={formatCurrency}
-    //             formatDate={formatDate}
-    //             getStatusColor={getStatusColor}
-    //             getStatusText={getStatusText}
-    //         />
-    //     );
-    //     // } else {
-    //     //     return (
-    //     //         <div className="text-center py-12">
-    //     //             <CalendarCheck className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-    //     //             <h3 className="text-xl font-semibold text-gray-600">Đơn đặt phòng</h3>
-    //     //             <p className="text-gray-500 mt-2">Chưa có đơn đặt nào</p>
-    //     //         </div>
-    //     //     );
-    //     // }
-
-    // };
-
 
     const renderDashboard = () => {
         switch (activeMenu) {
             case 'bookings':
                 return renderBookings();
             case 'rooms':
-                return <RoomManagementTabs/>;
+                console.log('🏨 About to render RoomManagementTabs');
+                console.log('🏨 Current selectedHotelId state:', selectedHotelId);
+                console.log('🏨 selectedHotelId type:', typeof selectedHotelId);
+                return <RoomManagementTabs selectedHotelId={selectedHotelId} />;
             case 'guests':
                 return (
                     <div className="text-center py-12">
                         <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                         <h3 className="text-xl font-semibold text-gray-600">Quản Lý Khách Hàng</h3>
                         <p className="text-gray-500 mt-2">Tính năng đang được phát triển...</p>
+                        {selectedHotelName && (
+                            <p className="text-blue-600 mt-2">Khách sạn: {selectedHotelName}</p>
+                        )}
                     </div>
                 );
             case 'revenue':
@@ -238,6 +244,9 @@ const HotelManagement = () => {
                         <DollarSign className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                         <h3 className="text-xl font-semibold text-gray-600">Báo Cáo Doanh Thu</h3>
                         <p className="text-gray-500 mt-2">Tính năng đang được phát triển...</p>
+                        {selectedHotelName && (
+                            <p className="text-blue-600 mt-2">Khách sạn: {selectedHotelName}</p>
+                        )}
                     </div>
                 );
             case 'notifications':
@@ -246,6 +255,9 @@ const HotelManagement = () => {
                         <Bell className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                         <h3 className="text-xl font-semibold text-gray-600">Thông Báo</h3>
                         <p className="text-gray-500 mt-2">Không có thông báo mới</p>
+                        {selectedHotelName && (
+                            <p className="text-blue-600 mt-2">Khách sạn: {selectedHotelName}</p>
+                        )}
                     </div>
                 );
             case 'settings':
@@ -254,6 +266,9 @@ const HotelManagement = () => {
                         <Settings className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                         <h3 className="text-xl font-semibold text-gray-600">Cài Đặt</h3>
                         <p className="text-gray-500 mt-2">Tính năng đang được phát triển...</p>
+                        {selectedHotelName && (
+                            <p className="text-blue-600 mt-2">Khách sạn: {selectedHotelName}</p>
+                        )}
                     </div>
                 );
             default:
@@ -267,7 +282,15 @@ const HotelManagement = () => {
             <div className="w-64 bg-white shadow-lg">
                 <div className="p-6 border-b">
                     <h1 className="text-xl font-bold text-gray-800">Quản Lý Khách Sạn</h1>
-                    {/* <p className="text-sm text-gray-600">Hotel Paradise</p> */}
+                </div>
+
+                {/* Hotel Selector */}
+                <div className="p-6 border-b">
+                    <HotelSelector 
+                        bookings={bookings}
+                        onHotelChange={handleHotelChange}
+                        selectedHotelId={selectedHotelId}
+                    />
                 </div>
 
                 <nav className="mt-6">
@@ -276,9 +299,15 @@ const HotelManagement = () => {
                         return (
                             <button
                                 key={item.id}
-                                onClick={() => setActiveMenu(item.id)}
-                                className={`w-full flex items-center px-6 py-3 text-left hover:bg-blue-50 hover:text-blue-600 transition-colors ${activeMenu === item.id ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : 'text-gray-700'
-                                    }`}
+                                onClick={() => {
+                                    console.log('🏨 Switching to menu:', item.id);
+                                    setActiveMenu(item.id);
+                                    // ✅ Lưu vào localStorage
+                                    localStorage.setItem('activeMenu', item.id);
+                                }}
+                                className={`w-full flex items-center px-6 py-3 text-left hover:bg-blue-50 hover:text-blue-600 transition-colors ${
+                                    activeMenu === item.id ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : 'text-gray-700'
+                                }`}
                             >
                                 <Icon className="h-5 w-5 mr-3" />
                                 {item.label}

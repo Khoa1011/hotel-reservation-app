@@ -121,7 +121,7 @@ roomHotelRouter.post("/hotelowner/create-roomtype", authorizeRoles("chuKhachSan"
 roomHotelRouter.get("/hotelowner/roomtypes/:hotelId", authorizeRoles("chuKhachSan"), async (req, res) => {
     try {
         const { hotelId } = req.params;
-        const { page = 1, limit = 10, search = "" } = req.query;
+        const { page = 1, limit = 100, search = "" } = req.query;
 
         if (!mongoose.Types.ObjectId.isValid(hotelId)) {
             return res.status(400).json({

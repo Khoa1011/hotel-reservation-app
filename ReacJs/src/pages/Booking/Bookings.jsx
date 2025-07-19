@@ -26,7 +26,8 @@ import {
   Trash2,
   Save,
   Home,
-  FileText
+  FileText,
+  Search
 } from 'lucide-react';
 import Cookies from 'js-cookie';
 import axios from '../../utils/axiosConfig';
@@ -37,14 +38,14 @@ import EditBooking from './editBooking';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { RefreshCw } from 'lucide-react';
 
-const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, formatCurrency, formatDate, getStatusColor, getStatusText }) => {
+const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, formatCurrency, formatDate, getStatusColor, getStatusText, selectedHotelId }) => {
   const [showFilter, setShowFilter] = useState(false);
   const [filters, setFilters] = useState({
     status: '',
     dateFrom: '',
     dateTo: '',
     timeRange: '',
-    hotelId: '',
+    search: ''
   });
   const [localBookings, setLocalBookings] = useState(bookings);
   const token = localStorage.getItem("token");
@@ -132,7 +133,7 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
     'no_show': 'khong_nhan_phong'
   };
 
-  
+
 
   // ✅ THÊM: Hàm kiểm tra đơn mới (hoàn toàn tự động)
   const checkForNewBookings = async () => {
@@ -273,11 +274,11 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
       const response = await axios.put(
         `${baseUrl}/api/booking-hotel/hotelowner/update/${cancellingBooking.bookingId}`,
         {
-          
+
           status: 'da_huy',
           cancelReason: cancelReason.trim()
         },
-        
+
         { withCredentials: true }
       );
 
@@ -318,7 +319,7 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
     try {
 
       if (newStatus === 'cancelled') {
-        const booking = localBookings.find(b => b.bookingId === bookingId);
+        const booking = bookings.find(b => b.bookingId === bookingId);
         if (booking) {
           openCancelModal(booking);
         }
@@ -422,6 +423,66 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
     }
   };
 
+  const getFilteredBookings = () => {
+    let filtered = selectedHotelId
+      ? bookings.filter(booking => booking.hotelId?._id === selectedHotelId)
+      : bookings;
+
+    // ✅ Search filter (tên, SĐT, email, mã đơn)
+    if (filters.search.trim()) {
+      const searchTerm = filters.search.toLowerCase().trim();
+      filtered = filtered.filter(booking =>
+        booking.customerName?.toLowerCase().includes(searchTerm) ||
+        booking.phoneNumber?.includes(searchTerm) ||
+        booking.email?.toLowerCase().includes(searchTerm) ||
+        booking.bookingId?.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    // Status filter
+    if (filters.status) {
+      filtered = filtered.filter(booking => booking.status === filters.status);
+    }
+
+    // Date filters
+    if (filters.dateFrom || filters.dateTo) {
+      filtered = filtered.filter(booking => {
+        const checkInDate = moment(booking.checkInDate, "DD-MM-YYYY");
+        const fromDate = filters.dateFrom ? moment(filters.dateFrom) : null;
+        const toDate = filters.dateTo ? moment(filters.dateTo) : null;
+
+        if (fromDate && checkInDate.isBefore(fromDate, 'day')) return false;
+        if (toDate && checkInDate.isAfter(toDate, 'day')) return false;
+        return true;
+      });
+    }
+
+    // Time range filter
+    if (filters.timeRange) {
+      const now = moment();
+      filtered = filtered.filter(booking => {
+        const checkInDate = moment(booking.checkInDate, "DD-MM-YYYY");
+        const checkOutDate = moment(booking.checkOutDate, "DD-MM-YYYY");
+
+        switch (filters.timeRange) {
+          case 'past':
+            return checkOutDate.isBefore(now, 'day');
+          case 'current':
+            return checkInDate.isSameOrBefore(now, 'day') && checkOutDate.isSameOrAfter(now, 'day');
+          case 'upcoming':
+            return checkInDate.isAfter(now, 'day');
+          default:
+            return true;
+        }
+      });
+    }
+
+    return filtered;
+  };
+
+
+
+
   // Hàm mở modal gán phòng
   const openRoomAssignModal = (booking) => {
     setAssigningBooking(booking);
@@ -493,6 +554,17 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
   // };
 
   useEffect(() => {
+    if (selectedHotelId) {
+      const filteredBookings = bookings.filter(booking =>
+        booking.hotelId?._id === selectedHotelId
+      );
+      setLocalBookings(filteredBookings);
+    } else {
+      setLocalBookings(bookings);
+    }
+  }, [bookings, selectedHotelId]);
+
+  useEffect(() => {
     previousBookingCountRef.current = bookings.length;
 
     // Bắt đầu auto update ngay lập tức
@@ -539,7 +611,7 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
       }
 
       // Nếu không có filter nào, hiển thị tất cả bookings
-      if (!filterParams.hotelId && !filterParams.status && !filterParams.timeRange && !filterParams.dateFrom && !filterParams.dateTo) {
+      if (!selectedHotelId && !filterParams.status && !filterParams.timeRange && !filterParams.dateFrom && !filterParams.dateTo) {
         setLocalBookings(bookings);
         return;
       }
@@ -548,9 +620,9 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
       let filteredBookings = [...bookings];
 
       // Filter theo hotel
-      if (filterParams.hotelId) {
+      if (selectedHotelId) {
         filteredBookings = filteredBookings.filter(booking =>
-          booking.hotelId?._id === filterParams.hotelId
+          booking.hotelId?._id === selectedHotelId
         );
       }
 
@@ -603,7 +675,7 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
     }
   };
 
-
+  const filteredBookings = getFilteredBookings();
 
   //Lấy thông báo khi có đơn mới
   useEffect(() => {
@@ -638,51 +710,52 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
 
 
   // Handle hotel selection
-  const handleFilterChange = (key, value) => {
-    if (key === "hotelId") {
-      localStorage.setItem("selectedHotelId", value);
-      // Đánh dấu hotel đã đọc khi chọn
-      if (value) {
-        markHotelAsRead(value);
-      }
-    }
-    setFilters(prev => {
-      const newFilters = {
-        ...prev,
-        [key]: value
-      };
-
-      // Gọi filter ngay lập tức
-      fetchBookingByHotelOwner(newFilters);
-
-      return newFilters;
-    });
-  };
-
   // const handleFilterChange = (key, value) => {
-  //   if (key == "hotelId") {
-  //     localStorage.setItem("selectedHotelId", value);
-  //   }
-  //   setFilters(prev => ({
-  //     ...prev,
-  //     [key]: value
-  //   }));
+  //   setFilters(prev => {
+  //     const newFilters = {
+  //       ...prev,
+  //       [key]: value
+  //     };
+  //     // Gọi filter ngay lập tức
+  //     fetchBookingByHotelOwner(newFilters);
+  //     return newFilters;
+  //   });
   // };
 
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+
+  // const clearFilters = () => {
+  //   setFilters({
+  //     status: '',
+  //     dateFrom: '',
+  //     dateTo: '',
+  //     timeRange: '',
+  //   });
+
+  //   setFilters(clearedFilters);
+  //   localStorage.removeItem("selectedHotelId");
+
+  //   // Hiển thị lại tất cả bookings
+  //   setLocalBookings(bookings);
+  // };
+
+
   const clearFilters = () => {
-    setFilters({
+    const clearedFilters = {
       status: '',
       dateFrom: '',
       dateTo: '',
       timeRange: '',
-      hotelId: '',
-    });
-
+      search: ''
+    };
     setFilters(clearedFilters);
-    localStorage.removeItem("selectedHotelId");
 
-    // Hiển thị lại tất cả bookings
-    setLocalBookings(bookings);
   };
 
   //Tính toán thời gian lưu trú (nights)
@@ -772,7 +845,7 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
             </div>
 
             <div className="text-sm text-gray-600">
-              Tổng: <span className="font-semibold text-blue-600">{localBookings.length}</span> đơn
+              Tổng: <span className="font-semibold text-blue-600">{filteredBookings.length}</span> đơn
             </div>
           </div>
 
@@ -795,55 +868,33 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
             </button>
           </div>
 
-          {/* Hotel Filter with Notifications */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Khách sạn
-            </label>
-            <select
-              value={filters.hotelId}
-              onChange={(e) => handleFilterChange('hotelId', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Tất cả khách sạn</option>
-              {hotelList.map((hotel, index) => (
-                <option key={index} value={hotel.id}>
-                  {hotel.name}
-                  {hotel.notifications.totalUnread > 0 && `(${hotel.notifications.pendingBookings} đơn đang chờ)`}
-                </option>
-              ))}
-            </select>
-            {/* Hiển thị thông báo chi tiết cho khách sạn đã chọn */}
-
-            {filters.hotelId && (
-              <div className="mt-2 p-3 bg-blue-50 rounded-lg">
-                <div className="text-sm">
-                  {(() => {
-                    const selectedHotel = hotelList.find(h => h.id === filters.hotelId);
-                    const notif = selectedHotel?.notifications;
-                    if (!notif || notif.totalUnread === 0) {
-                      return <span className="text-gray-600">Không có thông báo mới</span>;
-                    }
-                    return (
-                      <div className="space-y-1">
-                        <p className="font-medium text-blue-800">
-                          {selectedHotel.name} - {notif.totalUnread} thông báo mới
-                        </p>
-                        {notif.newBookings > 0 && (
-                          <p className="text-blue-600">• {notif.newBookings} đơn mới</p>
-                        )}
-                        {notif.pendingBookings > 0 && (
-                          <p className="text-blue-600">• {notif.pendingBookings} đơn chờ xử lý</p>
-                        )}
-                      </div>
-                    );
-                  })()}
-                </div>
+          {/* ✅ Grid chứa tất cả filters */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {/* ✅ Search Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tìm kiếm
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Tên, SĐT, email..."
+                  value={filters.search}
+                  onChange={(e) => handleFilterChange('search', e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                {filters.search && (
+                  <button
+                    onClick={() => handleFilterChange('search', '')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
-            )}
-          </div>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Status Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -927,11 +978,17 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
       )}
 
       {/* Active Filters Display */}
-      {(filters.status || filters.dateFrom || filters.dateTo || filters.timeRange) && (
+      {(filters.status || filters.dateFrom || filters.dateTo || filters.timeRange || filters.search) && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 text-sm">
               <span className="text-blue-700 font-medium">Bộ lọc đang áp dụng:</span>
+
+              {filters.search && (
+                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
+                  Tìm: "{filters.search}"
+                </span>
+              )}
               {filters.status && (
                 <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
                   Trạng thái: {getVietnameseStatusText(filters.status)}
@@ -970,9 +1027,9 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mx-auto"></div>
           <p className="text-gray-600 mt-4">Đang tải...</p>
         </div>
-      ) : localBookings.length > 0 ? (
+      ) : filteredBookings.length > 0 ? (
         <div className="bg-white rounded-lg shadow">
-          {localBookings.map((booking) => (
+          {filteredBookings.map((booking) => (
             <div key={booking.bookingId} className="border-b border-gray-200 last:border-b-0">
               <div
                 className="p-4 hover:bg-gray-50 cursor-pointer"

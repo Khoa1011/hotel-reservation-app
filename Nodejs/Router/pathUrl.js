@@ -12,6 +12,7 @@ const reviewRouter = require("../Controller/reviewController");
 const notificationController = require("../Controller/notificationController");
 const hotelowner = require("../Controller/Hotel/userHotelController");
 const hotelBooking = require("../Controller/Hotel/hotelBookingController"); 
+const roomTypeHotelRouter = require("../Controller/Hotel/roomTypeHotelController");
 
 
 
@@ -31,8 +32,9 @@ module.exports = function (app) {
 
 
     //Hotel 
-    app.use("/api/user-hotel/", hotelowner);
-    app.use("/api/booking-hotel/", hotelBooking);
+    app.use("/api/user-hotel", hotelowner);
+    app.use("/api/booking-hotel", hotelBooking);
+    app.use("/api/roomType-hotel", roomTypeHotelRouter);
 
     // //Admin
     // app.use("/api/admin", userRouter); 

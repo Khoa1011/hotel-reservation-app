@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Booking from './Booking/Bookings';
-import Rooms from './Rooms';
+import Rooms from './Room/Rooms';
 import { rooms, stats } from '../services/dataTest';
 import {
     Calendar,
@@ -27,6 +27,7 @@ import Cookies from 'js-cookie';
 import axios from '../utils/axiosConfig';
 import moment from 'moment-timezone';
 import { toast } from 'react-toastify';
+import RoomManagementTabs from '../components/RoomManagementTabs';
 
 const HotelManagement = () => {
     const [activeMenu, setActiveMenu] = useState('bookings');
@@ -109,7 +110,7 @@ const HotelManagement = () => {
                 return;
             }
             const response = await axios.get(`${baseUrl}/api/booking-hotel/hotelowner/bookings`, {
-                
+            
                 withCredentials: true
             });
             if (response.status === 404) {
@@ -222,7 +223,7 @@ const HotelManagement = () => {
             case 'bookings':
                 return renderBookings();
             case 'rooms':
-                return renderRooms();
+                return <RoomManagementTabs/>;
             case 'guests':
                 return (
                     <div className="text-center py-12">

@@ -2,6 +2,7 @@ import React from 'react';
 import { Calendar, Users, Bed, DollarSign, Settings, Bell } from 'lucide-react';
 import MenuItem from './MenuItem';
 import { formatCurrency } from '../services/utils';
+import RoomManagementTabs from './RoomManagementTabs';
 
 const menuItems = [
   { id: 'bookings', label: 'Đơn Đặt Phòng', icon: Calendar },

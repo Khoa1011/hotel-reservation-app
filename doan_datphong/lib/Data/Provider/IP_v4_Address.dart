@@ -11,5 +11,5 @@ class IPv4 {
   //   static final String IP_CURRENT ="https://hotel-backend-95xx.onrender.com";
 
     //Ngrok
-    static const String IP_CURRENT = "https://9c6d8dd03f39.ngrok-free.app";
+    static const String IP_CURRENT = "https://9aecb187f011.ngrok-free.app";
 }

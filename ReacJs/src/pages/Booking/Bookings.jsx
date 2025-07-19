@@ -273,9 +273,11 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
       const response = await axios.put(
         `${baseUrl}/api/booking-hotel/hotelowner/update/${cancellingBooking.bookingId}`,
         {
+          
           status: 'da_huy',
           cancelReason: cancelReason.trim()
         },
+        
         { withCredentials: true }
       );
 

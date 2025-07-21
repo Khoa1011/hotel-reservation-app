@@ -21,7 +21,6 @@ roomHotelRouter.post("/hotelowner/create-roomtype", authorizeRoles("chuKhachSan"
             giaCa,
             moTa,
             tienNghiDacBiet,
-            tongSoPhong
         } = req.body;
 
         // Validation
@@ -93,7 +92,6 @@ roomHotelRouter.post("/hotelowner/create-roomtype", authorizeRoles("chuKhachSan"
             giaCa: parseFloat(giaCa),
             moTa: moTa?.trim() || "",
             tienNghiDacBiet: amenitiesList,
-            tongSoPhong: parseInt(tongSoPhong) || 0
         });
 
         await newRoomType.save();
@@ -182,7 +180,6 @@ roomHotelRouter.put("/hotelowner/update-roomtype/:roomTypeId", authorizeRoles("c
             giaCa,
             moTa,
             tienNghiDacBiet,
-            tongSoPhong
         } = req.body;
 
         if (!mongoose.Types.ObjectId.isValid(roomTypeId)) {
@@ -242,7 +239,6 @@ roomHotelRouter.put("/hotelowner/update-roomtype/:roomTypeId", authorizeRoles("c
                 ...(giaCa !== undefined && { giaCa: parseFloat(giaCa) }),
                 ...(moTa !== undefined && { moTa: moTa?.trim() || "" }),
                 ...(tienNghiDacBiet !== undefined && { tienNghiDacBiet: amenitiesList }),
-                ...(tongSoPhong !== undefined && { tongSoPhong: parseInt(tongSoPhong) })
             },
             { new: true, runValidators: true }
         ).populate('maKhachSan', 'tenKhachSan');

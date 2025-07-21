@@ -32,10 +32,18 @@ const AddBooking = ({ onClose }) => {
     email: '',
     cccd: '',
 
+    // ✅ THÊM: Loại đặt phòng
+    bookingType: 'qua_dem', // Default
+
     // Thông tin đặt phòng
     maLoaiPhong: '', // Room type ID
     checkInDate: new Date().toISOString().split('T')[0],
     checkOutDate: '',
+    
+    // ✅ THÊM: Thời gian cho đặt theo giờ
+    checkInTime: '14:00',
+    checkOutTime: '18:00',
+    
     guests: 1,
     roomQuantity: 1,
 
@@ -48,12 +56,20 @@ const AddBooking = ({ onClose }) => {
     notes: ''
   });
 
-  const [nights, setNights] = useState(0);
+  const [duration, setDuration] = useState(0); // ✅ THAY ĐỔI: duration thay vì nights
+  const [unit, setUnit] = useState('đêm'); // ✅ THÊM: đơn vị thời gian
   const [totalAmount, setTotalAmount] = useState(0);
   const [change, setChange] = useState(0);
   const [errors, setErrors] = useState({});
   const [roomTypes, setRoomTypes] = useState([]);
   const [submitting, setSubmitting] = useState(false);
+
+  // ✅ THÊM: Danh sách loại đặt phòng
+  const bookingTypes = [
+    { value: 'theo_gio', label: 'Theo giờ', description: 'Đặt phòng theo số giờ sử dụng' },
+    { value: 'qua_dem', label: 'Qua đêm', description: 'Đặt phòng qua đêm (1 ngày)' },
+    { value: 'dai_ngay', label: 'Dài ngày', description: 'Đặt phòng nhiều ngày (2+ ngày)' }
+  ];
 
   const paymentMethods = [
     { id: 'tien_mat', name: 'Tiền mặt' },
@@ -63,7 +79,49 @@ const AddBooking = ({ onClose }) => {
     { id: 'the_tin_dung', name: 'Thẻ tín dụng' }
   ];
 
-  // Tạo đơn đặt phòng mới tại quầy
+  // ✅ SỬA: Validate form theo booking type
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.customerName.trim()) newErrors.customerName = 'Vui lòng nhập tên khách hàng';
+    if (!formData.phoneNumber.trim()) newErrors.phoneNumber = 'Vui lòng nhập số điện thoại';
+    if (!formData.maLoaiPhong) newErrors.maLoaiPhong = 'Vui lòng chọn loại phòng';
+
+    // ✅ Validation theo booking type
+    switch (formData.bookingType) {
+      case 'theo_gio':
+        if (!formData.checkInTime) newErrors.checkInTime = 'Vui lòng chọn giờ nhận';
+        if (!formData.checkOutTime) newErrors.checkOutTime = 'Vui lòng chọn giờ trả';
+        if (duration <= 0) newErrors.checkOutTime = 'Giờ trả phải sau giờ nhận';
+        break;
+
+      case 'qua_dem':
+        if (!formData.checkOutDate) newErrors.checkOutDate = 'Vui lòng chọn ngày trả phòng';
+        if (duration !== 1) newErrors.checkOutDate = 'Đặt qua đêm phải chính xác 1 ngày';
+        break;
+
+      case 'dai_ngay':
+        if (!formData.checkOutDate) newErrors.checkOutDate = 'Vui lòng chọn ngày trả phòng';
+        if (duration < 2) newErrors.checkOutDate = 'Đặt dài ngày tối thiểu 2 ngày';
+        break;
+    }
+
+    if (formData.paymentMethod === 'tien_mat' && formData.payNow) {
+      const payment = parseFloat(formData.customerPayment) || 0;
+      if (payment < totalAmount) {
+        newErrors.customerPayment = 'Số tiền khách đưa không đủ';
+      }
+    }
+
+    if (formData.cccd && !/^[0-9]{12}$/.test(formData.cccd)) {
+      newErrors.cccd = 'CCCD phải có 12 chữ số';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // ✅ SỬA: Tạo đơn đặt phòng với booking type
   const handleSubmit = async () => {
     if (!validateForm()) {
       return;
@@ -74,8 +132,11 @@ const AddBooking = ({ onClose }) => {
       const payload = {
         maKhachSan: hotelId,
         maLoaiPhong: formData.maLoaiPhong,
+        bookingType: formData.bookingType, // ✅ THÊM
         checkInDate: formData.checkInDate,
-        checkOutDate: formData.checkOutDate,
+        checkOutDate: formData.bookingType === 'theo_gio' ? formData.checkInDate : formData.checkOutDate, // ✅ SỬA
+        checkInTime: formData.checkInTime, // ✅ THÊM
+        checkOutTime: formData.checkOutTime, // ✅ THÊM
         customerName: formData.customerName,
         phoneNumber: formData.phoneNumber,
         email: formData.email,
@@ -95,8 +156,6 @@ const AddBooking = ({ onClose }) => {
       if (response.data?.message?.msgError === false) {
         toast.success(response.data.message.msgBody);
         onClose();
-        // Refresh page để load lại danh sách bookings
-        window.location.reload();
       } else {
         toast.error(response.data?.message?.msgBody || 'Tạo đơn không thành công!');
       }
@@ -117,7 +176,6 @@ const AddBooking = ({ onClose }) => {
       const response = await axios.get(url, { withCredentials: true });
 
       if (response.status === 200) {
-        // Giả sử API trả về danh sách room types
         const formatted = response.data.map(room => ({
           id: room.roomId,
           name: room.roomTypeName,
@@ -126,7 +184,6 @@ const AddBooking = ({ onClose }) => {
           description: room.roomTypeDescription
         }));
 
-        // Loại bỏ trùng lặp dựa trên ID
         const uniqueRoomTypes = Array.from(
           new Map(formatted.map(item => [item.id, item])).values()
         );
@@ -149,23 +206,50 @@ const AddBooking = ({ onClose }) => {
     }
   }, [hotelId]);
 
-  // Tính số ngày lưu trú
+  // ✅ SỬA: Tính duration theo booking type
   useEffect(() => {
-    if (formData.checkInDate && formData.checkOutDate) {
+    if (formData.bookingType === 'theo_gio') {
+      // Tính số giờ
+      if (formData.checkInTime && formData.checkOutTime) {
+        const startTime = moment(`${formData.checkInDate} ${formData.checkInTime}`, 'YYYY-MM-DD HH:mm');
+        let endTime = moment(`${formData.checkInDate} ${formData.checkOutTime}`, 'YYYY-MM-DD HH:mm');
+        
+        if (endTime.isSameOrBefore(startTime)) {
+          endTime.add(1, 'day');
+        }
+        
+        const hours = Math.ceil(endTime.diff(startTime, 'hours', true));
+        setDuration(hours > 0 ? hours : 0);
+        setUnit('giờ');
+      }
+    } else if (formData.checkInDate && formData.checkOutDate) {
+      // Tính số ngày
       const checkIn = new Date(formData.checkInDate);
       const checkOut = new Date(formData.checkOutDate);
       const diffTime = checkOut.getTime() - checkIn.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      setNights(diffDays > 0 ? diffDays : 0);
+      setDuration(diffDays > 0 ? diffDays : 0);
+      setUnit(formData.bookingType === 'qua_dem' ? 'đêm' : 'ngày');
     }
-  }, [formData.checkInDate, formData.checkOutDate]);
+  }, [formData.checkInDate, formData.checkOutDate, formData.checkInTime, formData.checkOutTime, formData.bookingType]);
 
-  // Tính tổng tiền
+  // ✅ SỬA: Tính tổng tiền theo booking type
   useEffect(() => {
     const roomType = roomTypes.find(rt => rt.id === formData.maLoaiPhong);
-    const roomTotal = roomType ? roomType.price * nights * formData.roomQuantity : 0;
-    setTotalAmount(roomTotal);
-  }, [formData.maLoaiPhong, nights, formData.roomQuantity, roomTypes]);
+    if (roomType && duration > 0) {
+      let unitPrice = roomType.price;
+      
+      if (formData.bookingType === 'theo_gio') {
+        // Giá theo giờ = giá phòng / 14 giờ
+        unitPrice = Math.round(roomType.price / 14);
+      }
+      
+      const roomTotal = unitPrice * duration * formData.roomQuantity;
+      setTotalAmount(roomTotal);
+    } else {
+      setTotalAmount(0);
+    }
+  }, [formData.maLoaiPhong, duration, formData.roomQuantity, roomTypes, formData.bookingType]);
 
   // Tính tiền thừa
   useEffect(() => {
@@ -191,35 +275,21 @@ const AddBooking = ({ onClose }) => {
     }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.customerName.trim()) newErrors.customerName = 'Vui lòng nhập tên khách hàng';
-    if (!formData.phoneNumber.trim()) newErrors.phoneNumber = 'Vui lòng nhập số điện thoại';
-    if (!formData.maLoaiPhong) newErrors.maLoaiPhong = 'Vui lòng chọn loại phòng';
-    if (!formData.checkOutDate) newErrors.checkOutDate = 'Vui lòng chọn ngày trả phòng';
-    if (nights <= 0) newErrors.checkOutDate = 'Ngày trả phòng phải sau ngày nhận phòng';
-
-    if (formData.paymentMethod === 'tien_mat' && formData.payNow) {
-      const payment = parseFloat(formData.customerPayment) || 0;
-      if (payment < totalAmount) {
-        newErrors.customerPayment = 'Số tiền khách đưa không đủ';
-      }
-    }
-
-    if (formData.cccd && !/^[0-9]{12}$/.test(formData.cccd)) {
-      newErrors.cccd = 'CCCD phải có 12 chữ số';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
     }).format(amount);
+  };
+
+  // ✅ THÊM: Helper function để get unit text
+  const getUnitText = () => {
+    switch (formData.bookingType) {
+      case 'theo_gio': return 'giờ';
+      case 'qua_dem': return 'đêm';
+      case 'dai_ngay': return 'ngày';
+      default: return 'đơn vị';
+    }
   };
 
   return (
@@ -311,6 +381,41 @@ const AddBooking = ({ onClose }) => {
         </div>
       </div>
 
+      {/* ✅ THÊM: Chọn loại đặt phòng */}
+      <div className="bg-gray-50 rounded-lg p-4">
+        <h2 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+          <Clock className="h-5 w-5 mr-2" />
+          Loại đặt phòng
+        </h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {bookingTypes.map(type => (
+            <label key={type.value} className="cursor-pointer">
+              <input
+                type="radio"
+                name="bookingType"
+                value={type.value}
+                checked={formData.bookingType === type.value}
+                onChange={(e) => handleInputChange('bookingType', e.target.value)}
+                className="sr-only"
+              />
+              <div className={`p-4 rounded-lg border-2 transition-colors ${
+                formData.bookingType === type.value 
+                  ? 'border-blue-500 bg-blue-50' 
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}>
+                <h3 className={`font-medium ${
+                  formData.bookingType === type.value ? 'text-blue-700' : 'text-gray-800'
+                }`}>
+                  {type.label}
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">{type.description}</p>
+              </div>
+            </label>
+          ))}
+        </div>
+      </div>
+
       {/* Thông tin đặt phòng */}
       <div className="bg-gray-50 rounded-lg p-4">
         <h2 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
@@ -332,7 +437,10 @@ const AddBooking = ({ onClose }) => {
               <option value="">Chọn loại phòng</option>
               {roomTypes.map(room => (
                 <option key={room.id} value={room.id}>
-                  {room.name} - {formatCurrency(room.price)}/ngày
+                  {room.name} - {formatCurrency(room.price)}/{
+                  formData.bookingType === 'theo_gio' ? 'giờ' : 
+                  formData.bookingType === 'qua_dem' ? 'đêm': 'ngày'
+                  }
                 </option>
               ))}
             </select>
@@ -354,22 +462,25 @@ const AddBooking = ({ onClose }) => {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Ngày trả phòng *
-            </label>
-            <input
-              type="date"
-              value={formData.checkOutDate}
-              onChange={(e) => handleInputChange('checkOutDate', e.target.value)}
-              min={formData.checkInDate}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors.checkOutDate ? 'border-red-500' : 'border-gray-300'
-                }`}
-            />
-            {errors.checkOutDate && (
-              <p className="text-red-500 text-xs mt-1">{errors.checkOutDate}</p>
-            )}
-          </div>
+          {/* ✅ CONDITIONAL: Ngày trả phòng (không hiển thị với theo giờ) */}
+          {formData.bookingType !== 'theo_gio' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Ngày trả phòng *
+              </label>
+              <input
+                type="date"
+                value={formData.checkOutDate}
+                onChange={(e) => handleInputChange('checkOutDate', e.target.value)}
+                min={formData.checkInDate}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors.checkOutDate ? 'border-red-500' : 'border-gray-300'
+                  }`}
+              />
+              {errors.checkOutDate && (
+                <p className="text-red-500 text-xs mt-1">{errors.checkOutDate}</p>
+              )}
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -402,6 +513,43 @@ const AddBooking = ({ onClose }) => {
           </div>
         </div>
 
+        {/* ✅ THÊM: Thời gian cho đặt theo giờ */}
+        {formData.bookingType === 'theo_gio' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Giờ nhận phòng *
+              </label>
+              <input
+                type="time"
+                value={formData.checkInTime}
+                onChange={(e) => handleInputChange('checkInTime', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors.checkInTime ? 'border-red-500' : 'border-gray-300'
+                  }`}
+              />
+              {errors.checkInTime && (
+                <p className="text-red-500 text-xs mt-1">{errors.checkInTime}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Giờ trả phòng *
+              </label>
+              <input
+                type="time"
+                value={formData.checkOutTime}
+                onChange={(e) => handleInputChange('checkOutTime', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors.checkOutTime ? 'border-red-500' : 'border-gray-300'
+                  }`}
+              />
+              {errors.checkOutTime && (
+                <p className="text-red-500 text-xs mt-1">{errors.checkOutTime}</p>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -433,11 +581,19 @@ const AddBooking = ({ onClose }) => {
           </div>
         </div>
 
-        {nights > 0 && (
+        {/* ✅ SỬA: Hiển thị duration info */}
+        {duration > 0 && (
           <div className="mt-4 p-3 bg-blue-50 rounded-lg">
             <div className="flex items-center text-blue-800">
               <Clock className="h-4 w-4 mr-2" />
-              <span className="font-medium">Số ngày lưu trú: {nights} ngày</span>
+              <span className="font-medium">
+                Thời gian lưu trú: {duration} {getUnitText()}
+                {formData.bookingType === 'theo_gio' && (
+                  <span className="text-sm ml-2">
+                    ({formData.checkInTime} - {formData.checkOutTime})
+                  </span>
+                )}
+              </span>
             </div>
           </div>
         )}
@@ -540,13 +696,23 @@ const AddBooking = ({ onClose }) => {
         <h2 className="text-lg font-semibold text-blue-800 mb-3">Tổng kết đơn đặt phòng</h2>
 
         <div className="space-y-2">
-          {formData.maLoaiPhong && (
+          {formData.maLoaiPhong && duration > 0 && (
             <div className="flex justify-between">
               <span>
-                Phòng ({roomTypes.find(r => r.id === formData.maLoaiPhong)?.name}) x {nights} ngày x {formData.roomQuantity} phòng:
+                Phòng ({roomTypes.find(r => r.id === formData.maLoaiPhong)?.name}) x {duration} {getUnitText()} x {formData.roomQuantity} phòng:
               </span>
               <span className="font-medium">
-                {formatCurrency((roomTypes.find(r => r.id === formData.maLoaiPhong)?.price || 0) * nights * formData.roomQuantity)}
+                {(() => {
+                  const roomType = roomTypes.find(r => r.id === formData.maLoaiPhong);
+                  if (!roomType) return formatCurrency(0);
+                  
+                  let unitPrice = roomType.price;
+                  if (formData.bookingType === 'theo_gio') {
+                    unitPrice = Math.round(roomType.price / 14);
+                  }
+                  
+                  return formatCurrency(unitPrice * duration * formData.roomQuantity);
+                })()}
               </span>
             </div>
           )}
@@ -596,7 +762,7 @@ const AddBooking = ({ onClose }) => {
               Đang tạo đơn...
             </div>
           ) : (
-            'Tạo đơn đặt phòng'
+            `Tạo đơn đặt phòng ${formData.bookingType === 'theo_gio' ? 'theo giờ' : formData.bookingType === 'qua_dem' ? 'qua đêm' : 'dài ngày'}`
           )}
         </button>
         <button
@@ -613,6 +779,8 @@ const AddBooking = ({ onClose }) => {
       {process.env.NODE_ENV === 'development' && (
         <div className="bg-gray-100 p-3 rounded text-xs">
           <p><strong>Hotel ID:</strong> {hotelId}</p>
+          <p><strong>Booking Type:</strong> {formData.bookingType}</p>
+          <p><strong>Duration:</strong> {duration} {getUnitText()}</p>
           <p><strong>Room Types:</strong> {roomTypes.length}</p>
           <p><strong>Total Amount:</strong> {totalAmount}</p>
           <p><strong>Form Valid:</strong> {Object.keys(errors).length === 0 ? 'Yes' : 'No'}</p>

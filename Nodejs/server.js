@@ -19,15 +19,13 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const cors = require("cors");
 
 // Cấu hình CORS chi tiết để xử lý yêu cầu cross-origin và credentials
+
+// Cho phép các origin này
+const allowedOrigins = process.env.CORS_ORIGIN.split(',');
+
 const corsOptions = {
     origin: function (origin, callback) {
-        // Cho phép các origin này
-        const allowedOrigins = [
-            'http://localhost:5173',
-            'http://localhost:3000',
-            'https://9aecb187f011.ngrok-free.app' // Thêm ngrok URL mới từ log
-        ];
-        
+    
         // Cho phép requests không có origin (mobile apps, postman, etc.)
         if (!origin) return callback(null, true);
         

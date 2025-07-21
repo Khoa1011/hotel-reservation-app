@@ -3,7 +3,8 @@ const mongoose = require("mongoose");
 const RoomImageSchema = new mongoose.Schema({
     maPhong :{
         type:mongoose.Schema.Types.ObjectId,
-        require:true
+        require:true,
+        ref: "phong"
     },
     url_anh:{
         type:String,
@@ -11,11 +12,17 @@ const RoomImageSchema = new mongoose.Schema({
     },
     thuTuAnh:{
         type:Number,
+        default: 1
     },
     moTa:{
         type:String,
         default :""
     }
+
+    
+},{
+    timestamps: true
 });
+RoomImageSchema.index({ maPhong: 1, thuTuAnh: 1 });
 
 module.exports = mongoose.model("hinhAnhPhong", RoomImageSchema);

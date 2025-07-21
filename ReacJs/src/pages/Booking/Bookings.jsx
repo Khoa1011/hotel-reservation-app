@@ -68,6 +68,10 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
   const [cancelReason, setCancelReason] = useState('');
   const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
 
+  //State gán phòng
+  const [availableRooms, setAvailableRooms] = useState([]);
+  const [loadingAvailableRooms, setLoadingAvailableRooms] = useState(false);
+
   // State cho room assignment
   const [showRoomAssignModal, setShowRoomAssignModal] = useState(false);
   const [assigningBooking, setAssigningBooking] = useState(null);
@@ -372,13 +376,44 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
   };
 
   // Hàm gán phòng
+
   const assignRoom = async (bookingId, roomData) => {
     try {
+      console.log('🔍 assignRoom called with:', {
+        bookingId,
+        roomData,
+        apiUrl: `${baseUrl}/api/booking-hotel/hotelowner/assign-room/${bookingId}`
+      });
+
+      // ✅ Validate input data
+      if (!bookingId) {
+        toast.error('Thiếu booking ID');
+        return { success: false };
+      }
+
+      if (!roomData || !roomData.soPhong) {
+        toast.error('Thiếu thông tin phòng');
+        return { success: false };
+      }
+
+      // ✅ FIXED: Map frontend data to backend expected format
+      const payload = {
+        roomNumber: roomData.soPhong,      // ✅ Backend expects "roomNumber"
+        floor: roomData.tang || 1,         // ✅ Backend expects "floor"  
+        viewType: roomData.loaiView || '', // ✅ Backend expects "viewType"
+        notes: roomData.ghiChuPhong || roomData.notes || '' // ✅ Backend expects "notes"
+      };
+
+      console.log('📤 Assign room payload (FIXED):', payload);
+
+      // ✅ FIXED: Use correct endpoint with /:id instead of /:bookingId
       const response = await axios.put(
         `${baseUrl}/api/booking-hotel/hotelowner/assign-room/${bookingId}`,
-        roomData,
+        payload,
         { withCredentials: true }
       );
+
+      console.log('📥 Assign room response:', response.data);
 
       if (response.data?.message?.msgError === false) {
         // Update local bookings với assigned room mới
@@ -387,8 +422,15 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
             if (b.bookingId === bookingId) {
               return {
                 ...b,
-                assignedRooms: [...(b.assignedRooms || []), response.data.assignedRoom],
-                status: 'da_nhan_phong' // Update status nếu cần
+                assignedRooms: [...(b.assignedRooms || []), {
+                  soPhong: roomData.soPhong,        // ✅ Keep frontend format
+                  tang: roomData.tang || 1,
+                  loaiView: roomData.loaiView || '',
+                  trangThaiPhong: 'da_giao_phong',
+                  ghiChuPhong: roomData.ghiChuPhong || roomData.notes || '',
+                  thoiGianGiaoPhong: new Date().toISOString()
+                }],
+                status: 'da_nhan_phong' // Update status
               };
             }
             return b;
@@ -400,7 +442,14 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
             if (b.bookingId === bookingId) {
               return {
                 ...b,
-                assignedRooms: [...(b.assignedRooms || []), response.data.assignedRoom],
+                assignedRooms: [...(b.assignedRooms || []), {
+                  soPhong: roomData.soPhong,
+                  tang: roomData.tang || 1,
+                  loaiView: roomData.loaiView || '',
+                  trangThaiPhong: 'da_giao_phong',
+                  ghiChuPhong: roomData.ghiChuPhong || roomData.notes || '',
+                  thoiGianGiaoPhong: new Date().toISOString()
+                }],
                 status: 'da_nhan_phong'
               };
             }
@@ -408,17 +457,42 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
           })
         );
 
-        toast.success("Gán phòng thành công!");
+        toast.success(`Gán phòng ${roomData.soPhong} thành công!`);
         setShowRoomAssignModal(false);
-        setRoomAssignData({ roomNumber: '', floor: 1, viewType: '', notes: '' });
+        setRoomAssignData({ roomNumber: '', floor: 1, viewType: '', notes: '', roomId: '' });
         return { success: true };
       } else {
-        toast.error(response.data?.message?.msgBody || "Gán phòng thất bại!");
+        const errorMsg = response.data?.message?.msgBody || "Gán phòng thất bại!";
+        console.log('❌ Assign room failed:', errorMsg);
+        toast.error(errorMsg);
         return { success: false };
       }
     } catch (error) {
-      console.error("Lỗi khi gán phòng:", error);
-      toast.error("Lỗi khi gán phòng!");
+      console.error("❌ assignRoom error:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        config: {
+          method: error.config?.method,
+          url: error.config?.url,
+          data: error.config?.data
+        }
+      });
+
+      // ✅ Better error handling
+      if (error.response?.status === 404) {
+        toast.error("Không tìm thấy đơn đặt phòng hoặc API");
+      } else if (error.response?.status === 400) {
+        const errorMsg = error.response?.data?.message?.msgBody ||
+          error.response?.data?.message ||
+          'Dữ liệu không hợp lệ';
+        toast.error(`❌ ${errorMsg}`);
+      } else if (error.response?.status === 500) {
+        toast.error("Lỗi server khi gán phòng");
+      } else {
+        toast.error("Lỗi khi gán phòng!");
+      }
+
       return { success: false };
     }
   };
@@ -481,12 +555,107 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
   };
 
 
+  // Function lấy phòng trống cho assignment  
+  const fetchAvailableRoomsForAssignment = async (booking) => {
+    if (!booking) {
+      console.log('❌ No booking provided');
+      return;
+    }
+
+    console.log('🔍 DEBUG: Full booking object:', booking);
+
+    // ✅ SMART DETECTION for roomTypeId
+    let foundRoomTypeId = booking.roomTypeId || booking.maLoaiPhong;
+
+    // ✅ If backend didn't provide roomTypeId, use smart mapping
+    if (!foundRoomTypeId) {
+      console.log('⚠️ Backend missing roomTypeId, using smart mapping...');
+
+      const roomTypeMapping = {
+        'Phòng của Khoa': '687d1e94cee4aed371090b63',
+        // Add more mappings as needed
+      };
+
+      foundRoomTypeId = roomTypeMapping[booking.roomType];
+
+      if (foundRoomTypeId) {
+        console.log('✅ Smart mapping found roomTypeId:', foundRoomTypeId);
+      } else {
+        console.log('❌ No mapping found for roomType:', booking.roomType);
+      }
+    } else {
+      console.log('✅ Backend provided roomTypeId:', foundRoomTypeId);
+    }
+
+    if (!foundRoomTypeId) {
+      console.log('❌ Could not determine roomTypeId');
+      toast.error(`Không thể xác định loại phòng "${booking.roomType}"`);
+      setAvailableRooms([]);
+      return;
+    }
+
+    console.log('🔍 DEBUG: Using roomTypeId:', foundRoomTypeId);
+
+    setLoadingAvailableRooms(true);
+    try {
+      const payload = {
+        maLoaiPhong: foundRoomTypeId, // ✅ NOW HAS VALUE!
+        checkInDate: moment(booking.checkInDate, 'DD-MM-YYYY').format('YYYY-MM-DD'),
+        checkOutDate: moment(booking.checkOutDate, 'DD-MM-YYYY').format('YYYY-MM-DD'),
+        checkInTime: booking.checkInTime,
+        checkOutTime: booking.checkOutTime,
+        bookingType: booking.bookingType,
+        excludeBookingId: booking._id || booking.bookingId
+      };
+
+      console.log('📤 API Request payload (FIXED):', payload);
+
+      const response = await axios.post(
+        `${baseUrl}/api/room-hotel/${booking.hotelId._id}/available-rooms-for-assignment`,
+        payload,
+        { withCredentials: true }
+      );
+
+      console.log('📥 API Response:', response.data);
+
+      if (response.data?.success) {
+        console.log('✅ Available rooms found:', response.data.availableRooms.length);
+        setAvailableRooms(response.data.availableRooms);
+
+        if (response.data.availableRooms.length === 0) {
+          console.log('⚠️ No rooms available:', response.data.message);
+          toast.warning(response.data.message || 'Không có phòng trống trong thời gian này');
+        } else {
+          toast.success(`🎉 Tìm thấy ${response.data.availableRooms.length} phòng trống!`);
+        }
+      } else {
+        console.log('❌ API returned success: false');
+        setAvailableRooms([]);
+        toast.warning('Không tìm thấy phòng trống phù hợp');
+      }
+    } catch (error) {
+      console.error('❌ API Error:', error);
+      setAvailableRooms([]);
+      toast.error('Lỗi khi tải danh sách phòng trống');
+    } finally {
+      setLoadingAvailableRooms(false);
+    }
+  };
+
 
 
   // Hàm mở modal gán phòng
-  const openRoomAssignModal = (booking) => {
+  const openRoomAssignModal = async (booking) => {
+
+    console.log('🏨 Opening room assign modal for:', booking.bookingId);
+    console.log('🔍 Full booking object to check roomTypeId:', booking);
     setAssigningBooking(booking);
     setShowRoomAssignModal(true);
+
+    setRoomAssignData({ roomNumber: '', floor: 1, viewType: '', notes: '' });
+
+    // Fetch available rooms
+    await fetchAvailableRoomsForAssignment(booking);
   };
 
   // Hàm mở modal chỉnh sửa
@@ -781,7 +950,8 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
       'da_nhan_phong': 'Đã nhận phòng',
       'dang_su_dung': 'Đang sử dụng',
       'da_tra_phong': 'Đã trả phòng',
-      'khong_nhan_phong': 'Không nhận phòng'
+      'khong_nhan_phong': 'Không nhận phòng',
+      'da_giao_phong': 'Đã giao phòng'
     };
     return statusTexts[status] || status;
   };
@@ -795,7 +965,8 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
       'da_nhan_phong': 'text-blue-600 bg-blue-100',
       'dang_su_dung': 'text-purple-600 bg-purple-100',
       'da_tra_phong': 'text-gray-600 bg-gray-100',
-      'khong_nhan_phong': 'text-red-600 bg-red-100'
+      'khong_nhan_phong': 'text-red-600 bg-red-100',
+      'da_giao_phong': 'text-indigo-600 bg-indigo-100',
     };
     return statusColors[status] || 'text-gray-600 bg-gray-100';
   };
@@ -1130,6 +1301,7 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
                         <>
                           <h4 className="font-semibold text-gray-800 flex items-center mt-4">
                             <Home className="h-4 w-4 mr-2" />
+
                             Phòng đã nhận
                           </h4>
                           <div className="space-y-2">
@@ -1137,7 +1309,13 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
                               <div key={index} className="bg-white p-2 rounded border">
                                 <p className="font-medium">Phòng {room.soPhong}</p>
                                 <p className="text-xs text-gray-600">
-                                  Tầng {room.tang} • {room.loaiView || "N/A"} • {room.trangThaiPhong}
+                                  Tầng {room.tang} • {room.loaiView === 'sea_view' ? 'View biển' :
+                                    room.loaiView === 'city_view' ? 'View thành phố' :
+                                      room.loaiView === 'garden_view' ? 'View vườn hoa' :
+                                        room.loaiView === 'mountain_view' ? 'View núi' :
+                                          room.loaiView === 'pool_view' ? 'View hồ bơi'
+                                            : "N/A"} • {room.trangThaiPhong === 'da_giao_phong' ? 'Đã giao phòng' :
+                                              room.trangThaiPhong === 'da_check-in' ? 'Đã check-in' : 'Đã check-out'}
                                 </p>
                                 {room.ghiChuPhong && (
                                   <p className="text-xs text-gray-500">{room.ghiChuPhong}</p>
@@ -1312,9 +1490,10 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
       )}
 
       {/* Modal gán phòng */}
+
       {showRoomAssignModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-lg">
             <div className="p-4 border-b flex justify-between items-center">
               <h2 className="text-lg font-bold text-gray-800">
                 Gán phòng cho đơn #{assigningBooking?.bookingId}
@@ -1336,82 +1515,87 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
                   <strong>Loại phòng:</strong> {assigningBooking?.roomType}
                 </p>
                 <p className="text-sm text-gray-600">
+                  <strong>Thời gian:</strong> {assigningBooking?.checkInDate} - {assigningBooking?.checkOutDate}
+                </p>
+                <p className="text-sm text-gray-600">
                   <strong>Số lượng:</strong> {assigningBooking?.roomQuantity || 1} phòng
                 </p>
               </div>
 
               <div className="space-y-3">
+                {/* ✅ SỬA: Dropdown chọn phòng */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Số phòng *
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Chọn phòng trống *
                   </label>
-                  <input
-                    type="text"
-                    value={roomAssignData.roomNumber}
-                    onChange={(e) => setRoomAssignData({ ...roomAssignData, roomNumber: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="VD: 101, 102..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tầng
-                  </label>
-                  <div>
-                    <div className="flex items-center space-x-2 mb-2">
-                      <input
-                        id="enable-floor"
-                        type="checkbox"
-                        checked={enableFloorSelection}
-                        onChange={(e) => setEnableFloorSelection(e.target.checked)}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                      <label htmlFor="enable-floor" className="text-sm text-gray-700">
-                        Chọn tầng cụ thể
-                      </label>
+                  {loadingAvailableRooms ? (
+                    <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500 mr-2"></div>
+                      <span className="text-gray-600 text-sm">Đang tải phòng trống...</span>
                     </div>
+                  ) : availableRooms.length > 0 ? (
+                    <select
+                      value={roomAssignData.roomId || ''}
+                      onChange={(e) => {
+                        const selectedRoom = availableRooms.find(r => r.roomId === e.target.value);
+                        setRoomAssignData({
+                          roomNumber: selectedRoom?.soPhong || '',
+                          floor: selectedRoom?.tang || 1,
+                          viewType: selectedRoom?.loaiView || '',
+                          notes: roomAssignData.notes,
+                          roomId: selectedRoom?.roomId || '' // ✅ THÊM roomId
+                        });
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Chọn phòng</option>
+                      {availableRooms.map(room => (
+                        <option key={room.roomId} value={room.roomId}>
+                          {room.displayName}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="w-full px-3 py-2 border border-red-300 rounded-lg bg-red-50 text-red-600 text-sm">
+                      ⚠️ Không có phòng trống phù hợp trong thời gian này
+                    </div>
+                  )}
 
-                    {enableFloorSelection && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Tầng
-                        </label>
-                        <input
-                          type="number"
-                          value={roomAssignData.floor}
-                          onChange={(e) =>
-                            setRoomAssignData({
-                              ...roomAssignData,
-                              floor: parseInt(e.target.value) || 1,
-                            })
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                          min="1"
-                        />
+                  <p className="text-xs text-gray-500 mt-1">
+                    💡 Hệ thống chỉ hiển thị phòng trống trong thời gian đặt
+                  </p>
+                </div>
+
+                {/* ✅ THÊM: Hiển thị thông tin phòng đã chọn */}
+                {roomAssignData.roomNumber && (
+                  <div className="bg-blue-50 p-3 rounded border">
+                    <h5 className="font-medium text-blue-800 mb-2">Thông tin phòng đã chọn:</h5>
+                    <div className="text-sm space-y-1">
+                      <div className="flex justify-between">
+                        <span>Số phòng:</span>
+                        <span className="font-medium">{roomAssignData.roomNumber}</span>
                       </div>
-                    )}
+                      <div className="flex justify-between">
+                        <span>Tầng:</span>
+                        <span className="font-medium">{roomAssignData.floor}</span>
+                      </div>
+                      {roomAssignData.viewType && roomAssignData.viewType !== 'none' && (
+                        <div className="flex justify-between">
+                          <span>View:</span>
+                          <span className="font-medium">
+                            {roomAssignData.viewType === 'sea_view' ? 'View biển' :
+                              roomAssignData.viewType === 'city_view' ? 'View thành phố' :
+                                roomAssignData.viewType === 'garden_view' ? 'View vườn' :
+                                  roomAssignData.viewType === 'mountain_view' ? 'View núi' :
+                                    roomAssignData.viewType === 'pool_view' ? 'View hồ bơi' : 'N/A'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Loại view
-                  </label>
-                  <select
-                    value={roomAssignData.viewType}
-                    onChange={(e) => setRoomAssignData({ ...roomAssignData, viewType: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Chọn loại view</option>
-                    <option value="sea_view">View biển</option>
-                    <option value="city_view">View thành phố</option>
-                    <option value="garden_view">View vườn</option>
-                    <option value="mountain_view">View núi</option>
-                    <option value="pool_view">View hồ bơi</option>
-                  </select>
-                </div>
-
+                {/* ✅ GIỮ NGUYÊN: Ghi chú */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Ghi chú
@@ -1424,6 +1608,13 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
                     placeholder="Ghi chú thêm về phòng..."
                   />
                 </div>
+
+                {/* ✅ HIỂN THỊ: Thống kê phòng trống */}
+                {!loadingAvailableRooms && (
+                  <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                    📊 Tìm thấy <strong>{availableRooms.length}</strong> phòng trống cho loại phòng này
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1436,13 +1627,24 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
               </button>
               <button
                 onClick={() => {
-                  if (!roomAssignData.roomNumber) {
-                    toast.error('Vui lòng nhập số phòng!');
+                  if (!roomAssignData.roomNumber || !roomAssignData.roomId) {
+                    toast.error('Vui lòng chọn phòng!');
                     return;
                   }
-                  assignRoom(assigningBooking.bookingId, roomAssignData);
+
+                  // ✅ Gửi dữ liệu phòng đã chọn
+                  const assignData = {
+                    soPhong: roomAssignData.roomNumber,       
+                    tang: roomAssignData.floor,              
+                    loaiView: roomAssignData.viewType,       
+                    ghiChuPhong: roomAssignData.notes,        
+                    roomId: roomAssignData.roomId            
+                  };
+
+                  assignRoom(assigningBooking.bookingId, assignData);
                 }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                disabled={!roomAssignData.roomNumber || loadingAvailableRooms}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Gán phòng
               </button>
@@ -1582,7 +1784,14 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Phương thức:</span>
-                        <span className="font-medium">{viewingBooking.paymentMethod || "Chưa chọn"}</span>
+                        <span className="font-medium">{
+                          viewingBooking.paymentMethod === 'tien_mat' ? 'Tiền mặt' :
+                            viewingBooking.paymentMethod === 'VNPay' ? 'VNPay' :
+                              viewingBooking.paymentMethod === 'Momo' ? 'Momo' :
+                                viewingBooking.paymentMethod === 'ZaloPay' ? 'ZaloPay' :
+                                  viewingBooking.paymentMethod === 'the_tin_dung' ? 'Thẻ tín dụng' :
+                                    viewingBooking.paymentMethod || "Chưa chọn"
+                        }</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Trạng thái:</span>
@@ -1620,11 +1829,18 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
                                 <p className="font-medium text-lg">Phòng {room.soPhong}</p>
                                 <p className="text-sm text-gray-600">Tầng {room.tang}</p>
                                 {room.loaiView && (
-                                  <p className="text-sm text-gray-600">View: {room.loaiView}</p>
+                                  <p className="text-sm text-gray-600">View: {
+                                    room.loaiView === 'sea_view' ? 'View biển' :
+                                      room.loaiView === 'city_view' ? 'View thành phố' :
+                                        room.loaiView === 'garden_view' ? 'View vườn hoa' :
+                                          room.loaiView === 'mountain_view' ? 'View núi' :
+                                            room.loaiView === 'pool_view' ? 'View hồ bơi'
+                                              : "N/A"
+                                  }</p>
                                 )}
                               </div>
-                              <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                                {room.trangThaiPhong}
+                              <span className={`px-2 py-1 ${getVietnameseStatusColor(room.trangThaiPhong)} text-xs rounded-full`}>
+                                {getVietnameseStatusText(room.trangThaiPhong)}
                               </span>
                             </div>
                             {room.ghiChuPhong && (

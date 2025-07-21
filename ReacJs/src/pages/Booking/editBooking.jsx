@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { X, Plus, Trash2, Save } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Plus, Trash2, Save, Clock, Calendar, User } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axios from '../../utils/axiosConfig';
+import moment from 'moment';
 
 const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
   // Quản lý state trong EditBooking
@@ -10,7 +11,33 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
   const [paymentMethod, setPaymentMethod] = useState(booking?.paymentMethod || '');
   const [selectedStatus, setSelectedStatus] = useState(booking.status);
 
+  // ✅ THÊM: State cho booking type và time changes
+  const [newBookingType, setNewBookingType] = useState(booking?.bookingType || '');
+  const [newCheckInDate, setNewCheckInDate] = useState(
+    moment(booking?.checkInDate, 'DD-MM-YYYY').format('YYYY-MM-DD') || ''
+  );
+  const [newCheckOutDate, setNewCheckOutDate] = useState(
+    moment(booking?.checkOutDate, 'DD-MM-YYYY').format('YYYY-MM-DD') || ''
+  );
+  const [newCheckInTime, setNewCheckInTime] = useState(booking?.checkInTime || '14:00');
+  const [newCheckOutTime, setNewCheckOutTime] = useState(booking?.checkOutTime || '12:00');
+
+  // ✅ THÊM: State cho actual time tracking
+  const [actualCheckInTime, setActualCheckInTime] = useState('');
+  const [actualCheckOutTime, setActualCheckOutTime] = useState('');
+  const [selectedRoomIndex, setSelectedRoomIndex] = useState(0);
+
+  // ✅ THÊM: State để tính toán pricing preview
+  const [pricingPreview, setPricingPreview] = useState(null);
+
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
+
+  // ✅ THÊM: Danh sách booking types
+  const bookingTypes = [
+    { value: 'theo_gio', label: 'Theo giờ', description: 'Đặt phòng theo số giờ sử dụng' },
+    { value: 'qua_dem', label: 'Qua đêm', description: 'Đặt phòng qua đêm (1 ngày)' },
+    { value: 'dai_ngay', label: 'Dài ngày', description: 'Đặt phòng nhiều ngày (2+ ngày)' }
+  ];
 
   // Danh sách dịch vụ có sẵn
   const availableServices = [
@@ -33,40 +60,65 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
     { value: 'VNPay', label: 'VNPay' },
   ];
 
+  // ✅ THÊM: useEffect để tính toán pricing preview khi có thay đổi
+  useEffect(() => {
+    if (newBookingType && newBookingType !== booking?.bookingType) {
+      calculatePricingPreview();
+    }
+  }, [newBookingType, newCheckInDate, newCheckOutDate, newCheckInTime, newCheckOutTime]);
+
+  // ✅ THÊM: Function tính toán pricing preview
+  const calculatePricingPreview = () => {
+    try {
+      let duration = 1;
+      let unit = 'đêm';
+      
+      const basePrice = booking?.roomPrice || 0;
+      let unitPrice = basePrice;
+
+      if (newBookingType === 'theo_gio') {
+        if (newCheckInTime && newCheckOutTime) {
+          const startTime = moment(`${newCheckInDate} ${newCheckInTime}`, 'YYYY-MM-DD HH:mm');
+          let endTime = moment(`${newCheckInDate} ${newCheckOutTime}`, 'YYYY-MM-DD HH:mm');
+          
+          if (endTime.isSameOrBefore(startTime)) {
+            endTime.add(1, 'day');
+          }
+          
+          duration = Math.ceil(endTime.diff(startTime, 'hours', true));
+          unit = 'giờ';
+          unitPrice = Math.round(basePrice / 14); // Giá theo giờ
+        }
+      } else if (newCheckInDate && newCheckOutDate) {
+        const checkIn = moment(newCheckInDate);
+        const checkOut = moment(newCheckOutDate);
+        duration = checkOut.diff(checkIn, 'days');
+        unit = newBookingType === 'qua_dem' ? 'đêm' : 'ngày';
+      }
+
+      const roomQuantity = booking?.roomQuantity || 1;
+      const newTotal = unitPrice * duration * roomQuantity;
+
+      setPricingPreview({
+        duration,
+        unit,
+        unitPrice,
+        newTotal,
+        oldTotal: booking?.totalAmount || 0,
+        difference: newTotal - (booking?.totalAmount || 0)
+      });
+    } catch (error) {
+      console.error('Error calculating pricing preview:', error);
+      setPricingPreview(null);
+    }
+  };
+
   // Hàm định dạng tiền tệ
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND',
     }).format(amount);
-  };
-
-  const updateBookingStatus = async (newStatus) => {
-    try {
-      const response = await axios.put(
-        `${baseUrl}/api/booking-hotel/hotelowner/update/${booking.bookingId}`,
-        { status: newStatus },
-        { withCredentials: true }
-      );
-
-
-      if (response.data?.message?.msgError === false) {
-        // Update local state
-        const updatedBooking = { ...booking, status: newStatus };
-        setLocalBookings((prev) =>
-          prev.map((b) => b.bookingId === booking.bookingId ? updatedBooking : b)
-        );
-        setBookings((prev) =>
-          prev.map((b) => b.bookingId === booking.bookingId ? updatedBooking : b)
-        );
-        toast.success("Cập nhật trạng thái thành công!");
-      } else {
-        toast.error(response.data?.message?.msgBody || "Cập nhật thất bại!");
-      }
-    } catch (error) {
-      console.error("Lỗi khi cập nhật trạng thái:", error);
-      toast.error("Lỗi khi cập nhật trạng thái!", error);
-    }
   };
 
   // Helper function để hiển thị tên status
@@ -81,6 +133,7 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
     };
     return statusTexts[status] || status;
   };
+
   const getVietnameseStatusColor = (status) => {
     const statusColors = {
       'dang_cho': 'text-yellow-600 bg-yellow-100',
@@ -141,61 +194,64 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
     );
   };
 
-  // Hàm cập nhật dịch vụ và thanh toán
-const updateBookingServices = async (bookingId, services, paymentMethod, bookingStatus) => {
-  try {
-    const updateData = {
-      ...(services && services.length > 0 && { service: services }),
-      ...(paymentMethod && { paymentMethod }),
-      ...(bookingStatus && { status: bookingStatus })
-    };
-
-    const response = await axios.put(
-      `${baseUrl}/api/booking-hotel/hotelowner/update/${bookingId}`,
-      updateData,
-      { withCredentials: true }
-    );
-
-    if (response.data?.message?.msgError === false) {
-      // Cập nhật state ngay lập tức với dữ liệu local trước
-      const updatedBooking = {
-        ...booking,
-        additionalServices: services || booking.additionalServices,
-        paymentMethod: paymentMethod || booking.paymentMethod,
-        status: bookingStatus || booking.status
+  // ✅ SỬA: Hàm cập nhật booking với booking type và time tracking
+  const updateBookingServices = async (bookingId, services, paymentMethod, bookingStatus, bookingTypeChanges, actualTimes) => {
+    try {
+      const updateData = {
+        ...(services && services.length > 0 && { service: services }),
+        ...(paymentMethod && { paymentMethod }),
+        ...(bookingStatus && { status: bookingStatus }),
+        // ✅ THÊM: Booking type changes
+        ...(bookingTypeChanges.newBookingType && { newBookingType: bookingTypeChanges.newBookingType }),
+        ...(bookingTypeChanges.newCheckInDate && { newCheckInDate: bookingTypeChanges.newCheckInDate }),
+        ...(bookingTypeChanges.newCheckOutDate && { newCheckOutDate: bookingTypeChanges.newCheckOutDate }),
+        ...(bookingTypeChanges.newCheckInTime && { newCheckInTime: bookingTypeChanges.newCheckInTime }),
+        ...(bookingTypeChanges.newCheckOutTime && { newCheckOutTime: bookingTypeChanges.newCheckOutTime }),
+        // ✅ THÊM: Actual time tracking
+        ...(actualTimes.actualCheckInTime && { actualCheckInTime: actualTimes.actualCheckInTime }),
+        ...(actualTimes.actualCheckOutTime && { actualCheckOutTime: actualTimes.actualCheckOutTime }),
+        ...(actualTimes.roomIndex !== undefined && { roomIndex: actualTimes.roomIndex })
       };
-      
-      setLocalBookings(prev =>
-        prev.map(b => b.bookingId === bookingId ? updatedBooking : b)
+
+      const response = await axios.put(
+        `${baseUrl}/api/booking-hotel/hotelowner/update/${bookingId}`,
+        updateData,
+        { withCredentials: true }
       );
-      setBookings(prev =>
-        prev.map(b => b.bookingId === bookingId ? updatedBooking : b)
-      );
-      
-      // Nếu có dữ liệu từ server thì cập nhật lại
-      if (response.data.booking) {
+
+      if (response.data?.message?.msgError === false) {
+        // Cập nhật state với dữ liệu mới
+        const updatedBooking = {
+          ...booking,
+          additionalServices: services || booking.additionalServices,
+          paymentMethod: paymentMethod || booking.paymentMethod,
+          status: bookingStatus || booking.status,
+          bookingType: bookingTypeChanges.newBookingType || booking.bookingType,
+          // Update other fields based on response
+          ...(response.data.updatedBooking || {})
+        };
+        
         setLocalBookings(prev =>
-          prev.map(b => b.bookingId === bookingId ? response.data.booking : b)
+          prev.map(b => b.bookingId === bookingId ? updatedBooking : b)
         );
         setBookings(prev =>
-          prev.map(b => b.bookingId === bookingId ? response.data.booking : b)
+          prev.map(b => b.bookingId === bookingId ? updatedBooking : b)
         );
+        
+        toast.success('Cập nhật đơn đặt thành công!');
+        return { success: true };
+      } else {
+        toast.error(response.data?.message?.msgBody || 'Cập nhật thất bại!');
+        return { success: false };
       }
-      
-      toast.success('Cập nhật dịch vụ thành công!');
-      return { success: true };
-    } else {
-      toast.error(response.data?.message?.msgBody || 'Cập nhật thất bại!');
+    } catch (error) {
+      console.error('Lỗi khi cập nhật:', error);
+      toast.error('Lỗi khi cập nhật đơn đặt!');
       return { success: false };
     }
-  } catch (error) {
-    console.error('Lỗi khi cập nhật dịch vụ:', error);
-    toast.error('Lỗi khi cập nhật dịch vụ!');
-    return { success: false };
-  }
-};
+  };
 
-  // Hàm lưu thay đổi
+  // ✅ SỬA: Hàm lưu thay đổi với nhiều options
   const saveChanges = async () => {
     if (!booking) {
       toast.error('Không có thông tin đơn đặt phòng!');
@@ -207,17 +263,32 @@ const updateBookingServices = async (bookingId, services, paymentMethod, booking
       return;
     }
 
+    // ✅ Prepare booking type changes
+    const bookingTypeChanges = {};
+    if (newBookingType && newBookingType !== booking.bookingType) {
+      bookingTypeChanges.newBookingType = newBookingType;
+      bookingTypeChanges.newCheckInDate = newCheckInDate;
+      bookingTypeChanges.newCheckOutDate = newCheckOutDate;
+      bookingTypeChanges.newCheckInTime = newCheckInTime;
+      bookingTypeChanges.newCheckOutTime = newCheckOutTime;
+    }
 
-    // const result =
-    //   await updateBookingStatus(selectedStatus);
-    const result =
-      await updateBookingServices(
-        booking.bookingId,
-        editServices || '',
-        paymentMethod || '',
-        selectedStatus || ''
-      );
+    // ✅ Prepare actual time changes
+    const actualTimes = {};
+    if (actualCheckInTime || actualCheckOutTime) {
+      actualTimes.actualCheckInTime = actualCheckInTime;
+      actualTimes.actualCheckOutTime = actualCheckOutTime;
+      actualTimes.roomIndex = selectedRoomIndex;
+    }
 
+    const result = await updateBookingServices(
+      booking.bookingId,
+      editServices || '',
+      paymentMethod || '',
+      selectedStatus || '',
+      bookingTypeChanges,
+      actualTimes
+    );
 
     if (result.success) {
       onClose();
@@ -225,13 +296,10 @@ const updateBookingServices = async (bookingId, services, paymentMethod, booking
   };
 
   const calculateTotal = () => {
-    const roomAmount = booking.totalAmount || 0;
+    const roomAmount = pricingPreview ? pricingPreview.newTotal : (booking.totalAmount || 0);
     const servicesAmount = calculateServicesTotal(editServices);
     return roomAmount + servicesAmount;
   };
-
-
-
 
   if (!booking) return null;
 
@@ -262,14 +330,249 @@ const updateBookingServices = async (bookingId, services, paymentMethod, booking
               </div>
               <div>
                 <span className="text-gray-600">Thời gian nhận:</span>
-                <span className="ml-2 font-medium">{booking.checkInDate}</span>
+                <span className="ml-2 font-medium">{booking.checkInDate} {booking.checkInTime}</span>
               </div>
               <div>
                 <span className="text-gray-600">Thời gian trả:</span>
-                <span className="ml-2 font-medium">{booking.checkOutDate}</span>
+                <span className="ml-2 font-medium">{booking.checkOutDate} {booking.checkOutTime}</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Loại đặt hiện tại:</span>
+                <span className="ml-2 font-medium">
+                  {booking.bookingType === 'theo_gio' ? 'Theo giờ' : 
+                   booking.bookingType === 'qua_dem' ? 'Qua đêm' : 'Dài ngày'}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-600">Số phòng:</span>
+                <span className="ml-2 font-medium">{booking.roomQuantity || 1} phòng</span>
               </div>
             </div>
           </div>
+
+          {/* ✅ THÊM: Thay đổi loại đặt phòng */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+              <Clock className="h-5 w-5 mr-2" />
+              Thay đổi loại đặt phòng
+            </h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Chọn loại đặt phòng mới
+                </label>
+                <select
+                  value={newBookingType}
+                  onChange={(e) => setNewBookingType(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Giữ nguyên ({booking.bookingType === 'theo_gio' ? 'Theo giờ' : booking.bookingType === 'qua_dem' ? 'Qua đêm' : 'Dài ngày'})</option>
+                  {bookingTypes.map(type => (
+                    <option key={type.value} value={type.value}>
+                      {type.label} - {type.description}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {newBookingType && (
+                <div className="bg-white p-4 rounded border">
+                  <h4 className="font-medium text-gray-700 mb-3">Cập nhật thời gian</h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Ngày nhận phòng
+                      </label>
+                      <input
+                        type="date"
+                        value={newCheckInDate}
+                        onChange={(e) => setNewCheckInDate(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    {newBookingType !== 'theo_gio' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Ngày trả phòng
+                        </label>
+                        <input
+                          type="date"
+                          value={newCheckOutDate}
+                          onChange={(e) => setNewCheckOutDate(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          min={newCheckInDate}
+                        />
+                      </div>
+                    )}
+
+                    {(newBookingType === 'theo_gio' || newBookingType === 'qua_dem') && (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Giờ nhận phòng
+                          </label>
+                          <input
+                            type="time"
+                            value={newCheckInTime}
+                            onChange={(e) => setNewCheckInTime(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Giờ trả phòng
+                          </label>
+                          <input
+                            type="time"
+                            value={newCheckOutTime}
+                            onChange={(e) => setNewCheckOutTime(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* ✅ Pricing Preview */}
+                  {pricingPreview && (
+                    <div className="mt-4 p-3 bg-blue-50 rounded border">
+                      <h5 className="font-medium text-blue-800 mb-2">Preview giá mới:</h5>
+                      <div className="text-sm space-y-1">
+                        <div className="flex justify-between">
+                          <span>Thời gian:</span>
+                          <span>{pricingPreview.duration} {pricingPreview.unit}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Giá cũ:</span>
+                          <span>{formatCurrency(pricingPreview.oldTotal)}</span>
+                        </div>
+                        <div className="flex justify-between font-medium">
+                          <span>Giá mới:</span>
+                          <span className={pricingPreview.difference >= 0 ? 'text-red-600' : 'text-green-600'}>
+                            {pricingPreview.difference >= 0 ? '+' : ''}{formatCurrency(pricingPreview.difference)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ✅ THÊM: Cập nhật thời gian thực tế */}
+          {booking.assignedRooms && booking.assignedRooms.length > 0 && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+                <User className="h-5 w-5 mr-2" />
+                Cập nhật thời gian thực tế
+              </h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Chọn phòng cần cập nhật
+                  </label>
+                  <select
+                    value={selectedRoomIndex}
+                    onChange={(e) => setSelectedRoomIndex(parseInt(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  >
+                    {booking.assignedRooms.map((room, index) => (
+                      <option key={index} value={index}>
+                        Phòng {room.soPhong} - Tầng {room.tang}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Giờ nhận phòng thực tế
+                    </label>
+                    <input
+                      type="time"
+                      value={actualCheckInTime}
+                      onChange={(e) => setActualCheckInTime(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      placeholder="Nhập giờ nhận thực tế"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Kế hoạch: {booking.checkInTime} | Nhận sớm → trả sớm, nhận trễ → trả đúng giờ
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Giờ trả phòng thực tế
+                    </label>
+                    <input
+                      type="time"
+                      value={actualCheckOutTime}
+                      onChange={(e) => setActualCheckOutTime(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      placeholder="Nhập giờ trả thực tế"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Kế hoạch: {booking.checkOutTime}
+                    </p>
+                  </div>
+                </div>
+
+                {/* ✅ Time calculation preview */}
+                {actualCheckInTime && (
+                  <div className="p-3 bg-white rounded border">
+                    <h5 className="font-medium text-green-800 mb-2">Preview thời gian:</h5>
+                    <div className="text-sm space-y-1">
+                      <div className="flex justify-between">
+                        <span>Kế hoạch nhận:</span>
+                        <span>{booking.checkInDate} {booking.checkInTime}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Thực tế nhận:</span>
+                        <span className="font-medium">{booking.checkInDate} {actualCheckInTime}</span>
+                      </div>
+                      {(() => {
+                        const plannedTime = moment(`${booking.checkInDate} ${booking.checkInTime}`, 'DD-MM-YYYY HH:mm');
+                        const actualTime = moment(`${booking.checkInDate} ${actualCheckInTime}`, 'DD-MM-YYYY HH:mm');
+                        const diff = actualTime.diff(plannedTime, 'minutes');
+                        
+                        if (diff < 0) {
+                          const plannedCheckOut = moment(`${booking.checkOutDate} ${booking.checkOutTime}`, 'DD-MM-YYYY HH:mm');
+                          const adjustedCheckOut = plannedCheckOut.add(diff, 'minutes');
+                          
+                          return (
+                            <div className="text-blue-600 text-xs bg-blue-50 p-2 rounded">
+                              <p>⏰ Nhận sớm {Math.abs(diff)} phút</p>
+                              <p>→ Giờ trả điều chỉnh: {adjustedCheckOut.format('HH:mm')}</p>
+                            </div>
+                          );
+                        } else if (diff > 0) {
+                          return (
+                            <div className="text-orange-600 text-xs bg-orange-50 p-2 rounded">
+                              <p>⏰ Nhận trễ {diff} phút</p>
+                              <p>→ Giờ trả giữ nguyên: {booking.checkOutTime}</p>
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div className="text-green-600 text-xs bg-green-50 p-2 rounded">
+                              <p>⏰ Nhận đúng giờ</p>
+                            </div>
+                          );
+                        }
+                      })()}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Chọn phương thức thanh toán */}
           <div>
@@ -288,8 +591,6 @@ const updateBookingServices = async (bookingId, services, paymentMethod, booking
             </select>
           </div>
 
-
-          {/* Cập nhật trạng thái đơn đặt */}
           {/* Cập nhật trạng thái đơn đặt */}
           <div>
             <h3 className="font-semibold text-gray-800 mb-3">Cập nhật trạng thái đơn đặt</h3>
@@ -453,9 +754,17 @@ const updateBookingServices = async (bookingId, services, paymentMethod, booking
             <h3 className="font-semibold text-gray-800 mb-3">Tổng kết thanh toán</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span>Tiền phòng:</span>
-                <span>{formatCurrency(booking.roomAmount || booking.totalAmount)}</span>
+                <span>Tiền phòng {pricingPreview ? '(mới)' : '(hiện tại)'}:</span>
+                <span className={pricingPreview ? 'text-blue-600 font-medium' : ''}>
+                  {formatCurrency(pricingPreview ? pricingPreview.newTotal : (booking.roomAmount || booking.totalAmount))}
+                </span>
               </div>
+              {pricingPreview && (
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Tiền phòng cũ:</span>
+                  <span className="line-through">{formatCurrency(booking.totalAmount || 0)}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span>Dịch vụ bổ sung:</span>
                 <span>{formatCurrency(calculateServicesTotal(editServices))}</span>
@@ -463,10 +772,7 @@ const updateBookingServices = async (bookingId, services, paymentMethod, booking
               <div className="flex justify-between font-semibold text-lg border-t pt-2">
                 <span>Tổng cộng:</span>
                 <span className="text-blue-600">
-                  {formatCurrency(
-                    (booking.roomAmount || booking.totalAmount) +
-                    calculateServicesTotal(editServices)
-                  )}
+                  {formatCurrency(calculateTotal())}
                 </span>
               </div>
             </div>

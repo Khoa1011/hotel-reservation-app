@@ -9,7 +9,7 @@ const EditRoomTypeModal = ({ showModal, roomType, onClose, onSubmit }) => {
     giaCa: '',
     moTa: '',
     tienNghiDacBiet: [],
-    tongSoPhong: ''
+    // tongSoPhong: ''
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -23,7 +23,7 @@ const EditRoomTypeModal = ({ showModal, roomType, onClose, onSubmit }) => {
         giaCa: roomType.giaCa?.toString() || '',
         moTa: roomType.moTa || '',
         tienNghiDacBiet: roomType.tienNghiDacBiet || [],
-        tongSoPhong: roomType.tongSoPhong?.toString() || ''
+        // tongSoPhong: roomType.tongSoPhong?.toString() || ''
       });
     }
   }, [roomType]);
@@ -42,7 +42,7 @@ const EditRoomTypeModal = ({ showModal, roomType, onClose, onSubmit }) => {
         giaCa: parseFloat(roomTypeForm.giaCa),
         moTa: roomTypeForm.moTa.trim(),
         tienNghiDacBiet: roomTypeForm.tienNghiDacBiet.filter(item => item.trim() !== ''),
-        tongSoPhong: parseInt(roomTypeForm.tongSoPhong) || 0
+        // tongSoPhong: parseInt(roomTypeForm.tongSoPhong) || 0
       };
 
       const response = await axios.put(
@@ -85,7 +85,7 @@ const EditRoomTypeModal = ({ showModal, roomType, onClose, onSubmit }) => {
         giaCa: roomType.giaCa?.toString() || '',
         moTa: roomType.moTa || '',
         tienNghiDacBiet: roomType.tienNghiDacBiet || [],
-        tongSoPhong: roomType.tongSoPhong?.toString() || ''
+        // tongSoPhong: roomType.tongSoPhong?.toString() || ''
       });
     }
     onClose();
@@ -129,7 +129,7 @@ const EditRoomTypeModal = ({ showModal, roomType, onClose, onSubmit }) => {
                   placeholder="VD: 1500000"
                 />
               </div>
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Tổng số phòng
                 </label>
@@ -142,7 +142,7 @@ const EditRoomTypeModal = ({ showModal, roomType, onClose, onSubmit }) => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="VD: 10"
                 />
-              </div>
+              </div> */}
             </div>
 
             <div>

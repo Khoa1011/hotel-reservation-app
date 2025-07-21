@@ -43,7 +43,7 @@ const HotelManagement = () => {
     const [loading, setLoading] = useState(false);
     const token = localStorage.getItem('token');
     const [error, setError] = useState(null);
-    
+
     // State cho hotel selector - ✅ Initialize từ localStorage
     const [selectedHotelId, setSelectedHotelId] = useState(() => {
         const saved = localStorage.getItem("selectedHotelId") || '';
@@ -69,10 +69,10 @@ const HotelManagement = () => {
     const handleHotelChange = (hotelId, hotelName) => {
         setSelectedHotelId(hotelId);
         setSelectedHotelName(hotelName);
-        
+
         // Có thể trigger refresh data cho menu hiện tại
         console.log('Selected hotel changed:', hotelId, hotelName);
-        
+
         // Nếu đang ở tab bookings, có thể filter lại
         if (activeMenu === 'bookings') {
             // Có thể gọi function để filter bookings theo hotel
@@ -171,7 +171,7 @@ const HotelManagement = () => {
                     getRoomStatusColor={getRoomStatusColor}
                     formatCurrency={formatCurrency}
                     formatDate={formatDate}
-                    getRoomStatusText={getRoomStatusText} 
+                    getRoomStatusText={getRoomStatusText}
                 />
             );
         } else {
@@ -277,16 +277,16 @@ const HotelManagement = () => {
     };
 
     return (
-        <div className="flex h-screen bg-gray-100">
+        <div className="flex h-screen bg-gray-100 overflow-hidden">
             {/* Sidebar */}
-            <div className="w-64 bg-white shadow-lg">
+            <div className="w-64 bg-white shadow-lg flex flex-col h-full">
                 <div className="p-6 border-b">
                     <h1 className="text-xl font-bold text-gray-800">Quản Lý Khách Sạn</h1>
                 </div>
 
                 {/* Hotel Selector */}
                 <div className="p-6 border-b">
-                    <HotelSelector 
+                    <HotelSelector
                         bookings={bookings}
                         onHotelChange={handleHotelChange}
                         selectedHotelId={selectedHotelId}
@@ -305,9 +305,8 @@ const HotelManagement = () => {
                                     // ✅ Lưu vào localStorage
                                     localStorage.setItem('activeMenu', item.id);
                                 }}
-                                className={`w-full flex items-center px-6 py-3 text-left hover:bg-blue-50 hover:text-blue-600 transition-colors ${
-                                    activeMenu === item.id ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : 'text-gray-700'
-                                }`}
+                                className={`w-full flex items-center px-6 py-3 text-left hover:bg-blue-50 hover:text-blue-600 transition-colors ${activeMenu === item.id ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : 'text-gray-700'
+                                    }`}
                             >
                                 <Icon className="h-5 w-5 mr-3" />
                                 {item.label}
@@ -317,7 +316,7 @@ const HotelManagement = () => {
                 </nav>
 
                 {/* Stats trong sidebar */}
-                <div className="mt-8 px-6">
+                {/* <div className="mt-8 px-6">
                     <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Thống kê hôm nay</h3>
                     <div className="mt-4 space-y-3">
                         <div className="flex justify-between text-sm">
@@ -337,13 +336,15 @@ const HotelManagement = () => {
                             <span className="font-semibold text-purple-600">{formatCurrency(stats.todayRevenue)}</span>
                         </div>
                     </div>
-                </div>
+                </div> */}
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 overflow-auto">
-                <div className="p-6">
-                    {renderDashboard()}
+            <div className="flex-1 flex flex-col h-full overflow-hidden"> {/* ✅ FIX: Proper flex container */}
+                <div className="flex-1 overflow-y-auto"> {/* ✅ Single scrollable area */}
+                    <div className="p-6 h-full"> {/* ✅ Remove max-width constraint */}
+                        {renderDashboard()}
+                    </div>
                 </div>
             </div>
         </div>

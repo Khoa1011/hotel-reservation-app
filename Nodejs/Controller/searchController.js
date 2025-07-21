@@ -75,12 +75,12 @@ searchRouter.get('/search', async (req, res) => {
             if (thanhPho) {
                 searchMatch['diaChi.thanhPho'] = { $regex: thanhPho, $options: 'i' };
             }
-            
+
             // ✅ TÌM KIẾM THEO QUẬN/HUYỆN
             if (quan) {
                 searchMatch['diaChi.quan'] = { $regex: quan, $options: 'i' };
             }
-            
+
             // ✅ TÌM KIẾM THEO PHƯỜNG/XÃ
             if (phuong) {
                 searchMatch['diaChi.phuong'] = { $regex: phuong, $options: 'i' };
@@ -117,7 +117,6 @@ searchRouter.get('/search', async (req, res) => {
                 minRoomPrice: { $min: '$roomTypes.giaCa' },
                 maxRoomPrice: { $max: '$roomTypes.giaCa' },
                 totalRoomTypes: { $size: '$roomTypes' },
-                maxCapacity: { $max: '$roomTypes.soLuongKhach' },
 
                 // ✅ TÍNH POPULARITY SCORE
                 popularityScore: {
@@ -182,7 +181,7 @@ searchRouter.get('/search', async (req, res) => {
         if (!isShowAllRequest) {
             if (minPrice) priceCapacityMatch.minRoomPrice = { $gte: parseFloat(minPrice) };
             if (maxPrice) priceCapacityMatch.maxRoomPrice = { $lte: parseFloat(maxPrice) };
-            if (guests) priceCapacityMatch.maxCapacity = { $gte: parseInt(guests) };
+
         }
 
         priceCapacityMatch.totalRoomTypes = { $gt: 0 };
@@ -240,17 +239,17 @@ searchRouter.get('/search', async (req, res) => {
                 sortCriteria.popularityScore = -1;
                 sortCriteria.soSao = -1;
                 break;
-                
+
             case 'Highest Price':
                 sortCriteria.maxRoomPrice = -1;
                 sortCriteria.soSao = -1;
                 break;
-                
+
             case 'Lowest Price':
                 sortCriteria.minRoomPrice = 1;
                 sortCriteria.soSao = -1;
                 break;
-                
+
             default:
                 if (isShowAllRequest) {
                     sortCriteria.soSao = -1;
@@ -291,7 +290,6 @@ searchRouter.get('/search', async (req, res) => {
                 minRoomPrice: 1,
                 maxRoomPrice: 1,
                 totalRoomTypes: 1,
-                maxCapacity: 1,
 
                 // ✅ THÊM: Popularity score để debug
                 popularityScore: {
@@ -332,7 +330,7 @@ searchRouter.get('/search', async (req, res) => {
         // ✅ TẠO MESSAGE THÔNG MINH
         let message = '';
         const sortText = sortBy ? ` (${sortBy})` : '';
-        
+
         if (isShowAllRequest) {
             message = `Hiển thị tất cả khách sạn${sortText} (${hotels.length} kết quả)`;
         } else if (keyword && (thanhPho || quan || phuong)) {
@@ -539,21 +537,37 @@ searchRouter.post('/hotel/:hotelId/availability', async (req, res) => {
         // Kiểm tra từng loại phòng
         for (const roomType of roomTypes) {
             try {
+
+                const actualRoomCount = await Room.countDocuments({
+                    maLoaiPhong: roomType._id,
+                    trangThaiPhong: true
+                });
+
                 // Kiểm tra khả năng chứa khách
-                const canAccommodate = (roomType.soLuongKhach * parseInt(requestedRooms)) >= totalGuests;
+                const realCapacity = await getRealRoomCapacity(roomType._id);
+                const effectiveCapacity = realCapacity.averageCapacity;
+
+                // Skip nếu không có phòng thực tế
+                if (realCapacity.totalRooms === 0) {
+                    console.log(`⚠️ Room type "${roomType.tenLoaiPhong}" has no actual rooms - skipping`);
+                    continue;
+                }
+
+                const canAccommodate = (effectiveCapacity * parseInt(requestedRooms)) >= totalGuests;
 
                 if (!canAccommodate) {
                     // Tạo đề xuất số phòng cần thiết
-                    const suggestedRooms = Math.ceil(totalGuests / roomType.soLuongKhach);
-                    if (suggestedRooms <= roomType.tongSoPhong) {
+                    const suggestedRooms = Math.ceil(totalGuests / effectiveCapacity);
+                    if (suggestedRooms <= actualRoomCount) {
                         suggestions.push({
                             roomTypeId: roomType._id,
                             roomTypeName: roomType.tenLoaiPhong,
-                            currentCapacity: roomType.soLuongKhach,
+                            currentCapacity: effectiveCapacity,
                             suggestedRooms,
-                            totalCapacity: roomType.soLuongKhach * suggestedRooms,
+                            totalCapacity: effectiveCapacity * suggestedRooms,
                             pricePerRoom: roomType.giaCa,
-                            estimatedTotal: roomType.giaCa * suggestedRooms
+                            estimatedTotal: roomType.giaCa * suggestedRooms,
+                            actualRoomCount
                         });
                     }
                     continue;
@@ -574,9 +588,9 @@ searchRouter.post('/hotel/:hotelId/availability', async (req, res) => {
                         roomTypeId: roomType._id,
                         tenLoaiPhong: roomType.tenLoaiPhong,
                         moTa: roomType.moTa,
-                        soLuongKhach: roomType.soLuongKhach,
+                        soLuongKhach: effectiveCapacity,
                         giaCa: roomType.giaCa,
-                        tongSoPhong: roomType.tongSoPhong,
+                        tongSoPhong: actualRoomCount,
 
                         availability: {
                             availableRooms: availability.availableRooms,
@@ -587,9 +601,9 @@ searchRouter.post('/hotel/:hotelId/availability', async (req, res) => {
 
                         capacityInfo: {
                             requestedRooms: parseInt(requestedRooms),
-                            totalCapacity: roomType.soLuongKhach * parseInt(requestedRooms),
+                            totalCapacity: effectiveCapacity * parseInt(requestedRooms),
                             guestDistribution: capacityAnalysis.guestDistribution,
-                            occupancyRate: Math.round((totalGuests / (roomType.soLuongKhach * parseInt(requestedRooms))) * 100)
+                            occupancyRate: Math.round((totalGuests / (effectiveCapacity * parseInt(requestedRooms))) * 100)
                         },
 
                         pricing: {
@@ -660,6 +674,63 @@ searchRouter.post('/hotel/:hotelId/availability', async (req, res) => {
 // 🔧 HELPER FUNCTIONS - CÁC HÀM HELPER KHÔNG THAY ĐỔI
 // =============================================================================
 
+
+async function getRealRoomCapacity(roomTypeId) {
+    try {
+        // Lấy tất cả phòng thuộc loại này
+        const rooms = await Room.find({
+            maLoaiPhong: roomTypeId,
+            trangThaiPhong: true // Chỉ lấy phòng hoạt động
+        }).select('soLuongNguoiToiDa _id');
+
+        console.log(`📊 Found ${rooms.length} rooms:`, rooms.map(r => ({
+            id: r._id.toString().slice(-6),
+            capacity: r.soLuongNguoiToiDa
+        })));
+
+        if (!rooms || rooms.length === 0) {
+            // Fallback về roomType nếu không có phòng
+            const roomType = await RoomType.findById(roomTypeId);
+            return {
+                averageCapacity: 0,
+                minCapacity: 0,
+                maxCapacity: 0,
+                totalRooms: 0,
+                capacitySource: 'no_rooms'
+            };
+        }
+
+        // Tính toán capacity từ phòng thực tế
+        const capacities = rooms.map(room => room.soLuongNguoiToiDa || 2);
+        const averageCapacity = Math.round(capacities.reduce((sum, cap) => sum + cap, 0) / capacities.length);
+        const minCapacity = Math.min(...capacities);
+        const maxCapacity = Math.max(...capacities);
+
+        return {
+            averageCapacity,
+            minCapacity,
+            maxCapacity,
+            totalRooms: rooms.length,
+            capacitySource: 'actual_rooms',
+            capacityBreakdown: capacities.reduce((acc, cap) => {
+                acc[cap] = (acc[cap] || 0) + 1;
+                return acc;
+            }, {})
+        };
+
+    } catch (error) {
+        console.error('❌ Lỗi lấy capacity phòng:', error);
+        return {
+            averageCapacity: 2,
+            minCapacity: 2,
+            maxCapacity: 2,
+            totalRooms: 0,
+            capacitySource: 'error_fallback'
+        };
+    }
+}
+
+
 // ✅ Validate yêu cầu đặt phòng
 function validateBookingRequest({ checkIn, checkOut, bookingType, guests, rooms }) {
     // Validate dates
@@ -727,11 +798,37 @@ async function findAvailableHotels({ checkIn, checkOut, bookingType, requiredGue
 
         console.log('👥 Guest capacity analysis:', guestCapacityAnalysis);
 
-        // Tìm room types phù hợp với phân bổ khách
-        const suitableRoomTypes = await RoomType.find({
-            soLuongKhach: { $gte: guestCapacityAnalysis.minCapacityPerRoom },
-            tongSoPhong: { $gte: requiredRooms }
-        }).select('_id maKhachSan tongSoPhong soLuongKhach tenLoaiPhong');
+
+        const allRoomTypes = await RoomType.find({
+            soLuongKhach: { $gte: guestCapacityAnalysis.minCapacityPerRoom }
+        }).select('_id maKhachSan tenLoaiPhong');
+
+        const suitableRoomTypes = [];
+
+        // ✅ Kiểm tra từng room type với số phòng thực tế
+        for (const roomType of allRoomTypes) {
+
+
+            const realCapacity = await getRealRoomCapacity(roomType._id);
+
+            if (realCapacity.totalRooms === 0 ||
+                realCapacity.averageCapacity < guestCapacityAnalysis.minCapacityPerRoom) {
+                continue;
+            }
+
+            const actualRoomCount = await Room.countDocuments({
+                maLoaiPhong: roomType._id,
+                trangThaiPhong: true
+            });
+
+            // ✅ Chỉ lấy room type có đủ số phòng thực tế
+            if (actualRoomCount >= requiredRooms) {
+                suitableRoomTypes.push({
+                    ...roomType.toObject(),
+                    realCapacity: realCapacity.averageCapacity
+                });
+            }
+        }
 
         if (!suitableRoomTypes.length) {
             console.log('❌ No suitable room types found');
@@ -810,7 +907,11 @@ async function checkEnhancedRoomAvailability({
             return { isAvailable: false, availableRooms: 0, reason: "Loại phòng không tồn tại" };
         }
 
-        const totalRooms = roomType.tongSoPhong || 0;
+        const totalRooms = await Room.countDocuments({
+            maLoaiPhong: roomTypeId,
+            trangThaiPhong: true
+        });
+
         if (totalRooms === 0) {
             return { isAvailable: false, availableRooms: 0, reason: "Không có phòng" };
         }

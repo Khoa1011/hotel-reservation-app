@@ -193,10 +193,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                         Center(
                           child: Column(
                             children: [
-                              CircleAvatar(
-                                radius: 70,
-                                backgroundColor: Colors.transparent,
-                                child: _buildAvatarImage(),
+                              SizedBox(
+                                width: 140,
+                                height: 140,
+                                child: ClipOval(
+                                  child: _buildAvatarImage(),
+                                ),
                               ),
                               SizedBox(height: 16),
                               Text(
@@ -350,7 +352,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   // Separate widget for better error handling
   Widget _buildAvatarImage() {
     final authProvider = context.read<UserAuthProvider>();
-
     // Kiểm tra user có tồn tại không
     if (!authProvider.isLoggedIn || authProvider.user == null) {
       return _buildDefaultAvatar();
@@ -392,12 +393,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
   Widget _buildDefaultAvatar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey[300],
-        shape: BoxShape.circle,
+    return CircleAvatar(
+      radius: 70,
+      backgroundColor: Colors.grey[200],
+      child: Icon(
+        Icons.person,
+        size: 60,
+        color: Colors.grey[600],
       ),
-      child: Icon(Icons.person, size: 50, color: Colors.grey[600]),
     );
   }
 

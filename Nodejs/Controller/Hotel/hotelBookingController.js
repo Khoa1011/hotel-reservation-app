@@ -107,6 +107,8 @@ hotelBookingRouter.get("/hotelowner/bookings", authorizeRoles("chuKhachSan", "nh
             bookingId: booking._id,
             customerName: booking.maNguoiDung?.tenNguoiDung || "Khách lẻ",
             roomType: booking.maLoaiPhong?.tenLoaiPhong || "N/A",
+            roomTypeId: booking.maLoaiPhong?._id?.toString(), 
+            maLoaiPhong: booking.maLoaiPhong?._id?.toString(),
             roomPrice: booking.maLoaiPhong?.giaCa || 0,
             maxGuests: booking.maLoaiPhong?.soLuongKhach || 1,
             checkInDate: moment(booking.ngayNhanPhong).format("DD-MM-YYYY"),
@@ -152,35 +154,192 @@ hotelBookingRouter.get("/hotelowner/bookings", authorizeRoles("chuKhachSan", "nh
 // Cập nhật trạng thái đặt phòng
 hotelBookingRouter.put("/hotelowner/update/:id", authorizeRoles("chuKhachSan", "nhanVien"), async (req, res) => {
     try {
-        
         const { id } = req.params;
-        const { status, assignedRooms,paymentMethod, reason, service } = req.body;
-console.log("🛠 PUT /update/:id - Params:", req.params);
-console.log("🛠 PUT /update/:id - Body:", req.body);
+        const { 
+            status, 
+            assignedRooms, 
+            paymentMethod, 
+            reason, 
+            service,
+            // ✅ THÊM CÁC FIELD MỚI
+            newBookingType,      // Thay đổi loại đặt phòng
+            newCheckInDate,      // Thay đổi ngày nhận
+            newCheckOutDate,     // Thay đổi ngày trả  
+            newCheckInTime,      // Thay đổi giờ nhận
+            newCheckOutTime,     // Thay đổi giờ trả
+            actualCheckInTime,   // ✅ Giờ nhận thực tế
+            actualCheckOutTime,  // ✅ Giờ trả thực tế
+            roomIndex            // Index của phòng cần update thời gian thực tế
+        } = req.body;
 
-        const booking = await Booking.findById(id);
+        console.log("🛠 PUT /update/:id - Params:", req.params);
+        console.log("🛠 PUT /update/:id - Body:", req.body);
+
+        const booking = await Booking.findById(id).populate('maLoaiPhong');
         if (!booking) {
             return res.status(404).json({ message: "Booking not found" });
         }
 
-        // Validate status
-        const validStatuses = ["dang_cho", "da_xac_nhan", "da_huy", "da_nhan_phong", "dang_su_dung", "da_tra_phong", "khong_nhan_phong"];
-        if (status && !validStatuses.includes(status)) {
-            return res.status(400).json({
-                message: {
-                    msgBody: "Trạng thái không hợp lệ!",
-                    msgError: true
-                }
-            });
+        const updateData = {};
+        let recalculatePrice = false;
+
+        // ✅ Cập nhật trạng thái booking
+        if (status) {
+            const validStatuses = ["dang_cho", "da_xac_nhan", "da_huy", "da_nhan_phong", "dang_su_dung", "da_tra_phong", "khong_nhan_phong"];
+            if (!validStatuses.includes(status)) {
+                return res.status(400).json({
+                    message: { msgBody: "Trạng thái không hợp lệ!", msgError: true }
+                });
+            }
+            updateData.trangThai = status;
         }
 
-        const updateData = {};
-        if (status) updateData.trangThai = status;
+        // ✅ THAY ĐỔI LOẠI ĐẶT PHÒNG
+        if (newBookingType && newBookingType !== booking.loaiDatPhong) {
+            if (!['theo_gio', 'qua_dem', 'dai_ngay'].includes(newBookingType)) {
+                return res.status(400).json({
+                    message: { msgBody: "Loại đặt phòng không hợp lệ!", msgError: true }
+                });
+            }
+            
+            updateData.loaiDatPhong = newBookingType;
+            recalculatePrice = true;
+            
+            console.log(`🔄 Changing booking type: ${booking.loaiDatPhong} → ${newBookingType}`);
+        }
+
+        // ✅ THAY ĐỔI THỜI GIAN
+        if (newCheckInDate) {
+            updateData.ngayNhanPhong = new Date(newCheckInDate);
+            recalculatePrice = true;
+        }
+        
+        if (newCheckOutDate) {
+            updateData.ngayTraPhong = new Date(newCheckOutDate);
+            recalculatePrice = true;
+        }
+        
+        if (newCheckInTime) {
+            updateData.gioNhanPhong = newCheckInTime;
+        }
+        
+        if (newCheckOutTime) {
+            updateData.gioTraPhong = newCheckOutTime;
+        }
+
+        // ✅ CẬP NHẬT THỜI GIAN THỰC TẾ CHO PHÒNG
+        if (actualCheckInTime || actualCheckOutTime) {
+            if (roomIndex !== undefined && booking.phongDuocGiao && booking.phongDuocGiao[roomIndex]) {
+                const currentRooms = [...booking.phongDuocGiao];
+                
+                if (actualCheckInTime) {
+                    // Set thời gian vào thực tế
+                    const actualCheckInDate = new Date(`${moment(booking.ngayNhanPhong).format('YYYY-MM-DD')} ${actualCheckInTime}`);
+                    currentRooms[roomIndex].thoiGianVaoThucTe = actualCheckInDate;
+                    
+                    // ✅ LOGIC: Nhận sớm thì trả sớm, nhận trễ thì trả đúng giờ
+                    const plannedCheckIn = moment(`${moment(booking.ngayNhanPhong).format('YYYY-MM-DD')} ${booking.gioNhanPhong}`, 'YYYY-MM-DD HH:mm');
+                    const actualCheckInMoment = moment(`${moment(booking.ngayNhanPhong).format('YYYY-MM-DD')} ${actualCheckInTime}`, 'YYYY-MM-DD HH:mm');
+                    
+                    let adjustedCheckOutTime = booking.gioTraPhong; // Default giữ nguyên
+                    
+                    if (actualCheckInMoment.isBefore(plannedCheckIn)) {
+                        // ✅ Nhận sớm → Trả sớm
+                        const earlyMinutes = plannedCheckIn.diff(actualCheckInMoment, 'minutes');
+                        const plannedCheckOut = moment(`${moment(booking.ngayTraPhong).format('YYYY-MM-DD')} ${booking.gioTraPhong}`, 'YYYY-MM-DD HH:mm');
+                        const adjustedCheckOut = plannedCheckOut.subtract(earlyMinutes, 'minutes');
+                        
+                        adjustedCheckOutTime = adjustedCheckOut.format('HH:mm');
+                        currentRooms[roomIndex].gioTraPhongDieuChinh = adjustedCheckOutTime;
+                        
+                        console.log(`⏰ Early check-in detected: ${earlyMinutes} minutes early`);
+                        console.log(`🔄 Adjusted checkout time: ${adjustedCheckOutTime}`);
+                        
+                    } else if (actualCheckInMoment.isAfter(plannedCheckIn)) {
+                        // ✅ Nhận trễ → Trả đúng giờ (không điều chỉnh)
+                        const lateMinutes = actualCheckInMoment.diff(plannedCheckIn, 'minutes');
+                        currentRooms[roomIndex].gioTraPhongDieuChinh = booking.gioTraPhong; // Giữ nguyên
+                        
+                        console.log(`⏰ Late check-in detected: ${lateMinutes} minutes late`);
+                        console.log(`🔄 Checkout time remains: ${booking.gioTraPhong}`);
+                        
+                    } else {
+                        // ✅ Nhận đúng giờ → Trả đúng giờ
+                        currentRooms[roomIndex].gioTraPhongDieuChinh = booking.gioTraPhong;
+                        console.log(`⏰ On-time check-in, checkout unchanged: ${booking.gioTraPhong}`);
+                    }
+                }
+                
+                if (actualCheckOutTime) {
+                    const actualCheckOutDate = new Date(`${moment(booking.ngayTraPhong).format('YYYY-MM-DD')} ${actualCheckOutTime}`);
+                    currentRooms[roomIndex].thoiGianRaThucTe = actualCheckOutDate;
+                }
+                
+                updateData.phongDuocGiao = currentRooms;
+            } else {
+                return res.status(400).json({
+                    message: { msgBody: "Phòng chưa được gán hoặc roomIndex không hợp lệ!", msgError: true }
+                });
+            }
+        }
+
+        // ✅ TÍNH LẠI GIÁ NẾU CẦN
+        if (recalculatePrice) {
+            const roomType = booking.maLoaiPhong;
+            const finalBookingType = newBookingType || booking.loaiDatPhong;
+            const finalCheckIn = moment(newCheckInDate || booking.ngayNhanPhong);
+            const finalCheckOut = moment(newCheckOutDate || booking.ngayTraPhong);
+            
+            let duration = 1;
+            let unit = "dem";
+            let unitPrice = roomType.giaCa;
+            
+            switch (finalBookingType) {
+                case 'theo_gio':
+                    const checkInTime = newCheckInTime || booking.gioNhanPhong;
+                    const checkOutTime = newCheckOutTime || booking.gioTraPhong;
+                    
+                    const startTime = moment(`${finalCheckIn.format('YYYY-MM-DD')} ${checkInTime}`, 'YYYY-MM-DD HH:mm');
+                    let endTime = moment(`${finalCheckIn.format('YYYY-MM-DD')} ${checkOutTime}`, 'YYYY-MM-DD HH:mm');
+                    
+                    if (endTime.isSameOrBefore(startTime)) {
+                        endTime.add(1, 'day');
+                    }
+                    
+                    duration = Math.ceil(endTime.diff(startTime, 'hours', true));
+                    unit = "gio";
+                    unitPrice = Math.round(roomType.giaCa / 14);
+                    break;
+                    
+                case 'qua_dem':
+                    duration = 1;
+                    unit = "dem";
+                    break;
+                    
+                case 'dai_ngay':
+                    duration = finalCheckOut.diff(finalCheckIn, 'days');
+                    unit = "ngay";
+                    break;
+            }
+            
+            const newRoomTotal = unitPrice * duration * booking.soLuongPhong;
+            const existingServiceFee = booking.thongTinGia?.phiDichVu || 0;
+            
+            updateData['thongTinGia.donGia'] = unitPrice;
+            updateData['thongTinGia.soLuongDonVi'] = duration;
+            updateData['thongTinGia.donVi'] = unit;
+            updateData['thongTinGia.tongTienPhong'] = newRoomTotal;
+            updateData['thongTinGia.tongDonDat'] = newRoomTotal + existingServiceFee;
+            
+            console.log(`💰 Recalculated price: ${newRoomTotal.toLocaleString('vi-VN')}đ (${duration} ${unit})`);
+        }
+
+        // ✅ Các cập nhật khác (không thay đổi)
         if (assignedRooms) updateData.phongDuocGiao = assignedRooms;
         if (paymentMethod) updateData.phuongThucThanhToan = paymentMethod;
         if (reason) updateData.ghiChu = reason || "Khách sạn đã hủy đơn này!";
 
-        // ✅ THÊM: Xử lý dịch vụ bổ sung
+        // ✅ Xử lý dịch vụ bổ sung (giữ nguyên logic cũ)
         if (service && Array.isArray(service)) {
             const dichVuMoi = service.map(service => ({
                 tenDichVu: service.name,
@@ -190,73 +349,79 @@ console.log("🛠 PUT /update/:id - Body:", req.body);
             }));
 
             updateData.dichVuBoSung = dichVuMoi;
-
-            // ✅ Tính tổng phí dịch vụ
             const tongPhiDichVu = dichVuMoi.reduce((total, service) => total + service.thanhTien, 0);
             updateData['thongTinGia.phiDichVu'] = tongPhiDichVu;
 
-            // ✅ Cập nhật tổng đơn đặt (cần lấy thông tin cũ trước)
-            const existingBooking = await Booking.findById(id);
-            if (existingBooking) {
-                const tongTienPhong = existingBooking.thongTinGia.tongTienPhong || 0;
-                updateData['thongTinGia.tongDonDat'] = tongTienPhong + tongPhiDichVu;
-            }
+            const currentRoomTotal = updateData['thongTinGia.tongTienPhong'] || booking.thongTinGia.tongTienPhong;
+            updateData['thongTinGia.tongDonDat'] = currentRoomTotal + tongPhiDichVu;
         }
 
-        const updatedBooking = await Booking.findByIdAndUpdate(
-            id,
-            updateData,
-            { new: true }
-        )
+        const updatedBooking = await Booking.findByIdAndUpdate(id, updateData, { new: true })
             .populate("maNguoiDung", "tenNguoiDung email soDienThoai")
             .populate("maLoaiPhong", "tenLoaiPhong giaCa")
             .populate("maKhachSan", "tenKhachSan");
 
         if (!updatedBooking) {
             return res.status(404).json({
-                message: {
-                    msgBody: "Không tìm thấy đơn đặt phòng!",
-                    msgError: true
-                }
+                message: { msgBody: "Không tìm thấy đơn đặt phòng!", msgError: true }
             });
         }
-        console.log("🛠 updateData:", updateData);
 
-        // ✅ Response message tùy theo hành động
-        let successMessage = "✅ Cập nhật trạng thái đơn đặt thành công!";
+        // ✅ Response message thông minh
+        let successMessage = "✅ Cập nhật đơn đặt thành công!";
+        
+        if (recalculatePrice) {
+            successMessage += ` Giá mới: ${updatedBooking.thongTinGia.tongDonDat.toLocaleString('vi-VN')}đ`;
+        }
+        
         if (status === "da_huy") {
             successMessage = "🚫 Đã hủy đơn đặt phòng thành công!";
-        } else if (service && service.length > 0) {
-            successMessage = `✅ Cập nhật dịch vụ thành công! Tổng tiền: ${updatedBooking.thongTinGia.tongDonDat.toLocaleString('vi-VN')}đ`;
         }
-        console.log("✅ Updated booking:", updatedBooking);
+        
+        if (actualCheckInTime || actualCheckOutTime) {
+            successMessage += " ⏰ Đã cập nhật thời gian thực tế!";
+        }
+
+        console.log("✅ Updated booking:", updatedBooking._id);
 
         res.status(200).json({
-            message: {
-                msgBody: successMessage,
-                msgError: false
-            },
+            message: { msgBody: successMessage, msgError: false },
             updatedBooking: {
                 bookingId: updatedBooking._id,
                 status: updatedBooking.trangThai,
+                bookingType: updatedBooking.loaiDatPhong,
                 assignedRooms: updatedBooking.phongDuocGiao,
                 services: updatedBooking.dichVuBoSung || [],
                 servicesFee: updatedBooking.thongTinGia.phiDichVu || 0,
                 totalAmount: updatedBooking.thongTinGia.tongDonDat || 0,
-                reason: updatedBooking.ghiChu
+                priceDetails: updatedBooking.thongTinGia,
+                reason: updatedBooking.ghiChu,
+                // ✅ Thông tin thời gian
+                timeInfo: {
+                    planned: {
+                        checkIn: `${moment(updatedBooking.ngayNhanPhong).format('DD/MM/YYYY')} ${updatedBooking.gioNhanPhong}`,
+                        checkOut: `${moment(updatedBooking.ngayTraPhong).format('DD/MM/YYYY')} ${updatedBooking.gioTraPhong}`
+                    },
+                    actual: updatedBooking.phongDuocGiao.map(room => ({
+                        roomNumber: room.soPhong,
+                        actualCheckIn: room.thoiGianVaoThucTe,
+                        actualCheckOut: room.thoiGianRaThucTe,
+                        adjustedCheckOutTime: room.gioTraPhongDieuChinh
+                    }))
+                }
             }
         });
+        
     } catch (error) {
         console.error("Lỗi cập nhật booking:", error);
         res.status(400).json({
-            message: {
-                msgBody: "❌ Cập nhật trạng thái đơn đặt thất bại!",
-                msgError: true
-            },
+            message: { msgBody: "❌ Cập nhật đơn đặt thất bại!", msgError: true },
             error: error.message
         });
     }
 });
+
+
 
 // API gán phòng cho đơn đặt
 hotelBookingRouter.put("/hotelowner/assign-room/:id", authorizeRoles("chuKhachSan", "nhanVien"), async (req, res) => {
@@ -330,6 +495,9 @@ hotelBookingRouter.post("/hotelowner/create-booking", authorizeRoles("chuKhachSa
             maLoaiPhong,
             checkInDate,
             checkOutDate,
+            checkInTime,      // ✅ THÊM
+            checkOutTime,     // ✅ THÊM
+            bookingType,      // ✅ THÊM - "dai_ngay", "qua_dem", "theo_gio"
             customerName,
             phoneNumber,
             email,
@@ -340,28 +508,95 @@ hotelBookingRouter.post("/hotelowner/create-booking", authorizeRoles("chuKhachSa
             roomQuantity = 1
         } = req.body;
 
-        // Validate required fields
-        if (!maKhachSan || !maLoaiPhong || !checkInDate || !checkOutDate) {
+        console.log("🔄 Creating booking with type:", bookingType);
+
+        // ✅ Validate booking type
+        if (!bookingType || !['theo_gio', 'qua_dem', 'dai_ngay'].includes(bookingType)) {
             return res.status(400).json({
-                msgBody: "Thiếu thông tin bắt buộc: khách sạn, loại phòng, ngày nhận/trả phòng!",
+                msgBody: "Loại đặt phòng không hợp lệ! Chọn: theo_gio, qua_dem, dai_ngay",
                 msgError: true,
             });
         }
 
-        // Tính số ngày lưu trú
-        const checkIn = moment(checkInDate);
-        const checkOut = moment(checkOutDate);
-        const nights = checkOut.diff(checkIn, 'days');
-
-        if (nights <= 0) {
+        // Validate required fields
+        if (!maKhachSan || !maLoaiPhong || !checkInDate) {
             return res.status(400).json({
-                msgBody: "Ngày trả phòng phải sau ngày nhận phòng!",
+                msgBody: "Thiếu thông tin bắt buộc: khách sạn, loại phòng, ngày nhận phòng!",
                 msgError: true,
             });
+        }
+
+        // ✅ Validation theo booking type
+        const checkIn = moment(checkInDate);
+        let checkOut = checkOutDate ? moment(checkOutDate) : null;
+
+        let duration = 1;
+        let unit = "dem";
+
+        switch (bookingType) {
+            case 'theo_gio':
+                if (!checkInTime || !checkOutTime) {
+                    return res.status(400).json({
+                        msgBody: "Đặt theo giờ cần có giờ nhận và giờ trả!",
+                        msgError: true,
+                    });
+                }
+
+                // Tính số giờ
+                const startTime = moment(`${checkInDate} ${checkInTime}`, 'YYYY-MM-DD HH:mm');
+                let endTime = moment(`${checkInDate} ${checkOutTime}`, 'YYYY-MM-DD HH:mm');
+
+                if (endTime.isSameOrBefore(startTime)) {
+                    endTime.add(1, 'day');
+                }
+
+                duration = Math.ceil(endTime.diff(startTime, 'hours', true));
+                unit = "gio";
+                checkOut = checkIn; // Cùng ngày
+                break;
+
+            case 'qua_dem':
+                if (!checkOutDate) {
+                    return res.status(400).json({
+                        msgBody: "Đặt qua đêm cần có ngày trả phòng!",
+                        msgError: true,
+                    });
+                }
+
+                const nightDiff = checkOut.diff(checkIn, 'days');
+                if (nightDiff !== 1) {
+                    return res.status(400).json({
+                        msgBody: "Đặt qua đêm phải chính xác 1 ngày!",
+                        msgError: true,
+                    });
+                }
+
+                duration = 1;
+                unit = "dem";
+                break;
+
+            case 'dai_ngay':
+                if (!checkOutDate) {
+                    return res.status(400).json({
+                        msgBody: "Đặt dài ngày cần có ngày trả phòng!",
+                        msgError: true,
+                    });
+                }
+
+                const longDiff = checkOut.diff(checkIn, 'days');
+                if (longDiff < 2) {
+                    return res.status(400).json({
+                        msgBody: "Đặt dài ngày tối thiểu 2 ngày!",
+                        msgError: true,
+                    });
+                }
+
+                duration = longDiff;
+                unit = "ngay";
+                break;
         }
 
         // Lấy thông tin loại phòng để tính giá
-        const RoomType = require("../../Model/RoomType/RoomType");
         const roomType = await RoomType.findById(maLoaiPhong);
         if (!roomType) {
             return res.status(400).json({
@@ -370,32 +605,43 @@ hotelBookingRouter.post("/hotelowner/create-booking", authorizeRoles("chuKhachSa
             });
         }
 
-        // Tính tổng tiền
-        const roomTotal = roomType.giaCa * nights * roomQuantity;
+        // ✅ Tính giá theo booking type
+        let unitPrice = roomType.giaCa;
+
+        if (bookingType === 'theo_gio') {
+            // Giá theo giờ = giá phòng / 14 giờ (quy ước)
+            unitPrice = Math.round(roomType.giaCa / 14);
+        }
+
+        const roomTotal = unitPrice * duration * roomQuantity;
+
+        // ✅ Set default times nếu không có
+        const finalCheckInTime = checkInTime || (bookingType === 'theo_gio' ? '14:00' : '14:00');
+        const finalCheckOutTime = checkOutTime || (bookingType === 'theo_gio' ? '18:00' : '12:00');
 
         const newBooking = new Booking({
-            maNguoiDung: guestUserId, // Default guest user
+            maNguoiDung: guestUserId,
             maKhachSan,
             maLoaiPhong,
-            maPhong: null, // Sẽ được gán sau
+            maPhong: null,
             cccd: cccd || "",
-            loaiDatPhong: "qua_dem", // Default
+            loaiDatPhong: bookingType,  // ✅ Sử dụng bookingType từ input
             soLuongPhong: roomQuantity,
             ngayNhanPhong: checkIn.toDate(),
             ngayTraPhong: checkOut.toDate(),
-            gioNhanPhong: "14:00",
-            gioTraPhong: "12:00",
+            gioNhanPhong: finalCheckInTime,   // ✅ Từ input
+            gioTraPhong: finalCheckOutTime,   // ✅ Từ input
             trangThai: "da_xac_nhan",
             phuongThucThanhToan: paymentMethod || "tien_mat",
             trangThaiThanhToan: "chua_thanh_toan",
             ghiChu: notes || "",
             soDienThoai: phoneNumber || "",
 
-            // Thông tin giá
+            // ✅ Thông tin giá chi tiết
             thongTinGia: {
-                donGia: roomType.giaCa,
-                soLuongDonVi: nights,
-                donVi: "ngay",
+                donGia: unitPrice,
+                soLuongDonVi: duration,
+                donVi: unit,
                 tongTienPhong: roomTotal,
                 phiDichVu: 0,
                 thue: 0,
@@ -412,13 +658,17 @@ hotelBookingRouter.post("/hotelowner/create-booking", authorizeRoles("chuKhachSa
 
         res.status(200).json({
             message: {
-                msgBody: "Tạo đơn đặt phòng thành công!",
+                msgBody: `Tạo đơn đặt phòng ${getBookingTypeText(bookingType)} thành công!`,
                 msgError: false
             },
             booking: {
                 bookingId: newBooking._id,
                 customerName: customerName || "Khách lẻ",
                 roomType: roomType.tenLoaiPhong,
+                bookingType: bookingType,
+                duration: `${duration} ${unit}`,
+                checkInTime: finalCheckInTime,
+                checkOutTime: finalCheckOutTime,
                 totalAmount: roomTotal,
                 status: newBooking.trangThai
             }
@@ -433,6 +683,16 @@ hotelBookingRouter.post("/hotelowner/create-booking", authorizeRoles("chuKhachSa
         });
     }
 });
+
+// ✅ Helper function
+function getBookingTypeText(type) {
+    switch (type) {
+        case 'theo_gio': return 'theo giờ';
+        case 'qua_dem': return 'qua đêm';
+        case 'dai_ngay': return 'dài ngày';
+        default: return '';
+    }
+}
 
 //Danh sách loại phòng cho khách sạn 
 hotelBookingRouter.get("/hotelowner/getRoomInHotel/:hotelId", authorizeRoles("chuKhachSan", "nhanVien"), async (req, res) => {

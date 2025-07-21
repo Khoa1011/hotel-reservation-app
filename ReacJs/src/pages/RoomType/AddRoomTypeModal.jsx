@@ -11,7 +11,7 @@ const AddRoomTypeModal = ({ showModal, onClose, onSubmit }) => {
     giaCa: '',
     moTa: '',
     tienNghiDacBiet: [],
-    tongSoPhong: ''
+    // tongSoPhong: ''
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -31,7 +31,7 @@ const AddRoomTypeModal = ({ showModal, onClose, onSubmit }) => {
         giaCa: parseFloat(roomTypeForm.giaCa),
         moTa: roomTypeForm.moTa,
         tienNghiDacBiet: roomTypeForm.tienNghiDacBiet,
-        tongSoPhong: parseInt(roomTypeForm.tongSoPhong),
+        // tongSoPhong: parseInt(roomTypeForm.tongSoPhong),
       };
 
       const response = await axios.post(
@@ -56,7 +56,7 @@ const AddRoomTypeModal = ({ showModal, onClose, onSubmit }) => {
           giaCa: '',
           moTa: '',
           tienNghiDacBiet: [],
-          tongSoPhong: ''
+          // tongSoPhong: ''
         });
         
         onClose(); // ✅ Sửa từ onclose thành onClose
@@ -86,7 +86,7 @@ const AddRoomTypeModal = ({ showModal, onClose, onSubmit }) => {
       giaCa: '',
       moTa: '',
       tienNghiDacBiet: [],
-      tongSoPhong: ''
+      // tongSoPhong: ''
     });
     onClose();
   };
@@ -129,7 +129,7 @@ const AddRoomTypeModal = ({ showModal, onClose, onSubmit }) => {
                   placeholder="VD: 1500000"
                 />
               </div>
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Tổng số phòng
                 </label>
@@ -142,7 +142,7 @@ const AddRoomTypeModal = ({ showModal, onClose, onSubmit }) => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="VD: 10"
                 />
-              </div>
+              </div> */}
             </div>
 
             <div>

@@ -204,6 +204,57 @@ class _EditProfileState extends State<EditProfileScreen> {
       });
     }
   }
+  Widget _buildAvatarImage(String? avatar) {
+    if (avatar == null || avatar.isEmpty) {
+      return _buildDefaultAvatar();
+    }
+
+    try {
+      // Avatar dạng URL
+      if (avatar.startsWith('http')) {
+        return Image.network(
+          avatar,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return _buildDefaultAvatar();
+          },
+        );
+      }
+      // Avatar là đường dẫn file local
+      else {
+        final filePath = avatar.startsWith('file://')
+            ? avatar.replaceFirst('file://', '')
+            : avatar;
+
+        if (File(filePath).existsSync()) {
+          return Image.file(
+            File(filePath),
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return _buildDefaultAvatar();
+            },
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Avatar loading error: $e');
+    }
+
+    return _buildDefaultAvatar();
+  }
+
+
+  Widget _buildDefaultAvatar() {
+    return CircleAvatar(
+      radius: 70,
+      backgroundColor: Colors.grey[200],
+      child: Icon(
+        Icons.person,
+        size: 60,
+        color: Colors.grey[600],
+      ),
+    );
+  }
 
   void _saveProfile() {
 
@@ -262,45 +313,49 @@ class _EditProfileState extends State<EditProfileScreen> {
 
   Widget _buildProfilePicture() {
     return Consumer<UserAuthProvider>(
-        builder: (context, authProvider, child){
-          return Center(
-            child: GestureDetector(
-              onTap: pickImage, // Hàm pickImage sẽ được gọi khi người dùng click vào ảnh
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.transparent,
-                    backgroundImage: _image != null
-                        ? FileImage(File(_image!.path)) // Nếu có ảnh mới, hiển thị ảnh từ file
-                        : (authProvider.user?.hinhDaiDien != null && authProvider.user!.hinhDaiDien.isNotEmpty
-                        ? NetworkImage(authProvider.user!.hinhDaiDien) // Nếu có ảnh cũ, hiển thị ảnh từ URL
-                        : const AssetImage('assets/default_profile.png')) as ImageProvider, // Ảnh mặc định
+      builder: (context, authProvider, child) {
+        return Center(
+          child: GestureDetector(
+            onTap: pickImage, // Hàm pickImage sẽ được gọi khi người dùng click vào ảnh
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: 100, // Kích thước giống ProfileScreen (2 * radius = 140)
+                  height: 100,
+                  child: ClipOval(
+                    child: _image != null
+                        ? Image.file(
+                      _image!,
+                      fit: BoxFit.cover,
+                    )
+                        : _buildAvatarImage(authProvider.user?.hinhDaiDien),
                   ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF14D9E1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      padding: const EdgeInsets.all(5),
-                      child: const Icon(
-                        Icons.edit,
-                        color: Colors.white,
-                        size: 20,
-                      ),
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF14D9E1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    padding: const EdgeInsets.all(5),
+                    child: const Icon(
+                      Icons.edit,
+                      color: Colors.white,
+                      size: 20,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          );
-        });
-
+          ),
+        );
+      },
+    );
   }
+
 
   Widget _buildTextField(
       String label,

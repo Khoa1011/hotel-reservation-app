@@ -148,7 +148,6 @@ class _ListRoomState extends State<ListRoomScreen> {
                     ),
                   );
                 } else if (state is GetListOfRoomSuccess) {
-                  // ✅ Sử dụng roomTypes thay vì rooms
                   if (state.roomTypes.isEmpty) {
                     return _buildEmptyState();
                   }
@@ -159,7 +158,6 @@ class _ListRoomState extends State<ListRoomScreen> {
                       itemCount: state.roomTypes.length,
                       itemBuilder: (context, index) {
                         final roomType = state.roomTypes[index];
-
                         // ✅ Sử dụng RoomTypeCard widget hiện có
                         return RoomCard(
                           lichPhongTrong:widget.lichPhongTrong,

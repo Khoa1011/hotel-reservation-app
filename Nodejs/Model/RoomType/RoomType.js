@@ -13,11 +13,8 @@ const RoomTypeSchema = new mongoose.Schema({
     min: [0, "Giá phòng không được âm"]
    }, // Giá phòng theo loại
   moTa: { type: String, default: "" },
-soLuongKhach: { type: Number, default: 1,
-    min: [1, "Số lượng khách tối thiểu là 1"]
-   },
   tienNghiDacBiet: [String],
-  tongSoPhong: { type: Number, default: 0 },
+  // tongSoPhong: { type: Number, default: 0 },
 });
 
 module.exports = mongoose.model("loaiPhong", RoomTypeSchema);

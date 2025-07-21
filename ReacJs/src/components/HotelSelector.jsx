@@ -29,6 +29,12 @@ const HotelSelector = ({ bookings = [], onHotelChange, selectedHotelId }) => {
   const hotelList = getAllHotels();
   const selectedHotel = hotelList.find(h => h.id === selectedHotelId);
 
+  // ✅ Helper function để truncate text dài
+  const truncateText = (text, maxLength = 25) => {
+    if (!text) return '';
+    return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+  };
+
   // Handle hotel selection
   const handleHotelSelect = (hotelId, hotelName) => {
     console.log('🏨 HotelSelector: handleHotelSelect called:', { hotelId, hotelName });
@@ -76,7 +82,7 @@ const HotelSelector = ({ bookings = [], onHotelChange, selectedHotelId }) => {
   return (
     <div className="relative">
       {/* Hotel Selector Dropdown */}
-      <div className="mb-4">
+      <div className="mb-0">
         <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
           Khách sạn hiện tại
         </label>
@@ -84,23 +90,23 @@ const HotelSelector = ({ bookings = [], onHotelChange, selectedHotelId }) => {
         <div className="relative">
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="w-full flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+            className="w-full flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors min-h-[48px]"
           >
-            <div className="flex items-center space-x-3">
-              <Building className="h-4 w-4 text-gray-400" />
-              <div className="text-left">
-                <p className="text-sm font-medium text-gray-900">
-                  {selectedHotel ? selectedHotel.name : 'Chọn khách sạn'}
+            <div className="flex items-center space-x-3 flex-1 min-w-0"> 
+              <Building className="h-4 w-4 text-gray-400 flex-shrink-0" />
+              <div className="text-left flex-1 min-w-0"> 
+                <p className="text-sm font-medium text-gray-900 truncate" title={selectedHotel?.name || 'Chọn khách sạn'}> {/* ✅ THÊM truncate + title */}
+                  {selectedHotel ? selectedHotel.name : 'Chọn khách sạn để bắt đầu'}
                 </p>
                 {selectedHotel && selectedHotel.notifications.totalUnread > 0 && (
-                  <p className="text-xs text-blue-600">
+                  <p className="text-xs text-blue-600 truncate"> 
                     {selectedHotel.notifications.totalUnread} thông báo mới
                   </p>
                 )}
               </div>
             </div>
             
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 flex-shrink-0">
               {selectedHotel && selectedHotel.notifications.totalUnread > 0 && (
                 <div className="flex items-center">
                   <Bell className="h-3 w-3 text-blue-500" />
@@ -113,19 +119,19 @@ const HotelSelector = ({ bookings = [], onHotelChange, selectedHotelId }) => {
             </div>
           </button>
 
-          {/* Dropdown Menu */}
+          {/* Dropdown Menu  */}
           {isOpen && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
               {/* Option: Tất cả khách sạn */}
               <button
                 onClick={() => handleHotelSelect('', 'Tất cả khách sạn')}
-                className={`w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 border-b border-gray-100 ${
+                className={`w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 border-b border-gray-100 min-h-[48px] ${
                   !selectedHotelId ? 'bg-blue-50 text-blue-600' : ''
                 }`}
               >
-                <div className="flex items-center space-x-3">
-                  <Building className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm font-medium">Tất cả khách sạn</span>
+                <div className="flex items-center space-x-3 flex-1 min-w-0"> 
+                  <Building className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                  <span className="text-sm font-medium truncate">Tất cả khách sạn</span> 
                 </div>
               </button>
 
@@ -134,16 +140,21 @@ const HotelSelector = ({ bookings = [], onHotelChange, selectedHotelId }) => {
                 <button
                   key={hotel.id}
                   onClick={() => handleHotelSelect(hotel.id, hotel.name)}
-                  className={`w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 ${
+                  className={`w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 min-h-[48px] ${
                     selectedHotelId === hotel.id ? 'bg-blue-50 text-blue-600' : ''
                   }`}
                 >
-                  <div className="flex items-center space-x-3">
-                    <Building className="h-4 w-4 text-gray-400" />
-                    <div>
-                      <span className="text-sm font-medium">{hotel.name}</span>
+                  <div className="flex items-center space-x-3 flex-1 min-w-0"> 
+                    <Building className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <div className="flex-1 min-w-0"> 
+                      <span 
+                        className="text-sm font-medium truncate block" 
+                        title={hotel.name}
+                      >
+                        {hotel.name}
+                      </span>
                       {hotel.notifications.totalUnread > 0 && (
-                        <p className="text-xs text-blue-600">
+                        <p className="text-xs text-blue-600 truncate">
                           {hotel.notifications.pendingBookings > 0 && `${hotel.notifications.pendingBookings} đơn chờ`}
                           {hotel.notifications.newBookings > 0 && ` • ${hotel.notifications.newBookings} đơn mới`}
                         </p>
@@ -152,7 +163,7 @@ const HotelSelector = ({ bookings = [], onHotelChange, selectedHotelId }) => {
                   </div>
                   
                   {hotel.notifications.totalUnread > 0 && (
-                    <div className="flex items-center space-x-1">
+                    <div className="flex items-center space-x-1 flex-shrink-0"> 
                       <Bell className="h-3 w-3 text-blue-500" />
                       <span className="bg-blue-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
                         {hotel.notifications.totalUnread}
@@ -171,28 +182,28 @@ const HotelSelector = ({ bookings = [], onHotelChange, selectedHotelId }) => {
           )}
         </div>
 
-        {/* Hotel Details */}
+        {/* Hotel Details*/}
         {selectedHotel && (
-          <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="mt-1 p-3 bg-blue-50 rounded-lg border border-blue-200">
             <div className="text-sm">
               {selectedHotel.notifications.totalUnread === 0 ? (
                 <div className="flex items-center text-gray-600">
-                  <Bell className="h-3 w-3 mr-1" />
-                  <span>Không có thông báo mới</span>
+                  <Bell className="h-3 w-3 mr-1 flex-shrink-0" />
+                  <span className="truncate">Không có thông báo mới</span>
                 </div>
               ) : (
                 <div className="space-y-1">
                   <p className="font-medium text-blue-800 flex items-center">
-                    <Bell className="h-3 w-3 mr-1" />
-                    {selectedHotel.notifications.totalUnread} thông báo mới
+                    <Bell className="h-3 w-3 mr-1 flex-shrink-0" />
+                    <span className="truncate">{selectedHotel.notifications.totalUnread} thông báo mới</span> 
                   </p>
                   {selectedHotel.notifications.newBookings > 0 && (
-                    <p className="text-blue-600 text-xs pl-4">
+                    <p className="text-blue-600 text-xs pl-4 truncate">
                       • {selectedHotel.notifications.newBookings} đơn mới (24h)
                     </p>
                   )}
                   {selectedHotel.notifications.pendingBookings > 0 && (
-                    <p className="text-blue-600 text-xs pl-4">
+                    <p className="text-blue-600 text-xs pl-4 truncate"> 
                       • {selectedHotel.notifications.pendingBookings} đơn chờ xử lý
                     </p>
                   )}

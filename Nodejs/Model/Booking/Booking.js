@@ -100,6 +100,7 @@ const BookingSchema = new mongoose.Schema({
     },
     thoiGianVaoThucTe: Date,    // Actual check-in time
     thoiGianRaThucTe: Date,     // Actual check-out time
+    gioTraPhongDieuChinh: String,
     // nhanVienGiao: {
     //   type: mongoose.Schema.Types.ObjectId,
     //   ref: "nguoiDung"

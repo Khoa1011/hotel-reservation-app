@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:doan_datphong/Helper/FormatDateTime.dart';
 import 'package:doan_datphong/Models/DanhGiaRespone.dart';
 import 'package:flutter/material.dart';
@@ -27,6 +29,49 @@ class _ReviewsSectionState extends State<ReviewsSection>
   bool _isExpanded = false;
   late AnimationController _animationController;
   late Animation<double> _animation;
+
+
+
+  Widget _buildAvatarImage(String? image) {
+    if (image == null || image.isEmpty) {
+      return _buildDefaultAvatar();
+    }
+
+    try {
+      if (image.startsWith('http')) {
+        return Image.network(
+          image,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return _buildDefaultAvatar();
+          },
+        );
+      } else {
+        final filePath = image.startsWith('file://')
+            ? image.replaceFirst('file://', '')
+            : image;
+
+        final file = File(filePath);
+        if (file.existsSync()) {
+          return Image.file(
+            file,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return _buildDefaultAvatar();
+            },
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Avatar loading error: $e');
+    }
+
+    return _buildDefaultAvatar();
+  }
+
+  Widget _buildDefaultAvatar() {
+    return Icon(Icons.person, color: Colors.grey[600], size: 20);
+  }
 
 
   @override
@@ -214,12 +259,14 @@ class _ReviewsSectionState extends State<ReviewsSection>
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundImage: review.user.hinhDaiDien.isNotEmpty
-                    ? NetworkImage(review.user.hinhDaiDien)
-                    : null,
-                child: review.user.hinhDaiDien.isEmpty
-                    ? Icon(Icons.person, color: Colors.grey[600])
-                    : null,
+                backgroundColor: Colors.grey[200],
+                child: ClipOval(
+                  child: SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: _buildAvatarImage(review.user.hinhDaiDien),
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(

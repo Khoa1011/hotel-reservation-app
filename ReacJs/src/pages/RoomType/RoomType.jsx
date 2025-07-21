@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  DollarSign, 
+import {
+  DollarSign,
   CheckCircle,
   Plus,
   Search,
@@ -118,7 +118,7 @@ const RoomTypeManagement = ({ selectedHotelId }) => {
   // ✅ Effect để fetch data khi selectedHotelId thay đổi (chỉ 1 lần)
   useEffect(() => {
     console.log('🏨 selectedHotelId effect triggered:', selectedHotelId);
-    
+
     if (selectedHotelId) {
       // Clear search when hotel changes
       setSearchTerm('');
@@ -195,7 +195,7 @@ const RoomTypeManagement = ({ selectedHotelId }) => {
 
   const handleEditRoomType = async (updatedRoomType) => {
     try {
-      setRoomTypes(prev => prev.map(rt => 
+      setRoomTypes(prev => prev.map(rt =>
         rt._id === updatedRoomType._id ? updatedRoomType : rt
       ));
       closeEditModal();
@@ -234,9 +234,9 @@ const RoomTypeManagement = ({ selectedHotelId }) => {
   );
 
   return (
-    <>
+    <div className="space-y-6">
       {/* Search and Add */}
-      <div className="mb-6 flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
@@ -253,7 +253,7 @@ const RoomTypeManagement = ({ selectedHotelId }) => {
             </div>
           )}
         </div>
-        
+
         <button
           onClick={openAddModal}
           disabled={!selectedHotelId}
@@ -306,13 +306,13 @@ const RoomTypeManagement = ({ selectedHotelId }) => {
                     <p className="font-semibold">{formatCurrency(roomType.giaCa)}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                {/* <div className="flex items-center gap-2">
                   <Home className="w-5 h-5 text-purple-600" />
                   <div>
                     <p className="text-sm text-gray-600">Tổng số phòng</p>
                     <p className="font-semibold">{roomType.tongSoPhong} phòng</p>
                   </div>
-                </div>
+                </div> */}
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-green-600" />
                   <div>
@@ -352,8 +352,8 @@ const RoomTypeManagement = ({ selectedHotelId }) => {
             {searchTerm ? 'Không tìm thấy loại phòng' : 'Chưa có loại phòng nào'}
           </h3>
           <p className="text-gray-600 mb-4">
-            {searchTerm 
-              ? 'Thử tìm kiếm với từ khóa khác' 
+            {searchTerm
+              ? 'Thử tìm kiếm với từ khóa khác'
               : 'Tạo loại phòng đầu tiên cho khách sạn của bạn'
             }
           </p>
@@ -394,7 +394,7 @@ const RoomTypeManagement = ({ selectedHotelId }) => {
         onClose={closeEditModal}
         onSubmit={handleEditRoomType}
       />
-    </>
+    </div>
   );
 };
 

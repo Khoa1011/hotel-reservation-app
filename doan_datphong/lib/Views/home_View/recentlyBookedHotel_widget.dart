@@ -438,51 +438,53 @@ class _RecentBookingsWidgetState extends State<RecentBookingsWidget> {
     return Container(
       height: 200,
       child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 60,
-              color: Colors.red[400],
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Lỗi tải dữ liệu',
-              style: TextStyle(
-                color: Colors.red[600],
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 60,
+                color: Colors.red[400],
               ),
-            ),
-            SizedBox(height: 8),
-            Text(
-              error,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 12,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                context.read<RecentBookingsBloc>().add(
-                    RefreshRecentBookings(widget.userId)
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF1565C0),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+              SizedBox(height: 16),
+              Text(
+                'Lỗi tải dữ liệu',
+                style: TextStyle(
+                  color: Colors.red[600],
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              child: Text(
-                'Thử lại',
-                style: TextStyle(color: Colors.white),
+              SizedBox(height: 8),
+              Text(
+                error,
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 12,
+                ),
+                textAlign: TextAlign.center,
               ),
-            ),
-          ],
+              SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  context.read<RecentBookingsBloc>().add(
+                      RefreshRecentBookings(widget.userId)
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF1565C0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  'Thử lại',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

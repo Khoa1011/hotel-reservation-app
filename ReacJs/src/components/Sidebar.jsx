@@ -52,7 +52,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, stats }) => {
     <div className="w-64 bg-white shadow-lg">
       <div className="p-6 border-b">
         <h1 className="text-xl font-bold text-gray-800">Quản Lý Khách Sạn</h1>
-        <p className="text-sm text-gray-600">Hotel Paradise</p>
+
 
         {/* Tổng thông báo */}
         {notifications.totalUnread > 0 && (

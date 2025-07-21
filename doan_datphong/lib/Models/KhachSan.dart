@@ -40,6 +40,7 @@ class KhachSan {
   // Chuyển từ JSON sang object
   factory KhachSan.fromJson(Map<String, dynamic> json) {
     final String baseImageUrl = IPv4.IP_CURRENT;
+    print("Hình ảnh từ JSON: ${json['hinhAnh']}");
     return KhachSan(
       id: json['_id'] ?? '',
       tenKhachSan: json['tenKhachSan'] ?? '',

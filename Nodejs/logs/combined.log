@@ -1358,3 +1358,20 @@
 {"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-21T15:54:27.943Z"}
 {"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-21T15:54:31.832Z"}
 {"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-21T15:54:52.724Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-21T23:36:57.577Z"}
+{"level":"info","message":"🎯 Processing new booking: 687ee567c2e3ddf64c2d53d2","service":"notification-service","timestamp":"2025-07-22T01:12:08.037Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 687ee567c2e3ddf64c2d53d2","service":"notification-service","timestamp":"2025-07-22T01:12:08.046Z"}
+{"level":"info","message":"📱 Sending notification to user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-22T01:12:08.115Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-22T01:12:08.146Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-22T01:12:08.148Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-22T01:12:08.941Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 687ee567c2e3ddf64c2d53d2","service":"notification-service","timestamp":"2025-07-22T01:12:08.942Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 687ee567c2e3ddf64c2d53d2","service":"notification-service","timestamp":"2025-07-22T01:12:08.942Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 687ee567c2e3ddf64c2d53d2","service":"notification-service","timestamp":"2025-07-22T01:12:08.943Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 687ee567c2e3ddf64c2d53d2","service":"notification-service","timestamp":"2025-07-22T01:12:08.944Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-22T23:00:00+07:00","service":"notification-service","timestamp":"2025-07-22T01:12:09.049Z"}
+{"level":"info","message":"✅ Before check-in notification scheduled for: 2025-07-22T21:00:00+07:00","service":"notification-service","timestamp":"2025-07-22T01:12:09.050Z"}
+{"level":"info","message":"✅ Check-in time notification scheduled for: 2025-07-22T22:00:00+07:00","service":"notification-service","timestamp":"2025-07-22T01:12:09.059Z"}
+{"level":"info","message":"✅ Scheduled 3 notifications, 0 failed for booking 687ee567c2e3ddf64c2d53d2","service":"notification-service","timestamp":"2025-07-22T01:12:09.060Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 687ee567c2e3ddf64c2d53d2","service":"notification-service","timestamp":"2025-07-22T01:12:09.060Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-22T01:33:12.115Z"}

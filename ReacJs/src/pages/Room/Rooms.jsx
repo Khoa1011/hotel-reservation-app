@@ -39,11 +39,11 @@ const RoomManagement = ({ selectedHotelId }) => {
   };
 
   const getRoomStatusColor = (status) => {
-    return status ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800';
+    return status ? 'bg-green-100 text-green-800': 'bg-red-100 text-red-800' ;
   };
 
   const getRoomStatusText = (status) => {
-    return status ? 'Đã đặt' : 'Trống';
+    return status ? 'Trống' : 'Đã đặt';
   };
 
   // ✅ THÊM: Get view text
@@ -347,12 +347,12 @@ const RoomManagement = ({ selectedHotelId }) => {
                         onClick={() => toggleRoomStatus(room._id, room.trangThaiPhong, room.soPhong)}
                         className="flex-1 px-3 py-2 text-sm rounded flex items-center justify-center gap-1"
                         style={{
-                          backgroundColor: room.trangThaiPhong ? '#10b981' : '#ef4444',
+                          backgroundColor: room.trangThaiPhong ?  '#ef4444' :'#10b981' ,
                           color: 'white'
                         }}
                       >
                         {room.trangThaiPhong ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                        {room.trangThaiPhong ? 'Trả phòng' : 'Đặt phòng'}
+                        {room.trangThaiPhong ? 'Đặt phòng' : 'Trả phòng'}
                       </button>
                       <button
                         onClick={() => openEditModal(room)}

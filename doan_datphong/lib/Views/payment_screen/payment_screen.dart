@@ -82,7 +82,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Future<void> _checkUserBanStatus() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      String userID = prefs.getString("user_id") ?? '';
+      String userID = prefs.getString("_id") ?? '';
+
+      print("Id của user $userID");
 
       if (userID.isNotEmpty) {
         context.read<BookingCheckBloc>().add(CheckUserBanStatus(userID));
@@ -679,40 +681,40 @@ class _PaymentScreenState extends State<PaymentScreen> {
             print('🔄 BookingCheckBloc state changed: ${state.runtimeType}');
 
             // ✅ SỬA: Cast state về đúng kiểu UserBanStatusLoaded
-            // if (state is UserBanStatusLoaded) {
-            //   setState(() {
-            //     _isCheckingUserBan = false;
-            //     _isUserBannedFromCash = state.isBannedFromCash; // ✅ Đã cast sang UserBanStatusLoaded
-            //     _userNoShowCount = state.noShowCount; // ✅ Đã cast sang UserBanStatusLoaded
-            //   });
-            //
-            //   // ✅ Nếu user bị cấm và đang chọn tiền mặt → chuyển sang phương thức khác
-            //   if (_isUserBannedFromCash && selectedPaymentMethod == PhuongThucThanhToan.tien_mat) {
-            //     setState(() {
-            //       selectedPaymentMethod = PhuongThucThanhToan.ZaloPay; // Default sang ZaloPay
-            //     });
-            //
-            //     // Hiển thị thông báo
-            //     NotificationDialog.showError(
-            //       context,
-            //       title: 'Tài khoản bị hạn chế',
-            //       message: 'Bạn đã không nhận phòng $_userNoShowCount lần. Vui lòng thanh toán online.',
-            //     );
-            //   }
-            // }
-            // // ✅ SỬA: Xử lý lỗi check user ban
-            // else if (state is BookingCheckError) {
-            //   setState(() {
-            //     _isCheckingUserBan = false;
-            //     _isUserBannedFromCash = false; // Default cho phép thanh toán tiền mặt nếu lỗi
-            //   });
-            //   print('❌ Booking check error: ${state.errorMessage}');
-            // }
-            // // ✅ SỬA: Xử lý trigger overdue check completed (nếu cần)
-            // else if (state is OverdueCheckCompleted) {
-            //   // Handle overdue check completed if needed
-            //   print('✅ Overdue check completed: ${state.message}');
-            // }
+            if (state is UserBanStatusLoaded) {
+              setState(() {
+                _isCheckingUserBan = false;
+                _isUserBannedFromCash = state.isBannedFromCash; // ✅ Đã cast sang UserBanStatusLoaded
+                _userNoShowCount = state.noShowCount; // ✅ Đã cast sang UserBanStatusLoaded
+              });
+
+              // ✅ Nếu user bị cấm và đang chọn tiền mặt → chuyển sang phương thức khác
+              if (_isUserBannedFromCash && selectedPaymentMethod == PhuongThucThanhToan.tien_mat) {
+                setState(() {
+                  selectedPaymentMethod = PhuongThucThanhToan.ZaloPay; // Default sang ZaloPay
+                });
+
+                // // Hiển thị thông báo
+                // NotificationDialog.showError(
+                //   context,
+                //   title: 'Tài khoản bị hạn chế',
+                //   message: 'Bạn đã không nhận phòng $_userNoShowCount lần. Vui lòng thanh toán online.',
+                // );
+              }
+            }
+            // ✅ SỬA: Xử lý lỗi check user ban
+            else if (state is BookingCheckError) {
+              setState(() {
+                _isCheckingUserBan = false;
+                _isUserBannedFromCash = false; // Default cho phép thanh toán tiền mặt nếu lỗi
+              });
+              print('❌ Booking check error: ${state.errorMessage}');
+            }
+            // ✅ SỬA: Xử lý trigger overdue check completed (nếu cần)
+            else if (state is OverdueCheckCompleted) {
+              // Handle overdue check completed if needed
+              print('✅ Overdue check completed: ${state.message}');
+            }
           },
         ),
       ],

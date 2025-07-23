@@ -151,7 +151,7 @@ amenitiesRouter.get("/key-amenities/:hotelId", async (req, res) => {
         const roomTypes = await RoomType.find({ maKhachSan: hotelId });
         const rooms = roomTypes.length > 0 ? 
             await Room.find({ maLoaiPhong: { $in: roomTypes.map(rt => rt._id) },
-                                trangThaiPhong: true }) : [];
+                                trangThaiPhong: "trong" }) : [];
 
         // 4. Sắp xếp theo độ ưu tiên và lấy top 6-8
         const keyAmenities = amenities
@@ -247,7 +247,7 @@ amenitiesRouter.get("/grouped-amenities/:hotelId", async (req, res) => {
         // BƯỚC 3: Lấy phòng của khách sạn để tính số lượng
         const roomTypes = await RoomType.find({ maKhachSan: hotelId });
         const rooms = roomTypes.length > 0 ? 
-            await Room.find({ maLoaiPhong: { $in: roomTypes.map(rt => rt._id) }, trangThaiPhong: true }) : [];
+            await Room.find({ maLoaiPhong: { $in: roomTypes.map(rt => rt._id) }, trangThaiPhong: "trong" }) : [];
         
         console.log("🏠 Found", rooms.length, "rooms for counting");
 

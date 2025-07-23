@@ -1375,3 +1375,320 @@
 {"level":"info","message":"✅ Scheduled 3 notifications, 0 failed for booking 687ee567c2e3ddf64c2d53d2","service":"notification-service","timestamp":"2025-07-22T01:12:09.060Z"}
 {"level":"info","message":"✅ Booking notifications processed successfully for: 687ee567c2e3ddf64c2d53d2","service":"notification-service","timestamp":"2025-07-22T01:12:09.060Z"}
 {"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-22T01:33:12.115Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-22T02:28:32.541Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-22T03:03:12.012Z"}
+{"level":"info","message":"📱 Registering FCM token for user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-22T03:03:29.094Z"}
+{"level":"info","message":"📝 Registering FCM token for user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-22T03:03:29.096Z"}
+{"level":"info","message":"✅ FCM token registered successfully for user 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-22T03:03:29.162Z"}
+{"level":"info","message":"📱 Registering FCM token for user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-22T03:10:31.486Z"}
+{"level":"info","message":"📝 Registering FCM token for user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-22T03:10:31.487Z"}
+{"level":"info","message":"✅ FCM token registered successfully for user 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-22T03:10:31.545Z"}
+{"level":"info","message":"🎯 Processing new booking: 687f01468c3e8c69a58368a2","service":"notification-service","timestamp":"2025-07-22T03:11:02.059Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 687f01468c3e8c69a58368a2","service":"notification-service","timestamp":"2025-07-22T03:11:02.060Z"}
+{"level":"info","message":"📱 Sending notification to user: 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-22T03:11:02.129Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 68706bf516118815f39c8695","service":"notification-service","timestamp":"2025-07-22T03:11:02.168Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-22T03:11:02.168Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-22T03:11:02.655Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 687f01468c3e8c69a58368a2","service":"notification-service","timestamp":"2025-07-22T03:11:02.656Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 687f01468c3e8c69a58368a2","service":"notification-service","timestamp":"2025-07-22T03:11:02.656Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 687f01468c3e8c69a58368a2","service":"notification-service","timestamp":"2025-07-22T03:11:02.657Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 687f01468c3e8c69a58368a2","service":"notification-service","timestamp":"2025-07-22T03:11:02.657Z"}
+{"level":"info","message":"✅ Check-in time notification scheduled for: 2025-07-22T23:00:00+07:00","service":"notification-service","timestamp":"2025-07-22T03:11:02.763Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-23T00:00:00+07:00","service":"notification-service","timestamp":"2025-07-22T03:11:02.764Z"}
+{"level":"info","message":"✅ Before check-in notification scheduled for: 2025-07-22T22:00:00+07:00","service":"notification-service","timestamp":"2025-07-22T03:11:02.768Z"}
+{"level":"info","message":"✅ Scheduled 3 notifications, 0 failed for booking 687f01468c3e8c69a58368a2","service":"notification-service","timestamp":"2025-07-22T03:11:02.770Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 687f01468c3e8c69a58368a2","service":"notification-service","timestamp":"2025-07-22T03:11:02.771Z"}
+{"level":"info","message":"📱 Registering FCM token for user: 687f07bb8c3e8c69a5836a5c","service":"notification-service","timestamp":"2025-07-22T03:38:47.234Z"}
+{"level":"info","message":"📝 Registering FCM token for user: 687f07bb8c3e8c69a5836a5c","service":"notification-service","timestamp":"2025-07-22T03:38:47.235Z"}
+{"level":"info","message":"✅ FCM token registered successfully for user 687f07bb8c3e8c69a5836a5c","service":"notification-service","timestamp":"2025-07-22T03:38:47.296Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-22T04:17:02.267Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-22T05:52:46.232Z"}
+{"level":"info","message":"📱 Registering FCM token for user: 687f07bb8c3e8c69a5836a5c","service":"notification-service","timestamp":"2025-07-22T07:53:02.664Z"}
+{"level":"info","message":"📝 Registering FCM token for user: 687f07bb8c3e8c69a5836a5c","service":"notification-service","timestamp":"2025-07-22T07:53:02.672Z"}
+{"level":"info","message":"✅ FCM token registered successfully for user 687f07bb8c3e8c69a5836a5c","service":"notification-service","timestamp":"2025-07-22T07:53:02.719Z"}
+{"level":"info","message":"🎯 Processing new booking: 687f43d21942e2e078170170","service":"notification-service","timestamp":"2025-07-22T07:54:58.241Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 687f43d21942e2e078170170","service":"notification-service","timestamp":"2025-07-22T07:54:58.242Z"}
+{"level":"info","message":"📱 Sending notification to user: 687f07bb8c3e8c69a5836a5c","service":"notification-service","timestamp":"2025-07-22T07:54:58.328Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 687f07bb8c3e8c69a5836a5c","service":"notification-service","timestamp":"2025-07-22T07:54:58.359Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-22T07:54:58.360Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-22T07:54:58.773Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 687f43d21942e2e078170170","service":"notification-service","timestamp":"2025-07-22T07:54:58.775Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 687f43d21942e2e078170170","service":"notification-service","timestamp":"2025-07-22T07:54:58.776Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 687f43d21942e2e078170170","service":"notification-service","timestamp":"2025-07-22T07:54:58.776Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 687f43d21942e2e078170170","service":"notification-service","timestamp":"2025-07-22T07:54:58.777Z"}
+{"level":"warn","message":"⚠️ Check-in time is in the past, skipping: 2025-07-22T14:00:00+07:00","service":"notification-service","timestamp":"2025-07-22T07:54:58.840Z"}
+{"level":"warn","message":"⚠️ Schedule time is in the past, skipping: 2025-07-22T13:00:00+07:00","service":"notification-service","timestamp":"2025-07-22T07:54:58.850Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-22T15:00:00+07:00","service":"notification-service","timestamp":"2025-07-22T07:54:58.883Z"}
+{"level":"info","message":"✅ Scheduled 1 notifications, 0 failed for booking 687f43d21942e2e078170170","service":"notification-service","timestamp":"2025-07-22T07:54:58.883Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 687f43d21942e2e078170170","service":"notification-service","timestamp":"2025-07-22T07:54:58.884Z"}
+{"level":"info","message":"🎯 Processing new booking: 687f44811942e2e07817044e","service":"notification-service","timestamp":"2025-07-22T07:57:53.511Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 687f44811942e2e07817044e","service":"notification-service","timestamp":"2025-07-22T07:57:53.511Z"}
+{"level":"info","message":"📱 Sending notification to user: 687f07bb8c3e8c69a5836a5c","service":"notification-service","timestamp":"2025-07-22T07:57:53.577Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 687f07bb8c3e8c69a5836a5c","service":"notification-service","timestamp":"2025-07-22T07:57:53.604Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-22T07:57:53.605Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-22T07:57:53.878Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 687f44811942e2e07817044e","service":"notification-service","timestamp":"2025-07-22T07:57:53.879Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 687f44811942e2e07817044e","service":"notification-service","timestamp":"2025-07-22T07:57:53.879Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 687f44811942e2e07817044e","service":"notification-service","timestamp":"2025-07-22T07:57:53.880Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 687f44811942e2e07817044e","service":"notification-service","timestamp":"2025-07-22T07:57:53.880Z"}
+{"level":"info","message":"✅ Check-in time notification scheduled for: 2025-07-23T22:00:00+07:00","service":"notification-service","timestamp":"2025-07-22T07:57:53.978Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-23T23:00:00+07:00","service":"notification-service","timestamp":"2025-07-22T07:57:53.979Z"}
+{"level":"info","message":"✅ Before check-in notification scheduled for: 2025-07-23T21:00:00+07:00","service":"notification-service","timestamp":"2025-07-22T07:57:53.980Z"}
+{"level":"info","message":"✅ Scheduled 3 notifications, 0 failed for booking 687f44811942e2e07817044e","service":"notification-service","timestamp":"2025-07-22T07:57:53.981Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 687f44811942e2e07817044e","service":"notification-service","timestamp":"2025-07-22T07:57:53.981Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-22T08:58:10.886Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-22T09:20:21.287Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-22T09:45:57.891Z"}
+{"level":"info","message":"🎯 Processing new booking: 687f60a87303a07946a5bd17","service":"notification-service","timestamp":"2025-07-22T09:58:00.836Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 687f60a87303a07946a5bd17","service":"notification-service","timestamp":"2025-07-22T09:58:00.838Z"}
+{"level":"info","message":"📱 Sending notification to user: 687f07bb8c3e8c69a5836a5c","service":"notification-service","timestamp":"2025-07-22T09:58:00.908Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 687f07bb8c3e8c69a5836a5c","service":"notification-service","timestamp":"2025-07-22T09:58:00.941Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-22T09:58:00.942Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-22T09:58:01.758Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 687f60a87303a07946a5bd17","service":"notification-service","timestamp":"2025-07-22T09:58:01.759Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 687f60a87303a07946a5bd17","service":"notification-service","timestamp":"2025-07-22T09:58:01.759Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 687f60a87303a07946a5bd17","service":"notification-service","timestamp":"2025-07-22T09:58:01.761Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 687f60a87303a07946a5bd17","service":"notification-service","timestamp":"2025-07-22T09:58:01.762Z"}
+{"level":"info","message":"✅ Before check-in notification scheduled for: 2025-07-22T22:00:00+07:00","service":"notification-service","timestamp":"2025-07-22T09:58:01.875Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-23T00:00:00+07:00","service":"notification-service","timestamp":"2025-07-22T09:58:01.881Z"}
+{"level":"info","message":"✅ Check-in time notification scheduled for: 2025-07-22T23:00:00+07:00","service":"notification-service","timestamp":"2025-07-22T09:58:01.885Z"}
+{"level":"info","message":"✅ Scheduled 3 notifications, 0 failed for booking 687f60a87303a07946a5bd17","service":"notification-service","timestamp":"2025-07-22T09:58:01.886Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 687f60a87303a07946a5bd17","service":"notification-service","timestamp":"2025-07-22T09:58:01.887Z"}
+{"level":"info","message":"🎯 Processing new booking: 687f61107303a07946a5be42","service":"notification-service","timestamp":"2025-07-22T09:59:44.117Z"}
+{"level":"info","message":"🎉 Sending booking success notification for: 687f61107303a07946a5be42","service":"notification-service","timestamp":"2025-07-22T09:59:44.118Z"}
+{"level":"info","message":"📱 Sending notification to user: 687f07bb8c3e8c69a5836a5c","service":"notification-service","timestamp":"2025-07-22T09:59:44.182Z"}
+{"level":"info","message":"📋 Found 1 active devices for user 687f07bb8c3e8c69a5836a5c","service":"notification-service","timestamp":"2025-07-22T09:59:44.216Z"}
+{"level":"info","message":"🚀 Sending multicast message to 1 tokens","service":"notification-service","timestamp":"2025-07-22T09:59:44.218Z"}
+{"level":"info","message":"✅ Booking success notification sent successfully","service":"notification-service","timestamp":"2025-07-22T09:59:44.602Z"}
+{"level":"info","message":"📊 Scheduling all notifications for booking: 687f61107303a07946a5be42","service":"notification-service","timestamp":"2025-07-22T09:59:44.603Z"}
+{"level":"info","message":"⏰ Scheduling before check-in notification for: 687f61107303a07946a5be42","service":"notification-service","timestamp":"2025-07-22T09:59:44.603Z"}
+{"level":"info","message":"🏨 Scheduling check-in time notification for: 687f61107303a07946a5be42","service":"notification-service","timestamp":"2025-07-22T09:59:44.604Z"}
+{"level":"info","message":"⏰ Scheduling overdue check-in notification for: 687f61107303a07946a5be42","service":"notification-service","timestamp":"2025-07-22T09:59:44.604Z"}
+{"level":"info","message":"✅ Check-in time notification scheduled for: 2025-07-24T14:00:00+07:00","service":"notification-service","timestamp":"2025-07-22T09:59:44.702Z"}
+{"level":"info","message":"✅ Overdue check-in notification scheduled for: 2025-07-24T15:00:00+07:00","service":"notification-service","timestamp":"2025-07-22T09:59:44.708Z"}
+{"level":"info","message":"✅ Before check-in notification scheduled for: 2025-07-24T13:00:00+07:00","service":"notification-service","timestamp":"2025-07-22T09:59:44.710Z"}
+{"level":"info","message":"✅ Scheduled 3 notifications, 0 failed for booking 687f61107303a07946a5be42","service":"notification-service","timestamp":"2025-07-22T09:59:44.710Z"}
+{"level":"info","message":"✅ Booking notifications processed successfully for: 687f61107303a07946a5be42","service":"notification-service","timestamp":"2025-07-22T09:59:44.711Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-22T10:01:53.227Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T04:10:01.157Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T05:37:01.521Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T05:41:10.521Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T05:41:14.599Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T05:41:18.441Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T05:41:34.600Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T05:41:37.903Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T05:41:39.655Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T05:41:41.205Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T05:41:43.508Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T05:41:46.136Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T05:51:36.527Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T05:51:53.888Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T09:52:41.819Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T09:55:44.285Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T10:00:45.254Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T10:01:17.598Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T10:01:19.910Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T10:01:47.619Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T10:01:50.706Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T10:05:04.075Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T10:05:08.610Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T10:06:53.094Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T10:28:00.252Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T10:29:18.583Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T10:29:21.956Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T10:30:29.136Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T10:31:18.759Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T10:37:35.946Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T10:41:25.296Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T10:41:48.347Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T10:41:49.826Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T11:18:21.001Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T11:19:10.407Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T11:19:15.164Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T11:49:19.247Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T11:49:37.549Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T11:50:05.596Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T11:50:08.403Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T11:51:33.594Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T11:51:36.126Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T11:51:40.162Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T11:51:43.826Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T11:51:46.103Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T11:51:55.126Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T11:54:05.331Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T11:55:11.042Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:00:17.921Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:00:23.849Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:00:26.740Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:00:37.240Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:00:42.539Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:00:44.753Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:00:53.904Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:04:20.467Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:04:58.058Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:05:00.378Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:05:10.188Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:05:23.651Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:07:46.359Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:07:48.635Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:10:35.294Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:10:47.788Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:10:50.234Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:10:51.937Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:11:00.598Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:11:10.612Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:11:15.462Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:11:20.905Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:15:06.396Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:17:59.995Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:21:54.100Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:22:00.326Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T12:59:53.195Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:00:14.108Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:00:22.042Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:12:30.270Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:12:33.734Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:12:37.236Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:12:39.000Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:12:43.354Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:12:47.796Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:13:06.942Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:13:11.826Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:13:19.775Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:13:21.929Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:15:05.962Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:16:22.337Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:16:25.384Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:16:28.347Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:17:27.608Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:17:30.108Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:17:34.071Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:17:36.414Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:17:39.369Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:17:42.177Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:17:57.993Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:18:04.488Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:19:04.976Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:19:08.885Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:19:11.056Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:19:14.032Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:19:16.178Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:21:57.416Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:22:02.232Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:22:05.589Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:22:20.560Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:22:24.030Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:22:26.204Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:22:30.883Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:22:33.677Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:22:45.946Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:24:47.610Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:25:47.382Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:25:52.333Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:25:57.384Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:26:06.945Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:26:16.868Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:26:19.112Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:26:24.935Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:30:13.119Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:36:16.985Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:36:32.593Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:36:36.632Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:40:48.648Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:40:51.252Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:40:56.036Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:40:57.984Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:40:59.718Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:41:07.149Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:41:14.575Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:41:21.948Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:41:24.674Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:41:30.228Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:41:34.622Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:42:37.164Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:42:57.389Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:43:03.720Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:43:42.013Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:48:07.764Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:48:13.027Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:48:19.076Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:48:21.104Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:48:26.734Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:48:28.986Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:48:33.635Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:48:35.807Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:49:19.652Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:49:47.078Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:49:49.083Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:50:04.501Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:52:21.769Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:52:30.386Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:54:05.043Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:54:08.625Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:57:29.641Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:57:36.357Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:57:38.400Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:57:47.927Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:57:49.544Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:58:22.801Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T13:58:26.141Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T14:00:09.977Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T14:00:47.727Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T14:06:37.268Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T15:26:01.776Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T15:30:43.612Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T15:31:15.166Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T15:32:29.141Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T15:32:33.666Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T15:32:36.785Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T15:32:40.841Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T15:32:44.007Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T15:32:55.180Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T15:33:07.512Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T15:33:21.260Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T15:33:32.641Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T15:33:35.708Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T15:34:00.641Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T15:34:04.044Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T15:36:04.362Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T15:36:10.053Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T15:38:14.288Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T15:49:49.342Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T15:49:52.610Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T15:50:03.157Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T15:50:06.606Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T15:50:17.162Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:09:26.140Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:19:04.954Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:19:25.660Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:19:50.725Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:19:53.152Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:21:40.897Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:21:43.196Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:22:22.635Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:22:40.633Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:23:03.710Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:26:55.902Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:41:01.413Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:41:07.043Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:41:12.706Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:41:58.149Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:42:02.207Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:42:09.244Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:42:12.864Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:42:16.742Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:44:09.445Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:44:11.985Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:45:22.740Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:45:28.564Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:47:34.327Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:47:37.710Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:49:18.626Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:50:16.389Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:50:21.939Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:50:38.237Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:50:49.111Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:53:09.483Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:57:03.616Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:57:05.517Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-23T16:57:17.567Z"}

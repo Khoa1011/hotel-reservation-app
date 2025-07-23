@@ -19,7 +19,17 @@ const RoomSchema = new mongoose.Schema({
     enum: ["sea_view", "city_view", "garden_view", "mountain_view", "pool_view", "none"],
     default: "none"
   },
-  trangThaiPhong: { type: Boolean, default: false },
+  trangThaiPhong: { 
+    type: String,
+    enum: [
+      "trong",           // Phòng trống, sẵn sàng cho khách
+      "dang_su_dung",    // Khách đang ở
+      "dang_don_dep",    // Đang dọn dẹp sau khách trả phòng
+      "bao_tri",         // Đang bảo trì, sửa chữa
+      "khong_kha_dung"   // Không khả dụng (hỏng hóc, ngừng hoạt động)
+    ],
+    default: "trong"
+  },
   dienTich: Number,
   moTa: { type: String, required: true },
   soLuongGiuong: { type: Number, required: true, min: 1 },

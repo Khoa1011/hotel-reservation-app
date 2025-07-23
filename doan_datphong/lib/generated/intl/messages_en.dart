@@ -529,7 +529,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "warning": MessageLookupByLibrary.simpleMessage("Warning!"),
     "weekendSurcharge": MessageLookupByLibrary.simpleMessage(
-      "Weekend Tax & Fee (1.2%)",
+      "Weekend Tax & Fee (20%)",
     ),
     "welcome": MessageLookupByLibrary.simpleMessage("Welcome"),
     "welcomeToStaytion": MessageLookupByLibrary.simpleMessage(

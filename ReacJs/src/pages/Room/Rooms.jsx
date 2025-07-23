@@ -347,7 +347,7 @@ const RoomManagement = ({ selectedHotelId }) => {
                         onClick={() => toggleRoomStatus(room._id, room.trangThaiPhong, room.soPhong)}
                         className="flex-1 px-3 py-2 text-sm rounded flex items-center justify-center gap-1"
                         style={{
-                          backgroundColor: room.trangThaiPhong ?  '#ef4444' :'#10b981' ,
+                          backgroundColor: room.trangThaiPhong ?  '#ef4444' :'#10b981',
                           color: 'white'
                         }}
                       >

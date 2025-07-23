@@ -204,7 +204,6 @@ roomHotelRouter.put("/hotelowner/update-roomtype/:roomTypeId", authorizeRoles("c
                 tenLoaiPhong: tenLoaiPhong.trim(),
                 _id: { $ne: roomTypeId }
             });
-
             if (existingRoomType) {
                 return res.status(409).json({
                     success: false,

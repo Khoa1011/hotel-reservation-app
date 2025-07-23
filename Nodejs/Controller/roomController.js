@@ -5,7 +5,7 @@ const RoomType = require("../Model/RoomType/RoomType");
 const Hotels = require("../Model/Hotel/Hotel");
 const authorizeRoles = require('../middleware/roleAuth');
 const mongoose = require("mongoose");
-const RoomImage = require("../Model/Room/RoomImage"); 
+const RoomImage = require("../Model/Room/RoomImage");
 const AmenityDetails = require("../Model/Amenities/AmenityDetails");
 const Amenity = require("../Model/Amenities/Amenities");
 const roomRouter = express.Router();
@@ -20,15 +20,15 @@ roomRouter.post("/add", uploadRoom.any(), async (req, res) => {
             req.file = req.files[0];
         }
 
-        const { 
-            maLoaiPhong, 
-            maKhachsan, 
-            trangThaiPhong, 
-            moTa, 
-            soLuongGiuong, 
-            soLuongNguoiToiDa, 
-            danhSachTienNghi, 
-            tongSoPhong 
+        const {
+            maLoaiPhong,
+            maKhachsan,
+            trangThaiPhong,
+            moTa,
+            soLuongGiuong,
+            soLuongNguoiToiDa,
+            danhSachTienNghi,
+            tongSoPhong
         } = req.body;
 
         // Validation
@@ -42,8 +42,8 @@ roomRouter.post("/add", uploadRoom.any(), async (req, res) => {
         if (!tongSoPhong) missingFields.push("tongSoPhong");
 
         if (missingFields.length > 0) {
-            return res.status(400).json({ 
-                message: "Missing required fields", 
+            return res.status(400).json({
+                message: "Missing required fields",
                 missingFields
             });
         }
@@ -85,9 +85,9 @@ roomRouter.post("/add", uploadRoom.any(), async (req, res) => {
                     amenitiesList = danhSachTienNghi;
                 }
             } catch (parseError) {
-                return res.status(400).json({ 
+                return res.status(400).json({
                     message: "Invalid amenities format",
-                    error: parseError.message 
+                    error: parseError.message
                 });
             }
         }
@@ -97,7 +97,9 @@ roomRouter.post("/add", uploadRoom.any(), async (req, res) => {
             maLoaiPhong,
             maKhachsan,
             hinhAnh: imagePath,
-            trangThaiPhong: trangThaiPhong === 'true' || trangThaiPhong === true,
+            trangThaiPhong: typeof trangThaiPhong === 'string' && trangThaiPhong
+                ? trangThaiPhong
+                : "trong",
             moTa: moTa.trim(),
             soLuongGiuong: parseInt(soLuongGiuong),
             soLuongNguoiToiDa: parseInt(soLuongNguoiToiDa),
@@ -119,9 +121,9 @@ roomRouter.post("/add", uploadRoom.any(), async (req, res) => {
 
         await hotel.save();
 
-        res.status(201).json({ 
+        res.status(201).json({
             success: true,
-            message: "Room added successfully", 
+            message: "Room added successfully",
             room: newRoom
         });
 
@@ -131,9 +133,9 @@ roomRouter.post("/add", uploadRoom.any(), async (req, res) => {
             fs.unlinkSync(req.file.path);
         }
 
-        res.status(500).json({ 
+        res.status(500).json({
             success: false,
-            message: "Server error", 
+            message: "Server error",
             error: error.message
         });
     }
@@ -142,7 +144,7 @@ roomRouter.post("/add", uploadRoom.any(), async (req, res) => {
 // API lấy thông tin chi tiết phòng (bao gồm hình ảnh và tiện nghi)
 roomRouter.get("/details/:roomId", async (req, res) => {
     const { roomId } = req.params;
-    
+
     try {
         // Validate ObjectId
         if (!mongoose.Types.ObjectId.isValid(roomId)) {
@@ -170,12 +172,12 @@ roomRouter.get("/details/:roomId", async (req, res) => {
             .select('url_anh thuTuAnh moTa');
 
         // Lấy danh sách tiện nghi
-        const amenities = await AmenityDetails.find({ 
+        const amenities = await AmenityDetails.find({
             maPhong: roomId,
-            trangThai: true 
+            trangThai: true
         })
-        .populate('maTienNghi', 'tenTienNghi loaiTienNghi icon')
-        .select('maTienNghi soLuong moTa');
+            .populate('maTienNghi', 'tenTienNghi loaiTienNghi icon')
+            .select('maTienNghi soLuong moTa');
 
         const result = {
             roomInfo: {

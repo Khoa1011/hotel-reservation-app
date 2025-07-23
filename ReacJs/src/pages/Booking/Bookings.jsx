@@ -69,18 +69,16 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
   const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
 
   //State gán phòng
-  const [availableRooms, setAvailableRooms] = useState([]);
-  const [loadingAvailableRooms, setLoadingAvailableRooms] = useState(false);
+
 
   // State cho room assignment
   const [showRoomAssignModal, setShowRoomAssignModal] = useState(false);
   const [assigningBooking, setAssigningBooking] = useState(null);
-  const [roomAssignData, setRoomAssignData] = useState({
-    roomNumber: '',
-    floor: 1,
-    viewType: '',
-    notes: ''
-  });
+
+  const [assignmentData, setAssignmentData] = useState([]);
+  const [availableRooms, setAvailableRooms] = useState([]);
+  const [loadingRooms, setLoadingRooms] = useState(false);
+
 
   //State cho thông báo nếu có đơn mới 
   const { notifications, fetchAllNotifications, markHotelAsRead } = useNotifications();
@@ -90,6 +88,35 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
   const [viewingBooking, setViewingBooking] = useState(null);
   //State chọn tầng
   const [enableFloorSelection, setEnableFloorSelection] = useState(false);
+
+  const [showTransferRoomModal, setShowTransferRoomModal] = useState(false);
+  const [transferringAssignment, setTransferringAssignment] = useState(null);
+  const [showAddServiceModal, setShowAddServiceModal] = useState(false);
+  const [addingServiceAssignment, setAddingServiceAssignment] = useState(null);
+  const [showGuestInfoModal, setShowGuestInfoModal] = useState(false);
+  const [editingGuestAssignment, setEditingGuestAssignment] = useState(null);
+
+  // State cho transfer room
+  const [transferRoomData, setTransferRoomData] = useState({
+    newRoomId: '',
+    reason: '',
+    transferFee: 0
+  });
+
+  // State cho add service
+  const [newServiceData, setNewServiceData] = useState({
+    services: [{ name: '', price: '', quantity: 1 }]
+  });
+
+  // State cho guest info
+  const [guestInfoData, setGuestInfoData] = useState({
+    tenKhachChinh: '',
+    soDienThoaiLienHe: '',
+    soLuongKhachThucTe: 1,
+    hasCompanions: false,
+    danhSachKhach: [],
+    yeuCauDacBiet: ''
+  });
 
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -138,6 +165,370 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
   };
 
 
+  const loadAvailableRooms = async (booking) => {
+    if (!booking) return;
+
+    setLoadingRooms(true);
+    try {
+      let roomTypeId = booking.roomTypeId || booking.maLoaiPhong;
+
+      if (!roomTypeId) {
+        const roomTypeMapping = {
+          'Phòng của Khoa': '687d1e94cee4aed371090b63',
+        };
+        roomTypeId = roomTypeMapping[booking.roomType];
+      }
+
+      if (!roomTypeId) {
+        toast.error(`Không thể xác định loại phòng "${booking.roomType}"`);
+        setAvailableRooms([]);
+        return;
+      }
+
+      const payload = {
+        maLoaiPhong: roomTypeId,
+        checkInDate: moment(booking.checkInDate, 'DD-MM-YYYY').format('YYYY-MM-DD'),
+        checkOutDate: moment(booking.checkOutDate, 'DD-MM-YYYY').format('YYYY-MM-DD'),
+        checkInTime: booking.checkInTime,
+        checkOutTime: booking.checkOutTime,
+        bookingType: booking.bookingType,
+        excludeBookingId: booking._id || booking.bookingId
+      };
+      const hotelId = booking.hotelId._id;
+
+      const response = await axios.post(
+        `${baseUrl}/api/room-hotel/${hotelId}/available-rooms-for-assignment`,
+        payload,
+        { withCredentials: true }
+      );
+
+      if (response.data?.success) {
+        setAvailableRooms(response.data.availableRooms);
+        if (response.data.availableRooms.length === 0) {
+          toast.warning('Không có phòng trống trong thời gian này');
+        }
+      } else {
+        setAvailableRooms([]);
+        toast.warning('Không tìm thấy phòng trống phù hợp');
+      }
+    } catch (error) {
+      console.error('Error loading available rooms:', error);
+      setAvailableRooms([]);
+      toast.error('Lỗi khi tải danh sách phòng trống');
+    } finally {
+      setLoadingRooms(false);
+    }
+  };
+
+
+  const updateAssignmentData = (index, field, value) => {
+    const newData = [...assignmentData];
+    newData[index][field] = value;
+
+    // Nếu chọn phòng, tự động điền thông tin
+    if (field === 'roomId' && value) {
+      const selectedRoom = availableRooms.find(r => r.roomId === value);
+      if (selectedRoom) {
+        newData[index].roomNumber = selectedRoom.soPhong;
+        newData[index].floor = selectedRoom.tang;
+        newData[index].viewType = selectedRoom.loaiView;
+      }
+    }
+
+    if (field === 'hasCompanions') {
+      if (value && !newData[index].danhSachKhach) {
+        newData[index].danhSachKhach = [{ ten: '', giayTo: '' }]; // Khởi tạo 1 khách
+      } else if (!value) {
+        newData[index].danhSachKhach = []; // Xóa danh sách nếu tắt
+      }
+    }
+
+    setAssignmentData(newData);
+  };
+
+  // ✅ THÊM: Handle bulk assign
+  const handleBulkAssign = async () => {
+    const validAssignments = assignmentData.filter(data => data.roomId);
+
+    if (validAssignments.length === 0) {
+      toast.error('Vui lòng chọn ít nhất 1 phòng!');
+      return;
+    }
+
+    setLoadingRooms(true);
+    let successCount = 0;
+    const errors = [];
+    const successfulAssignments = [];
+
+    try {
+      console.log(`🚀 Bắt đầu gán ${validAssignments.length} phòng cho đơn #${assigningBooking.bookingId}`);
+
+      // ✅ Gọi API cho từng phòng
+      for (let i = 0; i < validAssignments.length; i++) {
+        const data = validAssignments[i];
+
+        try {
+          const response = await axios.put(
+            `${baseUrl}/api/booking-hotel/hotelowner/assign-room/${assigningBooking.bookingId}`,
+            {
+              roomId: data.roomId,
+              notes: data.notes || `Phòng ${i + 1}/${validAssignments.length}`,
+              guestInfo: {
+                guestMain: data.guestName || '',
+                phoneContact: data.guestPhone || '',
+                specialRequest: data.specialRequest || '',
+                guestList: data.danhSachKhach || []
+              }
+            },
+            { withCredentials: true }
+          );
+
+          console.log(`✅ Phòng ${i + 1} response:`, response.data);
+
+          if (response.data?.message?.msgError === false) {
+            successCount++;
+
+            const assignmentInfo = response.data.assignment;
+            if (assignmentInfo) {
+              successfulAssignments.push({
+                assignmentId: assignmentInfo.assignmentId,
+                roomInfo: assignmentInfo.roomInfo,
+                status: assignmentInfo.status,
+                guestInfo: assignmentInfo.guestInfo || {
+                  tenKhachChinh: data.guestName || '',
+                  soDienThoaiLienHe: data.guestPhone || '',
+                  yeuCauDacBiet: data.specialRequest || ''
+                },
+                services: [],
+                serviceTotal: 0,
+                notes: data.notes || ''
+              });
+            }
+
+            // ✅ Log progress từ backend
+            const { bookingStatus } = response.data;
+            if (bookingStatus) {
+              console.log(`📊 Progress: ${bookingStatus.totalAssigned}/${bookingStatus.totalNeeded} phòng đã gán`);
+            }
+          } else {
+            errors.push(`Phòng ${i + 1}: ${response.data?.message?.msgBody || 'Lỗi không xác định'}`);
+          }
+        } catch (error) {
+          const errorMsg = error.response?.data?.message?.msgBody || error.message;
+          errors.push(`Phòng ${i + 1}: ${errorMsg}`);
+          console.error(`❌ Error assigning room ${i + 1}:`, error);
+        }
+      }
+
+      // ✅ Hiển thị kết quả
+      if (successCount > 0) {
+        if (successCount === validAssignments.length) {
+          toast.success(`🎉 Đã gán tất cả ${successCount} phòng thành công!`);
+        } else {
+          toast.success(`✅ Đã gán ${successCount}/${validAssignments.length} phòng thành công!`);
+
+          // Hiển thị lỗi nếu có
+          if (errors.length > 0) {
+            toast.warning(`⚠️ Một số phòng gán thất bại: ${errors.slice(0, 2).join(', ')}${errors.length > 2 ? `... và ${errors.length - 2} lỗi khác` : ''}`);
+          }
+        }
+
+        // ✅ Cập nhật state chỉ khi có ít nhất 1 phòng thành công
+        const newStatus = successCount === assigningBooking.roomQuantity ? 'da_nhan_phong' : 'da_xac_nhan';
+
+        setLocalBookings(prev =>
+          prev.map(b =>
+            b.bookingId === assigningBooking.bookingId
+              ? {
+                ...b,
+                status: newStatus,
+                assignedRooms: [...(b.assignedRooms || []), ...successfulAssignments]
+              }
+              : b
+          )
+        );
+        setBookings(prev =>
+          prev.map(b =>
+            b.bookingId === assigningBooking.bookingId
+              ? {
+                ...b,
+                status: newStatus,
+                assignedRooms: [...(b.assignedRooms || []), ...successfulAssignments] 
+              }
+              : b
+          )
+        );
+        setShowRoomAssignModal(false);
+
+        setTimeout(() => {
+          checkForNewBookings();
+        }, 1000);
+      } else {
+        toast.error('❌ Không thể gán phòng nào!');
+
+        // Hiển thị chi tiết lỗi
+        if (errors.length > 0) {
+          console.error('Danh sách lỗi:', errors);
+          toast.error(`Chi tiết lỗi: ${errors[0]}`); // Hiển thị lỗi đầu tiên
+        }
+      }
+    } catch (error) {
+      console.error('❌ Critical error in bulk assign:', error);
+      toast.error('Lỗi nghiêm trọng khi gán phòng!');
+    } finally {
+      setLoadingRooms(false);
+    }
+  };
+
+  // ✅ BONUS: Helper function để validate trước khi gán
+  const validateAssignments = () => {
+    const validAssignments = assignmentData.filter(data => data.roomId);
+    const roomIds = validAssignments.map(data => data.roomId);
+    const duplicateRooms = roomIds.filter((id, index) => roomIds.indexOf(id) !== index);
+
+    if (duplicateRooms.length > 0) {
+      toast.error('❌ Có phòng bị chọn trùng lặp!');
+      return false;
+    }
+
+    if (validAssignments.length === 0) {
+      toast.error('❌ Vui lòng chọn ít nhất 1 phòng!');
+      return false;
+    }
+
+    return true;
+  };
+
+  // ✅ THÊM: Get used room IDs
+  const getUsedRoomIds = () => {
+    return assignmentData.map(data => data.roomId).filter(Boolean);
+  };
+
+  // ✅ THÊM: Get available rooms for specific index
+  const getAvailableRoomsForIndex = (currentIndex) => {
+    const usedIds = getUsedRoomIds();
+    const currentRoomId = assignmentData[currentIndex]?.roomId;
+
+    return availableRooms.filter(room =>
+      !usedIds.includes(room.roomId) || room.roomId === currentRoomId
+    );
+  };
+
+  // Đổi phòng
+  const transferRoom = async (assignmentId, transferData) => {
+    try {
+      const response = await axios.post(
+        `${baseUrl}/api/booking-hotel/hotelowner/transfer-room/${assignmentId}`,
+        transferData,
+        { withCredentials: true }
+      );
+
+      if (response.data?.message?.msgError === false) {
+        toast.success(response.data.message.msgBody);
+
+        // Cập nhật local state
+        setLocalBookings(prev =>
+          prev.map(booking => ({
+            ...booking,
+            assignedRooms: booking.assignedRooms?.map(room =>
+              room.assignmentId === assignmentId
+                ? { ...room, ...response.data.transfer.newRoom }
+                : room
+            )
+          }))
+        );
+
+        setShowTransferRoomModal(false);
+        return { success: true };
+      } else {
+        toast.error(response.data?.message?.msgBody || "Đổi phòng thất bại!");
+        return { success: false };
+      }
+    } catch (error) {
+      console.error("Lỗi đổi phòng:", error);
+      toast.error("Lỗi khi đổi phòng!");
+      return { success: false };
+    }
+  };
+
+  // Thêm dịch vụ cho phòng
+  const addRoomService = async (assignmentId, services) => {
+    try {
+      const response = await axios.post(
+        `${baseUrl}/api/booking-hotel/hotelowner/add-room-service/${assignmentId}`,
+        { services },
+        { withCredentials: true }
+      );
+
+      if (response.data?.message?.msgError === false) {
+        toast.success(response.data.message.msgBody);
+
+        // Cập nhật local state
+        setLocalBookings(prev =>
+          prev.map(booking => ({
+            ...booking,
+            assignedRooms: booking.assignedRooms?.map(room =>
+              room.assignmentId === assignmentId
+                ? {
+                  ...room,
+                  services: [...(room.services || []), ...response.data.services],
+                  serviceTotal: response.data.totalServiceFee
+                }
+                : room
+            ),
+            totalAmount: booking.totalAmount + response.data.services.reduce((total, s) => total + s.thanhTien, 0)
+          }))
+        );
+
+        setShowAddServiceModal(false);
+        return { success: true };
+      } else {
+        toast.error(response.data?.message?.msgBody || "Thêm dịch vụ thất bại!");
+        return { success: false };
+      }
+    } catch (error) {
+      console.error("Lỗi thêm dịch vụ:", error);
+      toast.error("Lỗi khi thêm dịch vụ!");
+      return { success: false };
+    }
+  };
+
+  // Cập nhật thông tin khách
+  const updateGuestInfo = async (assignmentId, guestInfo) => {
+    try {
+      const response = await axios.put(
+        `${baseUrl}/api/booking-hotel/hotelowner/update-room-guests/${assignmentId}`,
+        { guestInfo },
+        { withCredentials: true }
+      );
+
+      if (response.data?.message?.msgError === false) {
+        toast.success(response.data.message.msgBody);
+
+        // Cập nhật local state
+        setLocalBookings(prev =>
+          prev.map(booking => ({
+            ...booking,
+            assignedRooms: booking.assignedRooms?.map(room =>
+              room.assignmentId === assignmentId
+                ? { ...room, guestInfo: response.data.guestInfo }
+                : room
+            )
+          }))
+        );
+
+        setShowGuestInfoModal(false);
+        return { success: true };
+      } else {
+        toast.error(response.data?.message?.msgBody || "Cập nhật thất bại!");
+        return { success: false };
+      }
+    } catch (error) {
+      console.error("Lỗi cập nhật thông tin khách:", error);
+      toast.error("Lỗi khi cập nhật thông tin khách!");
+      return { success: false };
+    }
+  };
 
   // ✅ THÊM: Hàm kiểm tra đơn mới (hoàn toàn tự động)
   const checkForNewBookings = async () => {
@@ -153,7 +544,6 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
         const newBookings = response.data;
         const previousCount = previousBookingCountRef.current;
         const currentCount = newBookings.length;
-
         // Phát hiện đơn mới
         if (currentCount > previousCount) {
           const existingBookingIds = bookings.map(b => b.bookingId);
@@ -253,6 +643,31 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
   }, [bookings]);
 
 
+
+  // Modal functions
+  const openTransferRoomModal = (assignment) => {
+    setTransferringAssignment(assignment);
+    setTransferRoomData({ newRoomId: '', reason: '', transferFee: 0 });
+    setShowTransferRoomModal(true);
+  };
+
+  const openAddServiceModal = (assignment) => {
+    setAddingServiceAssignment(assignment);
+    setNewServiceData({ services: [{ name: '', price: '', quantity: 1 }] });
+    setShowAddServiceModal(true);
+  };
+
+  const openGuestInfoModal = (assignment) => {
+    setEditingGuestAssignment(assignment);
+    setGuestInfoData(assignment.guestInfo || {
+      tenKhachChinh: '',
+      soDienThoaiLienHe: '',
+      soLuongKhachThucTe: 1,
+      danhSachKhach: [],
+      yeuCauDacBiet: ''
+    });
+    setShowGuestInfoModal(true);
+  };
 
   //Modal đóng/mở hủy đơn
   const openCancelModal = (booking) => {
@@ -378,123 +793,7 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
   // Hàm gán phòng
 
   const assignRoom = async (bookingId, roomData) => {
-    try {
-      console.log('🔍 assignRoom called with:', {
-        bookingId,
-        roomData,
-        apiUrl: `${baseUrl}/api/booking-hotel/hotelowner/assign-room/${bookingId}`
-      });
 
-      // ✅ Validate input data
-      if (!bookingId) {
-        toast.error('Thiếu booking ID');
-        return { success: false };
-      }
-
-      if (!roomData || !roomData.soPhong) {
-        toast.error('Thiếu thông tin phòng');
-        return { success: false };
-      }
-
-      // ✅ FIXED: Map frontend data to backend expected format
-      const payload = {
-        roomNumber: roomData.soPhong,      // ✅ Backend expects "roomNumber"
-        floor: roomData.tang || 1,         // ✅ Backend expects "floor"  
-        viewType: roomData.loaiView || '', // ✅ Backend expects "viewType"
-        notes: roomData.ghiChuPhong || roomData.notes || '' // ✅ Backend expects "notes"
-      };
-
-      console.log('📤 Assign room payload (FIXED):', payload);
-
-      // ✅ FIXED: Use correct endpoint with /:id instead of /:bookingId
-      const response = await axios.put(
-        `${baseUrl}/api/booking-hotel/hotelowner/assign-room/${bookingId}`,
-        payload,
-        { withCredentials: true }
-      );
-
-      console.log('📥 Assign room response:', response.data);
-
-      if (response.data?.message?.msgError === false) {
-        // Update local bookings với assigned room mới
-        setLocalBookings((prev) =>
-          prev.map((b) => {
-            if (b.bookingId === bookingId) {
-              return {
-                ...b,
-                assignedRooms: [...(b.assignedRooms || []), {
-                  soPhong: roomData.soPhong,        // ✅ Keep frontend format
-                  tang: roomData.tang || 1,
-                  loaiView: roomData.loaiView || '',
-                  trangThaiPhong: 'da_giao_phong',
-                  ghiChuPhong: roomData.ghiChuPhong || roomData.notes || '',
-                  thoiGianGiaoPhong: new Date().toISOString()
-                }],
-                status: 'da_nhan_phong' // Update status
-              };
-            }
-            return b;
-          })
-        );
-
-        setBookings((prev) =>
-          prev.map((b) => {
-            if (b.bookingId === bookingId) {
-              return {
-                ...b,
-                assignedRooms: [...(b.assignedRooms || []), {
-                  soPhong: roomData.soPhong,
-                  tang: roomData.tang || 1,
-                  loaiView: roomData.loaiView || '',
-                  trangThaiPhong: 'da_giao_phong',
-                  ghiChuPhong: roomData.ghiChuPhong || roomData.notes || '',
-                  thoiGianGiaoPhong: new Date().toISOString()
-                }],
-                status: 'da_nhan_phong'
-              };
-            }
-            return b;
-          })
-        );
-
-        toast.success(`Gán phòng ${roomData.soPhong} thành công!`);
-        setShowRoomAssignModal(false);
-        setRoomAssignData({ roomNumber: '', floor: 1, viewType: '', notes: '', roomId: '' });
-        return { success: true };
-      } else {
-        const errorMsg = response.data?.message?.msgBody || "Gán phòng thất bại!";
-        console.log('❌ Assign room failed:', errorMsg);
-        toast.error(errorMsg);
-        return { success: false };
-      }
-    } catch (error) {
-      console.error("❌ assignRoom error:", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        config: {
-          method: error.config?.method,
-          url: error.config?.url,
-          data: error.config?.data
-        }
-      });
-
-      // ✅ Better error handling
-      if (error.response?.status === 404) {
-        toast.error("Không tìm thấy đơn đặt phòng hoặc API");
-      } else if (error.response?.status === 400) {
-        const errorMsg = error.response?.data?.message?.msgBody ||
-          error.response?.data?.message ||
-          'Dữ liệu không hợp lệ';
-        toast.error(`❌ ${errorMsg}`);
-      } else if (error.response?.status === 500) {
-        toast.error("Lỗi server khi gán phòng");
-      } else {
-        toast.error("Lỗi khi gán phòng!");
-      }
-
-      return { success: false };
-    }
   };
 
   const getFilteredBookings = () => {
@@ -562,100 +861,32 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
       return;
     }
 
-    console.log('🔍 DEBUG: Full booking object:', booking);
 
-    // ✅ SMART DETECTION for roomTypeId
-    let foundRoomTypeId = booking.roomTypeId || booking.maLoaiPhong;
-
-    // ✅ If backend didn't provide roomTypeId, use smart mapping
-    if (!foundRoomTypeId) {
-      console.log('⚠️ Backend missing roomTypeId, using smart mapping...');
-
-      const roomTypeMapping = {
-        'Phòng của Khoa': '687d1e94cee4aed371090b63',
-        // Add more mappings as needed
-      };
-
-      foundRoomTypeId = roomTypeMapping[booking.roomType];
-
-      if (foundRoomTypeId) {
-        console.log('✅ Smart mapping found roomTypeId:', foundRoomTypeId);
-      } else {
-        console.log('❌ No mapping found for roomType:', booking.roomType);
-      }
-    } else {
-      console.log('✅ Backend provided roomTypeId:', foundRoomTypeId);
-    }
-
-    if (!foundRoomTypeId) {
-      console.log('❌ Could not determine roomTypeId');
-      toast.error(`Không thể xác định loại phòng "${booking.roomType}"`);
-      setAvailableRooms([]);
-      return;
-    }
-
-    console.log('🔍 DEBUG: Using roomTypeId:', foundRoomTypeId);
-
-    setLoadingAvailableRooms(true);
-    try {
-      const payload = {
-        maLoaiPhong: foundRoomTypeId, // ✅ NOW HAS VALUE!
-        checkInDate: moment(booking.checkInDate, 'DD-MM-YYYY').format('YYYY-MM-DD'),
-        checkOutDate: moment(booking.checkOutDate, 'DD-MM-YYYY').format('YYYY-MM-DD'),
-        checkInTime: booking.checkInTime,
-        checkOutTime: booking.checkOutTime,
-        bookingType: booking.bookingType,
-        excludeBookingId: booking._id || booking.bookingId
-      };
-
-      console.log('📤 API Request payload (FIXED):', payload);
-
-      const response = await axios.post(
-        `${baseUrl}/api/room-hotel/${booking.hotelId._id}/available-rooms-for-assignment`,
-        payload,
-        { withCredentials: true }
-      );
-
-      console.log('📥 API Response:', response.data);
-
-      if (response.data?.success) {
-        console.log('✅ Available rooms found:', response.data.availableRooms.length);
-        setAvailableRooms(response.data.availableRooms);
-
-        if (response.data.availableRooms.length === 0) {
-          console.log('⚠️ No rooms available:', response.data.message);
-          toast.warning(response.data.message || 'Không có phòng trống trong thời gian này');
-        } else {
-          toast.success(`🎉 Tìm thấy ${response.data.availableRooms.length} phòng trống!`);
-        }
-      } else {
-        console.log('❌ API returned success: false');
-        setAvailableRooms([]);
-        toast.warning('Không tìm thấy phòng trống phù hợp');
-      }
-    } catch (error) {
-      console.error('❌ API Error:', error);
-      setAvailableRooms([]);
-      toast.error('Lỗi khi tải danh sách phòng trống');
-    } finally {
-      setLoadingAvailableRooms(false);
-    }
   };
-
-
 
   // Hàm mở modal gán phòng
   const openRoomAssignModal = async (booking) => {
-
-    console.log('🏨 Opening room assign modal for:', booking.bookingId);
-    console.log('🔍 Full booking object to check roomTypeId:', booking);
+    console.log('🏨 Opening bulk assign modal for:', booking.bookingId);
     setAssigningBooking(booking);
+
+    // Khởi tạo assignment data dựa trên số phòng cần gán
+    const unassignedCount = booking.roomQuantity - (booking.assignedRooms?.length || 0);
+    const initialData = Array(unassignedCount).fill().map((_, index) => ({
+      roomId: '',
+      roomNumber: '',
+      floor: '',
+      viewType: '',
+      notes: '',
+      guestName: '',
+      guestPhone: '',
+      specialRequest: '',
+      hasCompanions: false,
+      danhSachKhach: []
+    }));
+    setAssignmentData(initialData);
+
     setShowRoomAssignModal(true);
-
-    setRoomAssignData({ roomNumber: '', floor: 1, viewType: '', notes: '' });
-
-    // Fetch available rooms
-    await fetchAvailableRoomsForAssignment(booking);
+    await loadAvailableRooms(booking);
   };
 
   // Hàm mở modal chỉnh sửa
@@ -668,6 +899,18 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
   const openDetailModal = (booking) => {
     setViewingBooking(booking);
     setShowDetailModal(true);
+  };
+
+  const getViewText = (viewType) => {
+    const viewTexts = {
+      'sea_view': 'View biển',
+      'city_view': 'View thành phố',
+      'garden_view': 'View vườn',
+      'mountain_view': 'View núi',
+      'pool_view': 'View hồ bơi',
+      'none': ''
+    };
+    return viewTexts[viewType] || '';
   };
 
   // Hàm fetch danh sách đặt phòng
@@ -898,21 +1141,6 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
     }));
   };
 
-
-  // const clearFilters = () => {
-  //   setFilters({
-  //     status: '',
-  //     dateFrom: '',
-  //     dateTo: '',
-  //     timeRange: '',
-  //   });
-
-  //   setFilters(clearedFilters);
-  //   localStorage.removeItem("selectedHotelId");
-
-  //   // Hiển thị lại tất cả bookings
-  //   setLocalBookings(bookings);
-  // };
 
 
   const clearFilters = () => {
@@ -1306,19 +1534,69 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
                           </h4>
                           <div className="space-y-2">
                             {booking.assignedRooms.map((room, index) => (
-                              <div key={index} className="bg-white p-2 rounded border">
-                                <p className="font-medium">Phòng {room.soPhong}</p>
-                                <p className="text-xs text-gray-600">
-                                  Tầng {room.tang} • {room.loaiView === 'sea_view' ? 'View biển' :
-                                    room.loaiView === 'city_view' ? 'View thành phố' :
-                                      room.loaiView === 'garden_view' ? 'View vườn hoa' :
-                                        room.loaiView === 'mountain_view' ? 'View núi' :
-                                          room.loaiView === 'pool_view' ? 'View hồ bơi'
-                                            : "N/A"} • {room.trangThaiPhong === 'da_giao_phong' ? 'Đã giao phòng' :
-                                              room.trangThaiPhong === 'da_check-in' ? 'Đã check-in' : 'Đã check-out'}
-                                </p>
-                                {room.ghiChuPhong && (
-                                  <p className="text-xs text-gray-500">{room.ghiChuPhong}</p>
+                              <div key={index} className="bg-white p-3 rounded border">
+                                <div className="flex justify-between items-start mb-2">
+                                  <div>
+                                    <p className="font-medium">Phòng {room.roomInfo?.soPhong}</p>
+                                    <p className="text-xs text-gray-600">
+                                      Tầng {room.roomInfo?.tang} • {getViewText(room.roomInfo?.loaiView)}
+                                    </p>
+                                    {room.guestInfo?.tenKhachChinh && (
+                                      <p className="text-xs text-blue-600">
+                                        Khách: {room.guestInfo.tenKhachChinh}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <span className={`px-2 py-1 text-xs rounded-full ${getVietnameseStatusColor(room.status)}`}>
+                                    {getVietnameseStatusText(room.status)}
+                                  </span>
+                                </div>
+
+                                {/* Services for this room */}
+                                {room.services && room.services.length > 0 && (
+                                  <div className="mt-2">
+                                    <p className="text-xs font-medium text-gray-700">Dịch vụ:</p>
+                                    <div className="text-xs text-gray-600">
+                                      {room.services.map((service, idx) => (
+                                        <div key={idx} className="flex justify-between">
+                                          <span>{service.tenDichVu} x{service.soLuong}</span>
+                                          <span>{formatCurrency(service.thanhTien)}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    <div className="text-xs font-medium text-blue-600 border-t pt-1 mt-1">
+                                      Tổng DV: {formatCurrency(room.serviceTotal || 0)}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Room Actions */}
+                                <div className="flex space-x-1 mt-2">
+                                  <button
+                                    onClick={() => openGuestInfoModal(room)}
+                                    className="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+                                    title="Thông tin khách"
+                                  >
+                                    <User className="h-3 w-3" />
+                                  </button>
+                                  <button
+                                    onClick={() => openAddServiceModal(room)}
+                                    className="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600"
+                                    title="Thêm dịch vụ"
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                  </button>
+                                  <button
+                                    onClick={() => openTransferRoomModal(room)}
+                                    className="px-2 py-1 bg-orange-500 text-white text-xs rounded hover:bg-orange-600"
+                                    title="Đổi phòng"
+                                  >
+                                    <RefreshCw className="h-3 w-3" />
+                                  </button>
+                                </div>
+
+                                {room.notes && (
+                                  <p className="text-xs text-gray-500 mt-1 italic">{room.notes}</p>
                                 )}
                               </div>
                             ))}
@@ -1493,11 +1771,19 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
 
       {showRoomAssignModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-lg">
-            <div className="p-4 border-b flex justify-between items-center">
-              <h2 className="text-lg font-bold text-gray-800">
-                Gán phòng cho đơn #{assigningBooking?.bookingId}
-              </h2>
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-6xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-bold text-gray-800">
+                  Gán phòng cho đơn #{assigningBooking?.bookingId}
+                </h2>
+                <p className="text-sm text-gray-600">
+                  Cần gán: <span className="font-medium text-blue-600">{assignmentData.length} phòng</span>
+                  {assigningBooking?.assignedRooms?.length > 0 && (
+                    <span className="ml-2">| Đã gán: {assigningBooking.assignedRooms.length} phòng</span>
+                  )}
+                </p>
+              </div>
               <button
                 onClick={() => setShowRoomAssignModal(false)}
                 className="text-gray-500 hover:text-red-500"
@@ -1506,148 +1792,296 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
-              <div className="bg-gray-50 p-3 rounded">
-                <p className="text-sm text-gray-600">
-                  <strong>Khách:</strong> {assigningBooking?.customerName}
-                </p>
-                <p className="text-sm text-gray-600">
-                  <strong>Loại phòng:</strong> {assigningBooking?.roomType}
-                </p>
-                <p className="text-sm text-gray-600">
-                  <strong>Thời gian:</strong> {assigningBooking?.checkInDate} - {assigningBooking?.checkOutDate}
-                </p>
-                <p className="text-sm text-gray-600">
-                  <strong>Số lượng:</strong> {assigningBooking?.roomQuantity || 1} phòng
-                </p>
+            <div className="p-6">
+              {/* Thông tin booking */}
+              <div className="bg-blue-50 p-4 rounded-lg mb-6">
+                <h3 className="font-semibold text-blue-800 mb-2">Thông tin đặt phòng</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-600">Khách hàng:</span>
+                    <p className="font-medium">{assigningBooking?.customerName}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Loại phòng:</span>
+                    <p className="font-medium">{assigningBooking?.roomType}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Check-in:</span>
+                    <p className="font-medium">{assigningBooking?.checkInDate} {assigningBooking?.checkInTime}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Check-out:</span>
+                    <p className="font-medium">{assigningBooking?.checkOutDate} {assigningBooking?.checkOutTime}</p>
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-3">
-                {/* ✅ SỬA: Dropdown chọn phòng */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Chọn phòng trống *
-                  </label>
-                  {loadingAvailableRooms ? (
-                    <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 flex items-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500 mr-2"></div>
-                      <span className="text-gray-600 text-sm">Đang tải phòng trống...</span>
-                    </div>
-                  ) : availableRooms.length > 0 ? (
-                    <select
-                      value={roomAssignData.roomId || ''}
-                      onChange={(e) => {
-                        const selectedRoom = availableRooms.find(r => r.roomId === e.target.value);
-                        setRoomAssignData({
-                          roomNumber: selectedRoom?.soPhong || '',
-                          floor: selectedRoom?.tang || 1,
-                          viewType: selectedRoom?.loaiView || '',
-                          notes: roomAssignData.notes,
-                          roomId: selectedRoom?.roomId || '' // ✅ THÊM roomId
-                        });
-                      }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Chọn phòng</option>
-                      {availableRooms.map(room => (
-                        <option key={room.roomId} value={room.roomId}>
-                          {room.displayName}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <div className="w-full px-3 py-2 border border-red-300 rounded-lg bg-red-50 text-red-600 text-sm">
-                      ⚠️ Không có phòng trống phù hợp trong thời gian này
-                    </div>
-                  )}
-
-                  <p className="text-xs text-gray-500 mt-1">
-                    💡 Hệ thống chỉ hiển thị phòng trống trong thời gian đặt
-                  </p>
-                </div>
-
-                {/* ✅ THÊM: Hiển thị thông tin phòng đã chọn */}
-                {roomAssignData.roomNumber && (
-                  <div className="bg-blue-50 p-3 rounded border">
-                    <h5 className="font-medium text-blue-800 mb-2">Thông tin phòng đã chọn:</h5>
-                    <div className="text-sm space-y-1">
-                      <div className="flex justify-between">
-                        <span>Số phòng:</span>
-                        <span className="font-medium">{roomAssignData.roomNumber}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Tầng:</span>
-                        <span className="font-medium">{roomAssignData.floor}</span>
-                      </div>
-                      {roomAssignData.viewType && roomAssignData.viewType !== 'none' && (
-                        <div className="flex justify-between">
-                          <span>View:</span>
-                          <span className="font-medium">
-                            {roomAssignData.viewType === 'sea_view' ? 'View biển' :
-                              roomAssignData.viewType === 'city_view' ? 'View thành phố' :
-                                roomAssignData.viewType === 'garden_view' ? 'View vườn' :
-                                  roomAssignData.viewType === 'mountain_view' ? 'View núi' :
-                                    roomAssignData.viewType === 'pool_view' ? 'View hồ bơi' : 'N/A'}
+              {/* Danh sách phòng đã gán */}
+              {assigningBooking?.assignedRooms && assigningBooking.assignedRooms.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-800 mb-3">Phòng đã gán</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {assigningBooking.assignedRooms.map((room, index) => (
+                      <div key={index} className="bg-green-50 border border-green-200 p-3 rounded">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">Phòng {room.roomInfo?.soPhong}</span>
+                          <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded">
+                            Đã gán
                           </span>
                         </div>
-                      )}
+                        <p className="text-xs text-gray-600">
+                          Tầng {room.roomInfo?.tang} • {getViewText(room.roomInfo?.loaiView)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Form gán phòng mới */}
+              {assignmentData.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-3">
+                    Gán phòng mới ({assignmentData.length} phòng)
+                  </h3>
+
+                  <div className="space-y-4">
+                    {assignmentData.map((data, index) => (
+                      <div key={index} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex justify-between items-center mb-3">
+                          <h4 className="font-medium text-gray-700">
+                            Phòng {index + 1}
+                          </h4>
+                          {data.roomId && (
+                            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">
+                              Phòng {data.roomNumber}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {/* Chọn phòng */}
+                          <div className="md:col-span-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Chọn phòng *
+                            </label>
+                            <select
+                              value={data.roomId}
+                              onChange={(e) => updateAssignmentData(index, 'roomId', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="">Chọn phòng</option>
+                              {getAvailableRoomsForIndex(index).map(room => (
+                                <option key={room.roomId} value={room.roomId}>
+                                  {room.displayName}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* Tên khách */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Tên khách chính
+                            </label>
+                            <input
+                              type="text"
+                              value={data.guestName}
+                              onChange={(e) => updateAssignmentData(index, 'guestName', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              placeholder="Tên khách (tùy chọn)"
+                            />
+                          </div>
+
+                          {/* SĐT riêng */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              SĐT liên hệ
+                            </label>
+                            <input
+                              type="tel"
+                              value={data.guestPhone}
+                              onChange={(e) => updateAssignmentData(index, 'guestPhone', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              placeholder="SĐT riêng (tùy chọn)"
+                            />
+                          </div>
+
+                          {/* Yêu cầu đặc biệt */}
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Yêu cầu đặc biệt
+                            </label>
+                            <input
+                              type="text"
+                              value={data.specialRequest}
+                              onChange={(e) => updateAssignmentData(index, 'specialRequest', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              placeholder="Ghi chú đặc biệt cho phòng này..."
+                            />
+                          </div>
+
+                          {/* Ghi chú */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Ghi chú
+                            </label>
+                            <input
+                              type="text"
+                              value={data.notes}
+                              onChange={(e) => updateAssignmentData(index, 'notes', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              placeholder="Ghi chú thêm..."
+                            />
+                          </div>
+
+
+                          {/* Có khách đi cùng? */}
+                          <div className="md:col-span-3">
+                            <div className="border rounded-lg p-4 space-y-4 bg-gray-50">
+                              <div className="flex justify-between items-center">
+                                <label className="inline-flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={data.hasCompanions || false}
+                                    onChange={(e) =>
+                                      updateAssignmentData(index, 'hasCompanions', e.target.checked)
+                                    }
+                                    className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                                  />
+                                  <span className="ml-2 text-sm font-medium text-gray-700">Có khách đi cùng?</span>
+                                </label>
+                              </div>
+
+                              {/* Nếu có khách đi cùng thì hiển thị form */}
+                              {data.hasCompanions && (
+                                <div className="space-y-4">
+                                  <h4 className="font-medium text-sm text-gray-700">Danh sách khách đi cùng</h4>
+
+                                  <div className="space-y-3">
+                                    {(data.danhSachKhach || []).map((guest, gIndex) => (
+                                      <div key={gIndex} className="border rounded-lg p-4 space-y-3 bg-white">
+                                        <div className="flex justify-between items-center">
+                                          <h5 className="text-sm font-medium">Khách {gIndex + 1}</h5>
+                                          {(data.danhSachKhach || []).length > 1 && (
+                                            <button
+                                              onClick={() => {
+                                                const updatedGuests = [...data.danhSachKhach];
+                                                updatedGuests.splice(gIndex, 1);
+                                                updateAssignmentData(index, 'danhSachKhach', updatedGuests);
+                                              }}
+                                              className="text-red-500 hover:text-red-700"
+                                            >
+                                              <Trash2 className="h-4 w-4" />
+                                            </button>
+                                          )}
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                          <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                              Tên khách *
+                                            </label>
+                                            <input
+                                              type="text"
+                                              placeholder="Tên khách"
+                                              value={guest.ten || ''}
+                                              onChange={(e) => {
+                                                const updatedGuests = [...data.danhSachKhach];
+                                                updatedGuests[gIndex].ten = e.target.value;
+                                                updateAssignmentData(index, 'danhSachKhach', updatedGuests);
+                                              }}
+                                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                            />
+                                          </div>
+
+                                          <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                              Số giấy tờ (tuỳ chọn)
+                                            </label>
+                                            <input
+                                              type="text"
+                                              placeholder="Số giấy tờ (tuỳ chọn)"
+                                              value={guest.giayTo || ''}
+                                              onChange={(e) => {
+                                                const updatedGuests = [...data.danhSachKhach];
+                                                updatedGuests[gIndex].giayTo = e.target.value;
+                                                updateAssignmentData(index, 'danhSachKhach', updatedGuests);
+                                              }}
+                                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+
+                                  <button
+                                    onClick={() => {
+                                      const newList = data.danhSachKhach ? [...data.danhSachKhach] : [];
+                                      newList.push({ ten: '', giayTo: '' });
+                                      updateAssignmentData(index, 'danhSachKhach', newList);
+                                    }}
+                                    className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 text-gray-600 hover:text-blue-600 transition-colors"
+                                  >
+                                    <Plus className="h-4 w-4 mx-auto" />
+                                    Thêm khách
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Summary */}
+                  <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-center text-sm">
+                      <span>Đã chọn phòng:</span>
+                      <span className="font-medium">
+                        {assignmentData.filter(data => data.roomId).length}/{assignmentData.length}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm mt-1">
+                      <span>Phòng trống khả dụng:</span>
+                      <span className="font-medium text-green-600">
+                        {availableRooms.length} phòng
+                      </span>
                     </div>
                   </div>
-                )}
-
-                {/* ✅ GIỮ NGUYÊN: Ghi chú */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ghi chú
-                  </label>
-                  <textarea
-                    value={roomAssignData.notes}
-                    onChange={(e) => setRoomAssignData({ ...roomAssignData, notes: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    rows="2"
-                    placeholder="Ghi chú thêm về phòng..."
-                  />
                 </div>
-
-                {/* ✅ HIỂN THỊ: Thống kê phòng trống */}
-                {!loadingAvailableRooms && (
-                  <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
-                    📊 Tìm thấy <strong>{availableRooms.length}</strong> phòng trống cho loại phòng này
-                  </div>
-                )}
-              </div>
+              )}
             </div>
 
-            <div className="p-4 border-t flex justify-end space-x-3">
+            {/* Action buttons */}
+            <div className="sticky bottom-0 bg-white border-t p-4 flex justify-end space-x-3">
               <button
                 onClick={() => setShowRoomAssignModal(false)}
                 className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                disabled={loadingRooms}
               >
                 Hủy
               </button>
-              <button
-                onClick={() => {
-                  if (!roomAssignData.roomNumber || !roomAssignData.roomId) {
-                    toast.error('Vui lòng chọn phòng!');
-                    return;
-                  }
-
-                  // ✅ Gửi dữ liệu phòng đã chọn
-                  const assignData = {
-                    soPhong: roomAssignData.roomNumber,       
-                    tang: roomAssignData.floor,              
-                    loaiView: roomAssignData.viewType,       
-                    ghiChuPhong: roomAssignData.notes,        
-                    roomId: roomAssignData.roomId            
-                  };
-
-                  assignRoom(assigningBooking.bookingId, assignData);
-                }}
-                disabled={!roomAssignData.roomNumber || loadingAvailableRooms}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Gán phòng
-              </button>
+              {assignmentData.length > 0 && (
+                <button
+                  onClick={handleBulkAssign}
+                  disabled={loadingRooms || assignmentData.filter(data => data.roomId).length === 0}
+                  className={`px-4 py-2 rounded-lg font-medium ${loadingRooms || assignmentData.filter(data => data.roomId).length === 0
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
+                >
+                  {loadingRooms ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                      Đang gán...
+                    </div>
+                  ) : (
+                    `Gán ${assignmentData.filter(data => data.roomId).length} phòng`
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -2007,6 +2441,323 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
                     <span>Xác nhận hủy</span>
                   </>
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showTransferRoomModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
+            <div className="p-4 border-b flex justify-between items-center">
+              <h2 className="text-lg font-bold text-gray-800">
+                Đổi phòng {transferringAssignment?.roomInfo?.soPhong}
+              </h2>
+              <button
+                onClick={() => setShowTransferRoomModal(false)}
+                className="text-gray-500 hover:text-red-500"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Chọn phòng mới *
+                </label>
+                <select
+                  value={transferRoomData.newRoomId}
+                  onChange={(e) => setTransferRoomData({ ...transferRoomData, newRoomId: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Chọn phòng</option>
+                  {availableRooms.map(room => (
+                    <option key={room.roomId} value={room.roomId}>
+                      {room.displayName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Lý do đổi phòng *
+                </label>
+                <textarea
+                  value={transferRoomData.reason}
+                  onChange={(e) => setTransferRoomData({ ...transferRoomData, reason: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  rows="3"
+                  placeholder="Nhập lý do đổi phòng..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Phí đổi phòng (VNĐ)
+                </label>
+                <input
+                  type="number"
+                  value={transferRoomData.transferFee}
+                  onChange={(e) => setTransferRoomData({ ...transferRoomData, transferFee: parseInt(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  min="0"
+                />
+              </div>
+            </div>
+
+            <div className="p-4 border-t flex justify-end space-x-3">
+              <button
+                onClick={() => setShowTransferRoomModal(false)}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={() => {
+                  if (!transferRoomData.newRoomId || !transferRoomData.reason) {
+                    toast.error('Vui lòng chọn phòng và nhập lý do!');
+                    return;
+                  }
+                  transferRoom(transferringAssignment.assignmentId, transferRoomData);
+                }}
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+              >
+                Đổi phòng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal thêm dịch vụ */}
+      {showAddServiceModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-lg">
+            <div className="p-4 border-b flex justify-between items-center">
+              <h2 className="text-lg font-bold text-gray-800">
+                Thêm dịch vụ - Phòng {addingServiceAssignment?.roomInfo?.soPhong}
+              </h2>
+              <button
+                onClick={() => setShowAddServiceModal(false)}
+                className="text-gray-500 hover:text-red-500"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {newServiceData.services.map((service, index) => (
+                <div key={index} className="border rounded p-3 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <h4 className="font-medium">Dịch vụ {index + 1}</h4>
+                    {newServiceData.services.length > 1 && (
+                      <button
+                        onClick={() => {
+                          const newServices = [...newServiceData.services];
+                          newServices.splice(index, 1);
+                          setNewServiceData({ services: newServices });
+                        }}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Tên dịch vụ
+                      </label>
+                      <input
+                        type="text"
+                        value={service.name}
+                        onChange={(e) => {
+                          const newServices = [...newServiceData.services];
+                          newServices[index].name = e.target.value;
+                          setNewServiceData({ services: newServices });
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        placeholder="Tên dịch vụ"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Giá (VNĐ)
+                      </label>
+                      <input
+                        type="number"
+                        value={service.price}
+                        onChange={(e) => {
+                          const newServices = [...newServiceData.services];
+                          newServices[index].price = parseInt(e.target.value) || 0;
+                          setNewServiceData({ services: newServices });
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        min="0"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Số lượng
+                      </label>
+                      <input
+                        type="number"
+                        value={service.quantity}
+                        onChange={(e) => {
+                          const newServices = [...newServiceData.services];
+                          newServices[index].quantity = parseInt(e.target.value) || 1;
+                          setNewServiceData({ services: newServices });
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        min="1"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="text-sm text-gray-600">
+                    Thành tiền: {formatCurrency((service.price || 0) * (service.quantity || 1))}
+                  </div>
+                </div>
+              ))}
+
+              <button
+                onClick={() => {
+                  setNewServiceData({
+                    services: [...newServiceData.services, { name: '', price: '', quantity: 1 }]
+                  });
+                }}
+                className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 text-gray-600 hover:text-blue-600"
+              >
+                <Plus className="h-4 w-4 mx-auto" />
+                Thêm dịch vụ khác
+              </button>
+
+              <div className="bg-blue-50 p-3 rounded">
+                <div className="font-medium text-blue-800">
+                  Tổng cộng: {formatCurrency(
+                    newServiceData.services.reduce((total, service) =>
+                      total + ((service.price || 0) * (service.quantity || 1)), 0
+                    )
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 border-t flex justify-end space-x-3">
+              <button
+                onClick={() => setShowAddServiceModal(false)}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={() => {
+                  const validServices = newServiceData.services.filter(s => s.name && s.price);
+                  if (validServices.length === 0) {
+                    toast.error('Vui lòng nhập ít nhất 1 dịch vụ hợp lệ!');
+                    return;
+                  }
+                  addRoomService(addingServiceAssignment.assignmentId, validServices);
+                }}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                Thêm dịch vụ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal thông tin khách */}
+      {showGuestInfoModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-lg">
+            <div className="p-4 border-b flex justify-between items-center">
+              <h2 className="text-lg font-bold text-gray-800">
+                Thông tin khách - Phòng {editingGuestAssignment?.roomInfo?.soPhong}
+              </h2>
+              <button
+                onClick={() => setShowGuestInfoModal(false)}
+                className="text-gray-500 hover:text-red-500"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tên khách chính
+                </label>
+                <input
+                  type="text"
+                  value={guestInfoData.tenKhachChinh}
+                  onChange={(e) => setGuestInfoData({ ...guestInfoData, tenKhachChinh: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="Tên khách chính phòng này"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Số điện thoại liên hệ
+                </label>
+                <input
+                  type="tel"
+                  value={guestInfoData.soDienThoaiLienHe}
+                  onChange={(e) => setGuestInfoData({ ...guestInfoData, soDienThoaiLienHe: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="SĐT riêng cho phòng này"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Số lượng khách thực tế
+                </label>
+                <input
+                  type="number"
+                  value={guestInfoData.soLuongKhachThucTe}
+                  onChange={(e) => setGuestInfoData({ ...guestInfoData, soLuongKhachThucTe: parseInt(e.target.value) || 1 })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  min="1"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Yêu cầu đặc biệt
+                </label>
+                <textarea
+                  value={guestInfoData.yeuCauDacBiet}
+                  onChange={(e) => setGuestInfoData({ ...guestInfoData, yeuCauDacBiet: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  rows="3"
+                  placeholder="Yêu cầu đặc biệt cho phòng này..."
+                />
+              </div>
+            </div>
+
+            <div className="p-4 border-t flex justify-end space-x-3">
+              <button
+                onClick={() => setShowGuestInfoModal(false)}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={() => {
+                  updateGuestInfo(editingGuestAssignment.assignmentId, guestInfoData);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Cập nhật
               </button>
             </div>
           </div>

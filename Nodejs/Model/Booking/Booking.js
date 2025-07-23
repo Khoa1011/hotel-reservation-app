@@ -4,7 +4,6 @@ const moment = require("moment");
 const BookingSchema = new mongoose.Schema({
   maNguoiDung: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "nguoiDung", required: true,index: true },
   maKhachSan: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "khachSan", required: true,index: true },
-  maPhong: { type: mongoose.Schema.Types.ObjectId, ref: "phong", default: null,index: true },
   maLoaiPhong: { type: mongoose.Schema.Types.ObjectId, required: true,  ref: "loaiPhong", index: true, index: true },
   
   cccd: {
@@ -18,6 +17,15 @@ const BookingSchema = new mongoose.Schema({
         message: 'CCCD phải có 12 chữ số'
     }
 },
+
+ ghiChu: {
+    type: String,
+    default: ""
+  },
+  soDienThoai:{
+    type:String,
+    default:""
+  },
     
   loaiDatPhong: {
     type: String,
@@ -71,57 +79,7 @@ const BookingSchema = new mongoose.Schema({
     enum: ['chua_thanh_toan', 'da_thanh_toan','thanh_toan_mot_phan','da_hoan_tien'],
     default: 'chua_thanh_toan' 
   },
-  ghiChu: {
-    type: String,
-    default: ""
-  },
-  soDienThoai:{
-    type:String,
-    default:""
-  },
-
-  phongDuocGiao: [{
-    soPhong: {
-      type: String,
-      required: function() { 
-        return ["da_nhan_phong", "dang_su_dung", "da_tra_phong"].includes(this.parent().trangThai);
-      }
-    },
-    tang: Number,
-    loaiView: String, // "sea_view", "city_view", etc.
-    trangThaiPhong: {
-      type: String,
-      enum: ["da_giao_phong", "da_check-in", "da_check-out", "dang_ve_sinh", "dang_bao_tri"],
-      default: "da_giao_phong"
-    },
-    thoiGianGiaoPhong: {
-      type: Date,
-      default: Date.now
-    },
-    thoiGianVaoThucTe: Date,    // Actual check-in time
-    thoiGianRaThucTe: Date,     // Actual check-out time
-    gioTraPhongDieuChinh: String,
-    // nhanVienGiao: {
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: "nguoiDung"
-    // },
-    // For hourly booking extensions
-    // lichSuGiaHan: [{
-    //   gioGiaHan: Date,
-    //   soGioThem: Number,
-    //   phiGiaHan: Number,
-    //   nhanVienXuLy: {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: "nguoiDung"
-    //   },
-    //   thoiGianGiaHan: {
-    //     type: Date,
-    //     default: Date.now
-    //   }
-    // }],
-    ghiChuPhong: String
-  }],
-
+ 
   dichVuBoSung: [{
     tenDichVu: {
       type: String,
@@ -305,10 +263,24 @@ BookingSchema.methods.tinhPhiDichVu = function() {
 };
 
 // ✅ THÊM: Middleware tự động tính phí
-BookingSchema.pre('save', function(next) {
+BookingSchema.pre('save', async function(next) {
+  if (this.isNew || this.isModified('soLuongPhong')) {
+    // Tính tổng tiền phòng dựa trên số lượng
+    this.thongTinGia.tongTienPhong = 
+      this.thongTinGia.donGia * 
+      this.thongTinGia.soLuongDonVi * 
+      this.soLuongPhong;
+  }
+  
+  // Tính tổng phí dịch vụ từ tất cả phòng
   if (this.isModified('dichVuBoSung')) {
-    const tongPhiDichVu = this.dichVuBoSung.reduce((total, service) => {
-      return total + service.thanhTien;
+    const assignments = await mongoose.model('ganPhongBooking')
+      .find({ maDatPhong: this._id });
+    
+    const tongPhiDichVu = assignments.reduce((total, assignment) => {
+      return total + assignment.dichVuSuDung.reduce((roomTotal, service) => {
+        return roomTotal + service.thanhTien;
+      }, 0);
     }, 0);
     
     this.thongTinGia.phiDichVu = tongPhiDichVu;

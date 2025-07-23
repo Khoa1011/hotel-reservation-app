@@ -549,7 +549,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "waitingForResult": MessageLookupByLibrary.simpleMessage("CHỜ KẾT QUẢ..."),
     "warning": MessageLookupByLibrary.simpleMessage("Cảnh báo!"),
     "weekendSurcharge": MessageLookupByLibrary.simpleMessage(
-      "Thuế & phí cuối tuần(1.2%)",
+      "Thuế & phí cuối tuần(20%)",
     ),
     "welcome": MessageLookupByLibrary.simpleMessage("Chào mừng"),
     "welcomeToStaytion": MessageLookupByLibrary.simpleMessage("Chào mừng"),

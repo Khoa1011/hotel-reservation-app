@@ -1859,10 +1859,10 @@ class S {
     );
   }
 
-  /// `Weekend Tax & Fee (1.2%)`
+  /// `Weekend Tax & Fee (20%)`
   String get weekendSurcharge {
     return Intl.message(
-      'Weekend Tax & Fee (1.2%)',
+      'Weekend Tax & Fee (20%)',
       name: 'weekendSurcharge',
       desc: '',
       args: [],

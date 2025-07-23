@@ -231,7 +231,7 @@ router.post('/:hotelId/search-roomtypes', async (req, res) => {
                     console.log('❌ Không thể chứa khách với số phòng yêu cầu');
                     const actualRoomCount = await Room.countDocuments({
                         maLoaiPhong: roomType._id,
-                        trangThaiPhong: true
+                        trangThaiPhong: "trong"
                     });
 
                     // Đề xuất số phòng cần thiết
@@ -399,7 +399,7 @@ async function getRealRoomCapacity(roomTypeId) {
         // Lấy tất cả phòng thuộc loại này
         const rooms = await Room.find({
             maLoaiPhong: roomTypeId,
-            trangThaiPhong: true // Chỉ lấy phòng hoạt động
+            trangThaiPhong: "trong" // Chỉ lấy phòng hoạt động
         }).select('soLuongNguoiToiDa _id');
 
         console.log(`📊 Found ${rooms.length} rooms:`, rooms.map(r => ({
@@ -668,7 +668,7 @@ router.post('/:hotelId/room-suggestions', async (req, res) => {
 
             const actualRoomCount = await Room.countDocuments({
                 maLoaiPhong: roomType._id,
-                trangThaiPhong: true
+                trangThaiPhong: "trong"
             });
 
             if (suggestedRooms <= actualRoomCount) {
@@ -733,7 +733,7 @@ async function checkEnhancedRoomAvailability({
 
         const totalRooms = await Room.countDocuments({
             maLoaiPhong: roomTypeId,
-            trangThaiPhong: true
+            trangThaiPhong: "trong"
         });
         if (totalRooms === 0) {
             return { isAvailable: false, availableRooms: 0, reason: "Không có phòng" };
@@ -1185,7 +1185,7 @@ router.get('/:hotelId/room-type/:roomTypeId/time-slots', async (req, res) => {
         // Lấy tổng số phòng
         const totalRooms = await Room.countDocuments({
             maLoaiPhong: roomTypeId,
-            trangThaiPhong: true
+            trangThaiPhong: "trong"
         });
 
         // Tạo time slots (6:00 - 23:00)
@@ -1439,7 +1439,7 @@ router.get('/:hotelId/room-type/:roomTypeId/details', async (req, res) => {
 
         const actualRoomCount = await Room.countDocuments({
             maLoaiPhong: roomTypeId,
-            trangThaiPhong: true
+            trangThaiPhong: "trong"
         });
 
         // Lấy hình ảnh và tiện nghi

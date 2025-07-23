@@ -249,11 +249,11 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
                   maxLength="10"
                 />
                 <p className="text-xs text-gray-500 mt-1">Chỉ chữ cái và số, tối đa 10 ký tự</p>
-                {formData.soPhong !== originalRoomNumber && (
+                {/* {formData.soPhong !== originalRoomNumber && (
                   <p className="text-xs text-orange-600 mt-1">
                     ⚠️ Đang thay đổi từ "{originalRoomNumber}"
                   </p>
-                )}
+                )} */}
               </div>
 
               <div>

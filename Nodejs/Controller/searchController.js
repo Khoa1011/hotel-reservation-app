@@ -540,7 +540,7 @@ searchRouter.post('/hotel/:hotelId/availability', async (req, res) => {
 
                 const actualRoomCount = await Room.countDocuments({
                     maLoaiPhong: roomType._id,
-                    trangThaiPhong: true
+                    trangThaiPhong: "trong"
                 });
 
                 // Kiểm tra khả năng chứa khách
@@ -680,7 +680,7 @@ async function getRealRoomCapacity(roomTypeId) {
         // Lấy tất cả phòng thuộc loại này
         const rooms = await Room.find({
             maLoaiPhong: roomTypeId,
-            trangThaiPhong: true // Chỉ lấy phòng hoạt động
+            trangThaiPhong: "trong" // Chỉ lấy phòng hoạt động
         }).select('soLuongNguoiToiDa _id');
 
         console.log(`📊 Found ${rooms.length} rooms:`, rooms.map(r => ({
@@ -818,7 +818,7 @@ async function findAvailableHotels({ checkIn, checkOut, bookingType, requiredGue
 
             const actualRoomCount = await Room.countDocuments({
                 maLoaiPhong: roomType._id,
-                trangThaiPhong: true
+                trangThaiPhong: "trong"
             });
 
             // ✅ Chỉ lấy room type có đủ số phòng thực tế
@@ -909,7 +909,7 @@ async function checkEnhancedRoomAvailability({
 
         const totalRooms = await Room.countDocuments({
             maLoaiPhong: roomTypeId,
-            trangThaiPhong: true
+            trangThaiPhong: "trong"
         });
 
         if (totalRooms === 0) {

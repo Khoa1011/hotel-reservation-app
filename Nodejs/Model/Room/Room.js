@@ -6,7 +6,6 @@ const RoomSchema = new mongoose.Schema({
   soPhong: { 
     type: String, 
     required: true,
-    unique: true,
     index: true
   },
   tang: { 
@@ -47,6 +46,91 @@ RoomSchema.virtual('hinhAnh', {
     foreignField: 'maPhong',
     options: { sort: { thuTuAnh: 1 } } 
 });
+
+
+
+// Vì maLoaiPhong thuộc về 1 hotel cụ thể
+RoomSchema.index({ soPhong: 1, maLoaiPhong: 1 }, { unique: true });
+
+// ✅ THÊM: Virtual để get hotel từ room type
+RoomSchema.virtual('maKhachSan', {
+  ref: 'loaiPhong',
+  localField: 'maLoaiPhong', 
+  foreignField: '_id',
+  justOne: true
+});
+
+// ✅ THÊM: Pre-save middleware để validate unique per hotel
+RoomSchema.pre('save', async function(next) {
+  if (this.isNew || this.isModified('soPhong')) {
+    try {
+      // Get hotel ID from room type
+      const roomType = await mongoose.model('loaiPhong').findById(this.maLoaiPhong);
+      if (!roomType) {
+        return next(new Error('Loại phòng không tồn tại'));
+      }
+      
+      // Check if room number exists in the same hotel
+      const existingRoom = await mongoose.model('phong').findOne({
+        soPhong: this.soPhong,
+        maLoaiPhong: { 
+          $in: await mongoose.model('loaiPhong').distinct('_id', { 
+            maKhachSan: roomType.maKhachSan 
+          })
+        },
+        _id: { $ne: this._id } // Exclude current room if updating
+      });
+      
+      if (existingRoom) {
+        return next(new Error(`Số phòng ${this.soPhong} đã tồn tại trong khách sạn này`));
+      }
+      
+      next();
+    } catch (error) {
+      next(error);
+    }
+  } else {
+    next();
+  }
+});
+
+// ✅ THÊM: Static method để check unique per hotel
+RoomSchema.statics.isRoomNumberAvailable = async function(roomNumber, hotelId, excludeRoomId = null) {
+  try {
+    // Get all room type IDs for this hotel
+    const roomTypeIds = await mongoose.model('loaiPhong').distinct('_id', { 
+      maKhachSan: hotelId 
+    });
+    
+    const query = {
+      soPhong: roomNumber,
+      maLoaiPhong: { $in: roomTypeIds }
+    };
+    
+    if (excludeRoomId) {
+      query._id = { $ne: excludeRoomId };
+    }
+    
+    const existingRoom = await this.findOne(query);
+    return !existingRoom;
+  } catch (error) {
+    console.error('Error checking room availability:', error);
+    return false;
+  }
+};
+
+// ✅ THÊM: Instance method để get hotel info
+RoomSchema.methods.getHotelInfo = async function() {
+  await this.populate({
+    path: 'maLoaiPhong',
+    populate: {
+      path: 'maKhachSan',
+      select: 'tenKhachSan diaChi'
+    }
+  });
+  
+  return this.maLoaiPhong?.maKhachSan;
+};
 
 
 module.exports = mongoose.model("phong", RoomSchema);

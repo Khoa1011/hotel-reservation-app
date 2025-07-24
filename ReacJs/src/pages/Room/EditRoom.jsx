@@ -41,16 +41,16 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
     if (room && showModal) {
       setFormData({
         trangThaiPhong: room.trangThaiPhong || false,
-        soPhong: room.soPhong || '',                    // ✅ THÊM
-        tang: room.tang || 1,                          // ✅ THÊM
-        loaiView: room.loaiView || 'none',             // ✅ THÊM
+        soPhong: room.soPhong || '',                   
+        tang: room.tang || 1,                          
+        loaiView: room.loaiView || 'none',             
         dienTich: room.dienTich?.toString() || '',
         moTa: room.moTa || '',
         soLuongGiuong: room.soLuongGiuong?.toString() || '',
         soLuongNguoiToiDa: room.soLuongNguoiToiDa?.toString() || '',
         cauHinhGiuong: room.cauHinhGiuong || []
       });
-      setOriginalRoomNumber(room.soPhong || '');       // ✅ THÊM
+      setOriginalRoomNumber(room.soPhong || '');       
       setExistingImages(room.hinhAnh || []);
       setImagesToDelete([]);
       setNewImageFiles([]);

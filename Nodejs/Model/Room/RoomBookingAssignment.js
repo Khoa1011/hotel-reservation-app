@@ -17,6 +17,7 @@ const RoomBookingAssignmentSchema = new mongoose.Schema({
         type: String,
         enum: [
             "chua_gan",
+            "da_tra_phong",
             "da_gan",           // Đã gán phòng
             "dang_cho_checkin", // Chờ khách check-in
             "da_checkin",       // Khách đã vào phòng

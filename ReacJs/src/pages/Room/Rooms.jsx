@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
+import {
   Plus,
   Search,
   Edit,
@@ -22,12 +22,12 @@ const RoomManagement = ({ selectedHotelId }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedRoomType, setSelectedRoomType] = useState('');
-  
+
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
-  
+
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
   // Utility functions
@@ -39,11 +39,34 @@ const RoomManagement = ({ selectedHotelId }) => {
   };
 
   const getRoomStatusColor = (status) => {
-    return status ? 'bg-green-100 text-green-800': 'bg-red-100 text-red-800' ;
+    // ✅ LOGIC: "trong" = green, "da_dat" = red  
+    switch (status) {
+      case 'trong':
+        return 'bg-green-100 text-green-800';
+      case 'da_dat':
+      case 'dang_su_dung':
+        return 'bg-red-100 text-red-800';
+      case 'bao_tri':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
   };
 
   const getRoomStatusText = (status) => {
-    return status ? 'Trống' : 'Đã đặt';
+    // ✅ LOGIC: Status string mapping
+    switch (status) {
+      case 'trong':
+        return 'Trống';
+      case 'da_dat':
+        return 'Đã đặt';
+      case 'dang_su_dung':
+        return 'Đang sử dụng';
+      case 'bao_tri':
+        return 'Bảo trì';
+      default:
+        return 'Không xác định';
+    }
   };
 
   // ✅ THÊM: Get view text
@@ -51,7 +74,7 @@ const RoomManagement = ({ selectedHotelId }) => {
     const viewTexts = {
       'sea_view': 'View biển',
       'city_view': 'View thành phố',
-      'garden_view': 'View vườn', 
+      'garden_view': 'View vườn',
       'mountain_view': 'View núi',
       'pool_view': 'View hồ bơi',
       'none': ''
@@ -62,7 +85,7 @@ const RoomManagement = ({ selectedHotelId }) => {
   // Lấy danh sách loại phòng
   const fetchRoomTypes = async () => {
     if (!selectedHotelId) return;
-    
+
     try {
       const response = await axios.get(
         `${baseUrl}/api/roomType-hotel/hotelowner/roomtypes/${selectedHotelId}`,
@@ -133,17 +156,41 @@ const RoomManagement = ({ selectedHotelId }) => {
   // ✅ Toggle room status (dummy - cần API riêng)
   const toggleRoomStatus = async (roomId, currentStatus, roomNumber) => {
     try {
-      // Tạm thời update local state
-      setRooms(prev => prev.map(room => 
-        room._id === roomId 
-          ? { ...room, trangThaiPhong: !currentStatus }
-          : room
-      ));
-      
-      toast.success(`${currentStatus ? 'Trả' : 'Đặt'} phòng ${roomNumber} thành công!`);
+      console.log(`🔄 Toggling room ${roomNumber} from ${currentStatus}`);
+
+      // ✅ Logic chuyển đổi đúng
+      let newStatus;
+      if (currentStatus === 'trong') {
+        newStatus = 'da_dat';      // Trống → Đặt
+      } else if (currentStatus === 'da_dat') {
+        newStatus = 'trong';       // Đặt → Trống  
+      } else {
+        toast.error(`Không thể thay đổi trạng thái "${currentStatus}"`);
+        return;
+      }
+
+      // ✅ Call API update room status (cần tạo API này)
+      const response = await axios.put(
+        `${baseUrl}/api/room-hotel/hotelowner/update-room-status/${roomId}`,
+        { trangThaiPhong: newStatus },
+        { withCredentials: true }
+      );
+
+      if (response.data?.success) {
+        // ✅ Update local state
+        setRooms(prev => prev.map(room =>
+          room._id === roomId
+            ? { ...room, trangThaiPhong: newStatus }
+            : room
+        ));
+
+        toast.success(`${newStatus === 'trong' ? 'Trả' : 'Đặt'} phòng ${roomNumber} thành công!`);
+      } else {
+        toast.error(response.data?.message || 'Cập nhật trạng thái thất bại');
+      }
     } catch (error) {
       console.error('Lỗi khi thay đổi trạng thái phòng:', error);
-      toast.error('Lỗi khi thay đổi trạng thái phòng');
+      toast.error(error.response?.data?.message || 'Lỗi khi thay đổi trạng thái phòng');
     }
   };
 
@@ -160,16 +207,16 @@ const RoomManagement = ({ selectedHotelId }) => {
     }
   }, [selectedRoomType]);
 
-  // ✅ SỬA: Filter functions - include room number
+  // Filter functions - include room number
   const filteredRooms = rooms.filter(room => {
     const matchesSearch = room.moTa?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         room.maLoaiPhong?.tenLoaiPhong?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         room.soPhong?.toLowerCase().includes(searchTerm.toLowerCase()); // ✅ THÊM
-    
+      room.maLoaiPhong?.tenLoaiPhong?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      room.soPhong?.toLowerCase().includes(searchTerm.toLowerCase());
+
     if (filterStatus === 'all') return matchesSearch;
-    if (filterStatus === 'available') return matchesSearch && !room.trangThaiPhong;
-    if (filterStatus === 'occupied') return matchesSearch && room.trangThaiPhong;
-    
+    if (filterStatus === 'available') return matchesSearch && room.trangThaiPhong === 'trong';     
+    if (filterStatus === 'occupied') return matchesSearch && room.trangThaiPhong !== 'trong';     
+
     return matchesSearch;
   });
 
@@ -251,7 +298,7 @@ const RoomManagement = ({ selectedHotelId }) => {
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-            
+
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
@@ -261,7 +308,7 @@ const RoomManagement = ({ selectedHotelId }) => {
               <option value="available">Phòng trống</option>
               <option value="occupied">Đã đặt</option>
             </select>
-            
+
             <button
               onClick={openAddModal}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
@@ -295,7 +342,7 @@ const RoomManagement = ({ selectedHotelId }) => {
                       }}
                     />
                   )}
-                  
+
                   <div className="p-4">
                     <div className="flex justify-between items-start mb-2">
                       <div>
@@ -345,15 +392,30 @@ const RoomManagement = ({ selectedHotelId }) => {
                     <div className="flex gap-2">
                       <button
                         onClick={() => toggleRoomStatus(room._id, room.trangThaiPhong, room.soPhong)}
-                        className="flex-1 px-3 py-2 text-sm rounded flex items-center justify-center gap-1"
-                        style={{
-                          backgroundColor: room.trangThaiPhong ?  '#ef4444' :'#10b981',
-                          color: 'white'
-                        }}
+                        className={`flex-1 px-3 py-2 text-sm rounded flex items-center justify-center gap-1 text-white ${room.trangThaiPhong === 'trong'
+                          ? 'bg-blue-500 hover:bg-blue-600'      // Trống → Button xanh "Đặt phòng"
+                          : 'bg-green-500 hover:bg-green-600'    // Đã đặt → Button xanh lá "Trả phòng"
+                          }`}
+                        disabled={room.trangThaiPhong === 'dang_su_dung' || room.trangThaiPhong === 'bao_tri'}
                       >
-                        {room.trangThaiPhong ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                        {room.trangThaiPhong ? 'Đặt phòng' : 'Trả phòng'}
+                        {room.trangThaiPhong === 'trong' ? (
+                          <>
+                            <ToggleRight className="w-4 h-4" />
+                            Đặt phòng
+                          </>
+                        ) : room.trangThaiPhong === 'da_dat' ? (
+                          <>
+                            <ToggleLeft className="w-4 h-4" />
+                            Trả phòng
+                          </>
+                        ) : (
+                          <>
+                            <ToggleRight className="w-4 h-4" />
+                            {getRoomStatusText(room.trangThaiPhong)}
+                          </>
+                        )}
                       </button>
+
                       <button
                         onClick={() => openEditModal(room)}
                         className="px-3 py-2 border border-gray-300 text-sm rounded hover:bg-gray-50"
@@ -361,10 +423,12 @@ const RoomManagement = ({ selectedHotelId }) => {
                       >
                         <Edit className="w-4 h-4" />
                       </button>
+
                       <button
                         onClick={() => deleteRoom(room._id, room.soPhong)}
                         className="px-3 py-2 border border-red-300 text-red-600 text-sm rounded hover:bg-red-50"
                         title="Xóa phòng"
+                        disabled={room.trangThaiPhong !== 'trong'}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -383,8 +447,8 @@ const RoomManagement = ({ selectedHotelId }) => {
                 {searchTerm || filterStatus !== 'all' ? 'Không tìm thấy phòng' : 'Chưa có phòng nào'}
               </h3>
               <p className="text-gray-600 mb-4">
-                {searchTerm || filterStatus !== 'all' 
-                  ? 'Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm' 
+                {searchTerm || filterStatus !== 'all'
+                  ? 'Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm'
                   : 'Tạo phòng đầu tiên cho loại phòng này'
                 }
               </p>

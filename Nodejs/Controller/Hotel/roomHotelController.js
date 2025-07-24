@@ -12,19 +12,19 @@ const RoomType = require("../../Model/RoomType/RoomType");
 const Booking = require("../../Model/Booking/Booking");
 const RoomBookingAssignment = require("../../Model/Room/RoomBookingAssignment");
 
-const { 
-    uploadRoom, 
-    handleMulterError, 
+const {
+    uploadRoom,
+    handleMulterError,
     logUploadProcess,
     getRelativePath,
-    deleteFiles 
+    deleteFiles
 } = require('../../config/upload');
 const RoomImage = require('../../Model/Room/RoomImage')
 
 
 // 1. Tạo phòng mới với upload nhiều hình ảnh
-roomHotelRouter.post("/hotelowner/create-room", 
-    authorizeRoles("chuKhachSan"), 
+roomHotelRouter.post("/hotelowner/create-room",
+    authorizeRoles("chuKhachSan"),
     logUploadProcess,
     uploadRoom.array('hinhAnh', 10),
     handleMulterError,
@@ -32,9 +32,9 @@ roomHotelRouter.post("/hotelowner/create-room",
         try {
             const {
                 maLoaiPhong,
-                soPhong,       
-                tang,          
-                loaiView,      
+                soPhong,
+                tang,
+                loaiView,
                 dienTich,
                 moTa,
                 soLuongGiuong,
@@ -45,7 +45,7 @@ roomHotelRouter.post("/hotelowner/create-room",
             // Validation
             const missingFields = [];
             if (!maLoaiPhong) missingFields.push("maLoaiPhong");
-            if (!soPhong) missingFields.push("soPhong"); 
+            if (!soPhong) missingFields.push("soPhong");
             if (!moTa) missingFields.push("moTa");
             if (!soLuongGiuong) missingFields.push("soLuongGiuong");
             if (!soLuongNguoiToiDa) missingFields.push("soLuongNguoiToiDa");
@@ -55,7 +55,7 @@ roomHotelRouter.post("/hotelowner/create-room",
                     const uploadedPaths = req.files.map(f => f.path);
                     deleteFiles(uploadedPaths);
                 }
-                
+
                 return res.status(400).json({
                     success: false,
                     message: "Thiếu thông tin bắt buộc",
@@ -63,16 +63,32 @@ roomHotelRouter.post("/hotelowner/create-room",
                 });
             }
 
-           
-            const existingRoom = await Room.findOne({ soPhong: soPhong.trim() });
-            if (existingRoom) {
+            // ✅ SỬA: Kiểm tra room type và lấy hotel ID
+            const roomType = await RoomType.findById(maLoaiPhong).populate('maKhachSan', 'tenKhachSan');
+            if (!roomType) {
                 if (req.files) {
                     const uploadedPaths = req.files.map(f => f.path);
                     deleteFiles(uploadedPaths);
                 }
                 return res.status(400).json({
                     success: false,
-                    message: `Số phòng ${soPhong} đã tồn tại`
+                    message: "Loại phòng không tồn tại"
+                });
+            }
+
+            const hotelId = roomType.maKhachSan._id;
+            const hotelName = roomType.maKhachSan.tenKhachSan;
+
+            // ✅ SỬA: Kiểm tra unique per hotel
+            const isAvailable = await Room.isRoomNumberAvailable(soPhong.trim(), hotelId);
+            if (!isAvailable) {
+                if (req.files) {
+                    const uploadedPaths = req.files.map(f => f.path);
+                    deleteFiles(uploadedPaths);
+                }
+                return res.status(400).json({
+                    success: false,
+                    message: `Số phòng ${soPhong} đã tồn tại trong khách sạn "${hotelName}"`
                 });
             }
 
@@ -102,13 +118,13 @@ roomHotelRouter.post("/hotelowner/create-room",
                 }
             }
 
-            // ✅ Tạo phòng mới với các field mới
+            // ✅ Tạo phòng mới
             const newRoom = new Room({
                 maLoaiPhong,
-                soPhong: soPhong.trim(),           
-                tang: parseInt(tang) || 1,         
-                loaiView: loaiView || "none",     
-                trangThaiPhong: "trong", 
+                soPhong: soPhong.trim(),
+                tang: parseInt(tang) || 1,
+                loaiView: loaiView || "none",
+                trangThaiPhong: "trong",
                 dienTich: parseFloat(dienTich) || 0,
                 moTa: moTa.trim(),
                 soLuongGiuong: parseInt(soLuongGiuong),
@@ -121,7 +137,7 @@ roomHotelRouter.post("/hotelowner/create-room",
             // Lưu hình ảnh vào bảng RoomImage
             const imagePromises = req.files.map((file, index) => {
                 const relativePath = getRelativePath(file.path);
-                
+
                 const roomImage = new RoomImage({
                     maPhong: newRoom._id,
                     url_anh: relativePath,
@@ -135,30 +151,47 @@ roomHotelRouter.post("/hotelowner/create-room",
 
             // Populate thông tin đầy đủ
             await newRoom.populate('maLoaiPhong', 'tenLoaiPhong giaCa');
-            
+
             // Lấy danh sách hình ảnh
             const roomImages = await RoomImage.find({ maPhong: newRoom._id }).sort({ thuTuAnh: 1 });
 
+            console.log(`✅ Created room ${newRoom.soPhong} in hotel "${hotelName}"`);
+
             res.status(201).json({
                 success: true,
-                message: `Tạo phòng ${newRoom.soPhong} thành công!`,
+                message: `Tạo phòng ${newRoom.soPhong} thành công cho khách sạn "${hotelName}"!`,
                 room: {
                     ...newRoom.toObject(),
-                    hinhAnh: roomImages
+                    hinhAnh: roomImages,
+                    hotelInfo: {
+                        hotelId,
+                        hotelName
+                    }
                 }
             });
 
         } catch (error) {
             console.error("Lỗi tạo phòng:", error);
-            
-            // ✅ Handle duplicate key error
-            if (error.code === 11000 && error.keyPattern?.soPhong) {
+
+            // ✅ Handle specific validation errors
+            if (error.message?.includes('đã tồn tại trong khách sạn')) {
                 return res.status(400).json({
                     success: false,
-                    message: `Số phòng ${req.body.soPhong} đã tồn tại`
+                    message: error.message
                 });
             }
-            
+
+            // Handle compound unique index error
+            if (error.code === 11000) {
+                const duplicateField = Object.keys(error.keyPattern || {})[0];
+                if (duplicateField === 'soPhong') {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Số phòng ${req.body.soPhong} đã tồn tại trong loại phòng này`
+                    });
+                }
+            }
+
             res.status(500).json({
                 success: false,
                 message: "Lỗi server khi tạo phòng",
@@ -230,22 +263,25 @@ roomHotelRouter.get("/hotelowner/rooms/:roomTypeId", authorizeRoles("chuKhachSan
 });
 
 // 3. Cập nhật phòng và hình ảnh
-roomHotelRouter.put("/hotelowner/update-room/:roomId", 
+roomHotelRouter.put("/hotelowner/update-room/:roomId",
     authorizeRoles("chuKhachSan"),
     logUploadProcess,
-    uploadRoom.array('hinhAnh', 10), // Cho phép upload tối đa 10 hình
+    uploadRoom.array('hinhAnh', 10),
     handleMulterError,
     async (req, res) => {
         try {
             const { roomId } = req.params;
             const {
                 trangThaiPhong,
+                soPhong,        // ✅ THÊM: Cho phép update số phòng
+                tang,           // ✅ THÊM
+                loaiView,       // ✅ THÊM
                 dienTich,
                 moTa,
                 soLuongGiuong,
                 soLuongNguoiToiDa,
                 cauHinhGiuong,
-                deleteImages // Danh sách ID hình ảnh cần xóa
+                deleteImages
             } = req.body;
 
             if (!mongoose.Types.ObjectId.isValid(roomId)) {
@@ -255,12 +291,38 @@ roomHotelRouter.put("/hotelowner/update-room/:roomId",
                 });
             }
 
-            const room = await Room.findById(roomId);
+            const room = await Room.findById(roomId).populate({
+                path: 'maLoaiPhong',
+                populate: {
+                    path: 'maKhachSan',
+                    select: 'tenKhachSan'
+                }
+            });
+
             if (!room) {
                 return res.status(404).json({
                     success: false,
                     message: "Không tìm thấy phòng"
                 });
+            }
+
+            const hotelId = room.maLoaiPhong.maKhachSan._id;
+            const hotelName = room.maLoaiPhong.maKhachSan.tenKhachSan;
+
+            // ✅ SỬA: Kiểm tra unique số phòng nếu có thay đổi
+            if (soPhong && soPhong.trim() !== room.soPhong) {
+                const isAvailable = await Room.isRoomNumberAvailable(
+                    soPhong.trim(), 
+                    hotelId, 
+                    roomId  // Exclude current room
+                );
+                
+                if (!isAvailable) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Số phòng ${soPhong} đã tồn tại trong khách sạn "${hotelName}"`
+                    });
+                }
             }
 
             // Xử lý cấu hình giường
@@ -281,19 +343,26 @@ roomHotelRouter.put("/hotelowner/update-room/:roomId",
                 }
             }
 
-            // Cập nhật thông tin phòng
+            // ✅ SỬA: Cập nhật thông tin phòng với các field mới
+            const updateFields = {};
+            
+            if (trangThaiPhong !== undefined) updateFields.trangThaiPhong = trangThaiPhong;
+            if (soPhong !== undefined) updateFields.soPhong = soPhong.trim();      
+            if (tang !== undefined) updateFields.tang = parseInt(tang);              
+            if (loaiView !== undefined) updateFields.loaiView = loaiView;              
+            if (dienTich !== undefined) updateFields.dienTich = parseFloat(dienTich);
+            if (moTa !== undefined) updateFields.moTa = moTa.trim();
+            if (soLuongGiuong !== undefined) updateFields.soLuongGiuong = parseInt(soLuongGiuong);
+            if (soLuongNguoiToiDa !== undefined) updateFields.soLuongNguoiToiDa = parseInt(soLuongNguoiToiDa);
+            if (cauHinhGiuong !== undefined) updateFields.cauHinhGiuong = bedConfig;
+            
+            updateFields.capNhatCuoi = new Date();
+
             const updatedRoom = await Room.findByIdAndUpdate(
                 roomId,
-                {
-                    ...(trangThaiPhong !== undefined && {trangThaiPhong}),
-                    ...(dienTich !== undefined && { dienTich: parseFloat(dienTich) }),
-                    ...(moTa && { moTa: moTa.trim() }),
-                    ...(soLuongGiuong !== undefined && { soLuongGiuong: parseInt(soLuongGiuong) }),
-                    ...(soLuongNguoiToiDa !== undefined && { soLuongNguoiToiDa: parseInt(soLuongNguoiToiDa) }),
-                    ...(cauHinhGiuong !== undefined && { cauHinhGiuong: bedConfig }),
-                },
+                updateFields,
                 { new: true, runValidators: true }
-            ).populate('maLoaiPhong', 'tenLoaiPhong giaCa')
+            ).populate('maLoaiPhong', 'tenLoaiPhong giaCa');
 
             // Xóa hình ảnh cũ nếu có
             if (deleteImages) {
@@ -303,46 +372,53 @@ roomHotelRouter.put("/hotelowner/update-room/:roomId",
 
             // Thêm hình ảnh mới nếu có
             if (req.files && req.files.length > 0) {
-                // Lấy thứ tự cao nhất hiện tại
                 const lastImage = await RoomImage.findOne({ maPhong: roomId }).sort({ thuTuAnh: -1 });
                 const startOrder = lastImage ? lastImage.thuTuAnh + 1 : 1;
 
                 const imagePromises = req.files.map((file, index) => {
-                    // Tạo relative path để lưu vào database
                     const relativePath = getRelativePath(file.path);
-                    
+
                     const roomImage = new RoomImage({
                         maPhong: roomId,
                         url_anh: relativePath,
                         thuTuAnh: startOrder + index,
-                        moTa: `Hình ảnh phòng ${startOrder + index}`
+                        moTa: `Hình ảnh phòng ${updatedRoom.soPhong} - ${startOrder + index}`
                     });
                     return roomImage.save();
                 });
 
                 await Promise.all(imagePromises);
-
-                // ✅ NEW: Log update folder info
-                if (req.folderInfo) {
-                    console.log(`✅ Room updated with new images in: ${req.folderInfo.roomTypePath}`);
-                    console.log(`🏨 Hotel: ${req.folderInfo.hotelName} | Room Type: ${req.folderInfo.roomTypeName}`);
-                }
             }
 
             // Lấy danh sách hình ảnh mới
             const roomImages = await RoomImage.find({ maPhong: roomId }).sort({ thuTuAnh: 1 });
 
+            console.log(`✅ Updated room ${updatedRoom.soPhong} in hotel "${hotelName}"`);
+
             res.status(200).json({
                 success: true,
-                message: "Cập nhật phòng thành công!",
+                message: `Cập nhật phòng ${updatedRoom.soPhong} thành công!`,
                 room: {
                     ...updatedRoom.toObject(),
-                    hinhAnh: roomImages
+                    hinhAnh: roomImages,
+                    hotelInfo: {
+                        hotelId,
+                        hotelName
+                    }
                 }
             });
 
         } catch (error) {
             console.error("Lỗi cập nhật phòng:", error);
+            
+            // ✅ Handle validation errors
+            if (error.message?.includes('đã tồn tại trong khách sạn')) {
+                return res.status(400).json({
+                    success: false,
+                    message: error.message
+                });
+            }
+
             res.status(500).json({
                 success: false,
                 message: "Lỗi server khi cập nhật phòng",
@@ -446,206 +522,10 @@ roomHotelRouter.get("/hotelowner/room-detail/:roomId", authorizeRoles("chuKhachS
 });
 
 
-roomHotelRouter.post('/:hotelId/available-rooms-for-assignment', async (req, res) => {
-  try {
-    const { hotelId } = req.params;
-    const { 
-      maLoaiPhong, 
-      checkInDate, 
-      checkOutDate, 
-      checkInTime, 
-      checkOutTime, 
-      bookingType,
-      excludeBookingId 
-    } = req.body;
-
-    // Tìm tất cả phòng của loại phòng này
-    const allRooms = await Room.find({
-      maKhachSan: hotelId,
-      maLoaiPhong: maLoaiPhong,
-      trangThaiPhong: "trong"
-    });
-
-    // ✅ THÊM: Lấy danh sách phòng đã được gán trong thời gian trùng
-    const startDate = moment(checkInDate);
-    const endDate = moment(checkOutDate);
-
-    // Tìm tất cả assignments có thời gian trùng
-    const conflictingAssignments = await RoomBookingAssignment.find({
-      trangThaiHoatDong: true,
-      trangThaiGanPhong: { $in: ['da_gan', 'dang_su_dung'] },
-      maPhong: { $in: allRooms.map(r => r._id) }
-    }).populate({
-      path: 'maDatPhong',
-      select: 'ngayNhanPhong ngayTraPhong gioNhanPhong gioTraPhong bookingId'
-    });
-
-    // ✅ Filter ra phòng đã được gán có thời gian trùng
-    const occupiedRoomIds = new Set();
-
-    for (const assignment of conflictingAssignments) {
-      const booking = assignment.maDatPhong;
-      
-      // Skip nếu là cùng booking (để cho phép gán nhiều phòng cho 1 đơn)
-      if (excludeBookingId && booking.bookingId === excludeBookingId) {
-        continue;
-      }
-
-      const existingStart = moment(booking.ngayNhanPhong);
-      const existingEnd = moment(booking.ngayTraPhong);
-
-      // Kiểm tra overlap thời gian
-      const hasTimeOverlap = (
-        startDate.isBefore(existingEnd) && endDate.isAfter(existingStart)
-      );
-
-      if (hasTimeOverlap) {
-        occupiedRoomIds.add(assignment.maPhong.toString());
-      }
-    }
-
-    // ✅ Lọc ra phòng available
-    const availableRooms = allRooms.filter(room => 
-      !occupiedRoomIds.has(room._id.toString())
-    );
-
-    // Format response
-    const formattedRooms = availableRooms.map(room => ({
-      roomId: room._id,
-      soPhong: room.soPhong,
-      tang: room.tang,
-      loaiView: room.loaiView,
-      displayName: `Phòng ${room.soPhong} - Tầng ${room.tang}${room.loaiView ? ` (${getViewText(room.loaiView)})` : ''}`
-    }));
-
-    console.log(`🏠 Found ${formattedRooms.length}/${allRooms.length} available rooms (excluded ${occupiedRoomIds.size} occupied)`);
-
-    res.json({
-      success: true,
-      availableRooms: formattedRooms,
-      totalRooms: allRooms.length,
-      occupiedCount: occupiedRoomIds.size
-    });
-
-  } catch (error) {
-    console.error('Error fetching available rooms:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Lỗi khi lấy danh sách phòng trống',
-      error: error.message
-    });
-  }
-});
 
 
-// ✅ SỬA Helper function kiểm tra phòng available với đúng field names
-const checkRoomAvailabilityForAssignment = async ({
-    roomId,
-    soPhong,
-    checkInDate,
-    checkOutDate,
-    checkInTime,
-    checkOutTime,
-    bookingType,
-    excludeBookingId
-}) => {
-    try {
-        console.log(`🔍 Checking availability for room ${soPhong}:`, {
-            roomId,
-            checkInDate,
-            checkOutDate,
-            checkInTime,
-            checkOutTime,
-            bookingType
-        });
 
-        // Tìm tất cả assignment của phòng này (active)
-        const conflictAssignments = await RoomBookingAssignment.find({
-            maPhong: roomId,
-            trangThaiHoatDong: true,
-            trangThaiGanPhong: { $nin: ['huy_gan', 'da_checkout'] },
-            ...(excludeBookingId && { maDatPhong: { $ne: excludeBookingId } })
-        }).populate('maDatPhong');
 
-        console.log(`📊 Found ${conflictAssignments.length} potential conflicts for room ${soPhong}`);
 
-        if (conflictAssignments.length === 0) {
-            console.log(`✅ Room ${soPhong} is available - no conflicts`);
-            return true;
-        }
-
-        // Kiểm tra conflict về thời gian
-        const requestCheckIn = moment(checkInDate, 'YYYY-MM-DD');
-        const requestCheckOut = moment(checkOutDate || checkInDate, 'YYYY-MM-DD');
-
-        for (const assignment of conflictAssignments) {
-            const booking = assignment.maDatPhong;
-            const bookingCheckIn = moment(booking.ngayNhanPhong);
-            const bookingCheckOut = moment(booking.ngayTraPhong);
-
-            console.log(`🔍 Comparing with booking ${booking._id}:`, {
-                bookingDates: `${bookingCheckIn.format('DD-MM-YYYY')} - ${bookingCheckOut.format('DD-MM-YYYY')}`,
-                requestDates: `${checkInDate} - ${checkOutDate}`,
-                bookingType: booking.loaiDatPhong
-            });
-
-            // Kiểm tra overlap về ngày
-            const hasDateOverlap = requestCheckIn.isBefore(bookingCheckOut) && 
-                                 requestCheckOut.isAfter(bookingCheckIn);
-
-            if (hasDateOverlap) {
-                // Nếu cùng là booking theo giờ, kiểm tra overlap về giờ
-                if (bookingType === 'theo_gio' && booking.loaiDatPhong === 'theo_gio' &&
-                    requestCheckIn.isSame(bookingCheckIn, 'day')) {
-                    
-                    const requestStart = moment(`${checkInDate} ${checkInTime}`, 'YYYY-MM-DD HH:mm');
-                    const requestEnd = moment(`${checkInDate} ${checkOutTime}`, 'YYYY-MM-DD HH:mm');
-                    
-                    const bookingStart = moment(`${bookingCheckIn.format('YYYY-MM-DD')} ${booking.gioNhanPhong}`, 'YYYY-MM-DD HH:mm');
-                    const bookingEnd = moment(`${bookingCheckIn.format('YYYY-MM-DD')} ${booking.gioTraPhong}`, 'YYYY-MM-DD HH:mm');
-
-                    // Handle time spanning midnight
-                    if (requestEnd.isSameOrBefore(requestStart)) {
-                        requestEnd.add(1, 'day');
-                    }
-                    if (bookingEnd.isSameOrBefore(bookingStart)) {
-                        bookingEnd.add(1, 'day');
-                    }
-
-                    const hasTimeOverlap = requestStart.isBefore(bookingEnd) && 
-                                         requestEnd.isAfter(bookingStart);
-
-                    if (hasTimeOverlap) {
-                        console.log(`❌ Room ${soPhong} has time overlap with booking ${booking._id}`);
-                        return false;
-                    }
-                } else {
-                    // Nếu có booking overnight/long-stay hoặc khác loại, conflict
-                    console.log(`❌ Room ${soPhong} has date overlap with booking ${booking._id}`);
-                    return false;
-                }
-            }
-        }
-
-        console.log(`✅ Room ${soPhong} is available - no time conflicts`);
-        return true;
-
-    } catch (error) {
-        console.error('❌ Error checking room availability:', error);
-        return false;
-    }
-};
-// ✅ Helper function get view text
-const getViewText = (viewType) => {
-   const viewTexts = {
-       'sea_view': 'View biển',
-       'city_view': 'View thành phố', 
-       'garden_view': 'View vườn',
-       'mountain_view': 'View núi',
-       'pool_view': 'View hồ bơi',
-       'none': ''
-   };
-   return viewTexts[viewType] || '';
-};
 
 module.exports = roomHotelRouter;

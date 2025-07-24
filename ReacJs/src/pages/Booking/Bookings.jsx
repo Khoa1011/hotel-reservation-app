@@ -38,7 +38,7 @@ import EditBooking from './editBooking';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { RefreshCw } from 'lucide-react';
 
-const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, formatCurrency, formatDate, getStatusColor, getStatusText, selectedHotelId }) => {
+const Booking = ({ hotels = [], bookings, setBookings, expandedBooking, setExpandedBooking, formatCurrency, formatDate, getStatusColor, getStatusText, selectedHotelId }) => {
   const [showFilter, setShowFilter] = useState(false);
   const [filters, setFilters] = useState({
     status: '',
@@ -126,33 +126,41 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
   // ).map(([id, name]) => ({ id, name })).filter(hotel => hotel.id && hotel.name);
 
   const getAllHotels = () => {
-    // Lấy tất cả hotels từ bookings gốc (không phải localBookings)
+    // ✅ Nếu có hotels prop, dùng nó
+    if (hotels && Array.isArray(hotels) && hotels.length > 0) {
+      return hotels.map(h => ({
+        id: h.hotelId || h._id,
+        name: h.tenKhachSan,
+        notifications: notifications.hotelNotifications[h.hotelId || h._id] || {
+          newBookings: 0,
+          pendingBookings: 0,
+          totalUnread: 0
+        }
+      }));
+    }
+
+    // ✅ Fallback về bookings với safety check
+    if (!bookings || !Array.isArray(bookings)) {
+      console.log('⚠️ No valid data for hotels');
+      return [];
+    }
+
     const allHotels = Array.from(
       new Map(bookings.map(b => [b.hotelId?._id, b.hotelId?.tenKhachSan])).entries()
     ).map(([id, name]) => ({
       id,
       name,
-      notifications: notifications.hotelNotifications[id] || { newBookings: 0, pendingBookings: 0, totalUnread: 0 }
+      notifications: notifications.hotelNotifications[id] || {
+        newBookings: 0,
+        pendingBookings: 0,
+        totalUnread: 0
+      }
     })).filter(hotel => hotel.id && hotel.name);
 
     return allHotels;
   };
 
   const hotelList = getAllHotels();
-
-
-
-
-  // Map trạng thái từ backend sang frontend
-  const statusMapping = {
-    'dang_cho': 'pending',
-    'da_xac_nhan': 'confirmed',
-    'da_huy': 'cancelled',
-    'da_nhan_phong': 'checked_in',
-    'dang_su_dung': 'in_use',
-    'da_tra_phong': 'checked_out',
-    'khong_nhan_phong': 'no_show'
-  };
 
   const reverseStatusMapping = {
     'pending': 'dang_cho',
@@ -164,6 +172,33 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
     'no_show': 'khong_nhan_phong'
   };
 
+
+  const getViewText = (viewType) => {
+    const viewTexts = {
+      'sea_view': 'View biển',
+      'city_view': 'View thành phố',
+      'garden_view': 'View vườn',
+      'mountain_view': 'View núi',
+      'pool_view': 'View hồ bơi',
+      'none': ''
+    };
+    return viewTexts[viewType] || 'Không có view';
+  };
+
+  const roomStatusMapping = (status) => {
+    const statusText = {
+      'chua_gan': 'Chưa thêm phòng',
+      'da_gan': 'Đã thêm phòng',
+      'dang_cho_checkin': 'Đang chờ check-in',
+      'da_checkin': 'Đã check-in',
+      'dang_su_dung': 'Đang sử dụng',
+      'da_checkout': 'Đã check-out',
+      'chuyen_phong': 'Chuyển phòng',
+      'nang_cap': 'Nâng cấp',
+      'huy_gan': 'Hủy thêm phòng',
+    };
+    return statusText[status] || "Không xác định";
+  };
 
   const loadAvailableRooms = async (booking) => {
     if (!booking) return;
@@ -197,11 +232,11 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
       const hotelId = booking.hotelId._id;
 
       const response = await axios.post(
-        `${baseUrl}/api/room-hotel/${hotelId}/available-rooms-for-assignment`,
+        `${baseUrl}/api/booking-hotel/${hotelId}/available-rooms-for-assignment`,
         payload,
         { withCredentials: true }
       );
-
+      console.log("Giá trị trả về", response);
       if (response.data?.success) {
         setAvailableRooms(response.data.availableRooms);
         if (response.data.availableRooms.length === 0) {
@@ -353,7 +388,7 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
               ? {
                 ...b,
                 status: newStatus,
-                assignedRooms: [...(b.assignedRooms || []), ...successfulAssignments] 
+                assignedRooms: [...(b.assignedRooms || []), ...successfulAssignments]
               }
               : b
           )
@@ -364,7 +399,7 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
           checkForNewBookings();
         }, 1000);
       } else {
-        toast.error('❌ Không thể gán phòng nào!');
+        toast.error('❌ Không thể thêm phòng nào!');
 
         // Hiển thị chi tiết lỗi
         if (errors.length > 0) {
@@ -374,37 +409,17 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
       }
     } catch (error) {
       console.error('❌ Critical error in bulk assign:', error);
-      toast.error('Lỗi nghiêm trọng khi gán phòng!');
+      toast.error('Lỗi nghiêm trọng khi thêm phòng!');
     } finally {
       setLoadingRooms(false);
     }
   };
 
-  // ✅ BONUS: Helper function để validate trước khi gán
-  const validateAssignments = () => {
-    const validAssignments = assignmentData.filter(data => data.roomId);
-    const roomIds = validAssignments.map(data => data.roomId);
-    const duplicateRooms = roomIds.filter((id, index) => roomIds.indexOf(id) !== index);
 
-    if (duplicateRooms.length > 0) {
-      toast.error('❌ Có phòng bị chọn trùng lặp!');
-      return false;
-    }
-
-    if (validAssignments.length === 0) {
-      toast.error('❌ Vui lòng chọn ít nhất 1 phòng!');
-      return false;
-    }
-
-    return true;
-  };
-
-  // ✅ THÊM: Get used room IDs
   const getUsedRoomIds = () => {
     return assignmentData.map(data => data.roomId).filter(Boolean);
   };
 
-  // ✅ THÊM: Get available rooms for specific index
   const getAvailableRoomsForIndex = (currentIndex) => {
     const usedIds = getUsedRoomIds();
     const currentRoomId = assignmentData[currentIndex]?.roomId;
@@ -539,6 +554,7 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
         `${baseUrl}/api/booking-hotel/hotelowner/bookings`,
         { withCredentials: true }
       );
+      console.log("Danh sách booking", response.data);
 
       if (response.data && Array.isArray(response.data)) {
         const newBookings = response.data;
@@ -790,13 +806,12 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
     }
   };
 
-  // Hàm gán phòng
-
-  const assignRoom = async (bookingId, roomData) => {
-
-  };
 
   const getFilteredBookings = () => {
+    if (!bookings || !Array.isArray(bookings)) {
+      console.log('⚠️ Bookings not array in getFilteredBookings:', typeof bookings, bookings);
+      return [];
+    }
     let filtered = selectedHotelId
       ? bookings.filter(booking => booking.hotelId?._id === selectedHotelId)
       : bookings;
@@ -901,71 +916,13 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
     setShowDetailModal(true);
   };
 
-  const getViewText = (viewType) => {
-    const viewTexts = {
-      'sea_view': 'View biển',
-      'city_view': 'View thành phố',
-      'garden_view': 'View vườn',
-      'mountain_view': 'View núi',
-      'pool_view': 'View hồ bơi',
-      'none': ''
-    };
-    return viewTexts[viewType] || '';
-  };
-
-  // Hàm fetch danh sách đặt phòng
-  // const fetchBookingByHotelOwner = async (filterParams = {}) => {
-  //   setLoading(true);
-  //   try {
-  //     if (!token) {
-  //       toast.error('Không tìm thấy token. Vui lòng đăng nhập lại.');
-  //       return;
-  //     }
-
-  //     // Xây dựng query params từ filterParams
-  //     const queryParams = new URLSearchParams();
-  //     if (filterParams.status) {
-  //       queryParams.append('status', filterParams.status);
-  //     }
-  //     if (filterParams.timeRange) {
-  //       queryParams.append('filter', filterParams.timeRange);
-  //     }
-  //     if (filterParams.dateFrom) {
-  //       queryParams.append('fromDate', filterParams.dateFrom);
-  //     }
-  //     if (filterParams.dateTo) {
-  //       queryParams.append('toDate', filterParams.dateTo);
-  //     }
-  //     if (filterParams.hotelId) {
-  //       queryParams.append('hotelId', filterParams.hotelId);
-  //     }
-
-  //     // ✅ Fixed: URL API với đúng path
-  //     const url = queryParams.toString()
-  //       ? `${baseUrl}/api/booking-hotel/hotelowner/bookings?${queryParams}`
-  //       : `${baseUrl}/api/booking-hotel/hotelowner/bookings`;
-
-  //     const response = await axios.get(url);
-
-  //     if (response.status == 404) {
-  //       toast.error('Chưa có khách sạn nào');
-  //       window.location.href = '/';
-  //       return;
-  //     }
-
-  //     // Cập nhật danh sách bookings
-  //     setBookings(response.data);
-  //     setLocalBookings(response.data);
-  //   } catch (error) {
-  //     console.error('Lỗi khi lấy danh sách đặt phòng:', error.response?.data || error.message);
-  //     console.error('Kiểm tra token trong booking:', token);
-  //     toast.error('Không thể lấy danh sách đặt phòng. Vui lòng thử lại.');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   useEffect(() => {
+    if (!bookings || !Array.isArray(bookings)) {
+      console.log('⚠️ Bookings not ready, setting empty local bookings');
+      setLocalBookings([]);
+      return;
+    }
     if (selectedHotelId) {
       const filteredBookings = bookings.filter(booking =>
         booking.hotelId?._id === selectedHotelId
@@ -1021,6 +978,11 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
         toast.error('Không tìm thấy token. Vui lòng đăng nhập lại.');
         return;
       }
+      if (!bookings || !Array.isArray(bookings)) {
+      console.log('⚠️ No bookings data available for filtering');
+      setLocalBookings([]);
+      return;
+    }
 
       // Nếu không có filter nào, hiển thị tất cả bookings
       if (!selectedHotelId && !filterParams.status && !filterParams.timeRange && !filterParams.dateFrom && !filterParams.dateTo) {
@@ -1089,6 +1051,19 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
 
   const filteredBookings = getFilteredBookings();
 
+
+  useEffect(() => {
+  // ✅ THÊM: Safety check
+  if (!bookings || !Array.isArray(bookings)) {
+    console.log('⚠️ Bookings not ready in sync useEffect');
+    setLocalBookings([]);
+    return;
+  }
+  
+  console.log('🔄 Syncing localBookings with bookings:', bookings.length);
+  setLocalBookings(bookings);
+}, [bookings]);
+
   //Lấy thông báo khi có đơn mới
   useEffect(() => {
     if (hotelList.length > 0) {
@@ -1120,19 +1095,6 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
     }
   }, [bookings]); // Chỉ chạy khi bookings thay đổi
 
-
-  // Handle hotel selection
-  // const handleFilterChange = (key, value) => {
-  //   setFilters(prev => {
-  //     const newFilters = {
-  //       ...prev,
-  //       [key]: value
-  //     };
-  //     // Gọi filter ngay lập tức
-  //     fetchBookingByHotelOwner(newFilters);
-  //     return newFilters;
-  //   });
-  // };
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({
@@ -1548,7 +1510,7 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
                                     )}
                                   </div>
                                   <span className={`px-2 py-1 text-xs rounded-full ${getVietnameseStatusColor(room.status)}`}>
-                                    {getVietnameseStatusText(room.status)}
+                                    {roomStatusMapping(room.status)}
                                   </span>
                                 </div>
 
@@ -1675,7 +1637,7 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
                               className="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 flex items-center justify-center"
                             >
                               <Home className="h-4 w-4 mr-1" />
-                              Gán phòng
+                              Thêm phòng
                             </button>
                             <button
                               onClick={() => updateBookingStatus(booking.bookingId, 'cancelled')}
@@ -1689,26 +1651,26 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
                         {booking.status === 'da_nhan_phong' && (
                           <>
                             <button
-                              onClick={() => updateBookingStatus(booking.bookingId, 'in_use')}
+                              onClick={() => updateBookingStatus(booking.bookingId, 'dang_su_dung')}
                               className="px-3 py-2 bg-purple-600 text-white text-sm rounded hover:bg-purple-700"
                             >
                               Đang sử dụng
                             </button>
                             <button
-                              onClick={() => updateBookingStatus(booking.bookingId, 'checked_out')}
+                              onClick={() => updateBookingStatus(booking.bookingId, 'da_tra_phong')}
                               className="px-3 py-2 bg-gray-600 text-white text-sm rounded hover:bg-gray-700"
                             >
-                              Trả phòng
+                              Checkout & Thanh toán
                             </button>
                           </>
                         )}
 
                         {booking.status === 'dang_su_dung' && (
                           <button
-                            onClick={() => updateBookingStatus(booking.bookingId, 'checked_out')}
+                            onClick={() => updateBookingStatus(booking.bookingId, 'da_tra_phong')}
                             className="px-3 py-2 bg-gray-600 text-white text-sm rounded hover:bg-gray-700 col-span-2"
                           >
-                            Trả phòng
+                            Checkout & Thanh toán
                           </button>
                         )}
 
@@ -1775,7 +1737,7 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
             <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
               <div>
                 <h2 className="text-xl font-bold text-gray-800">
-                  Gán phòng cho đơn #{assigningBooking?.bookingId}
+                  Thêm phòng cho đơn #{assigningBooking?.bookingId}
                 </h2>
                 <p className="text-sm text-gray-600">
                   Cần gán: <span className="font-medium text-blue-600">{assignmentData.length} phòng</span>
@@ -1842,7 +1804,7 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
               {assignmentData.length > 0 && (
                 <div>
                   <h3 className="font-semibold text-gray-800 mb-3">
-                    Gán phòng mới ({assignmentData.length} phòng)
+                    Thêm phòng mới ({assignmentData.length} phòng)
                   </h3>
 
                   <div className="space-y-4">
@@ -2256,35 +2218,32 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
                         Phòng đã nhận ({viewingBooking.assignedRooms.length})
                       </h3>
                       <div className="space-y-3">
-                        {viewingBooking.assignedRooms.map((room, index) => (
-                          <div key={index} className="bg-white p-3 rounded border">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="font-medium text-lg">Phòng {room.soPhong}</p>
-                                <p className="text-sm text-gray-600">Tầng {room.tang}</p>
-                                {room.loaiView && (
-                                  <p className="text-sm text-gray-600">View: {
-                                    room.loaiView === 'sea_view' ? 'View biển' :
-                                      room.loaiView === 'city_view' ? 'View thành phố' :
-                                        room.loaiView === 'garden_view' ? 'View vườn hoa' :
-                                          room.loaiView === 'mountain_view' ? 'View núi' :
-                                            room.loaiView === 'pool_view' ? 'View hồ bơi'
-                                              : "N/A"
-                                  }</p>
-                                )}
+                        {viewingBooking.assignedRooms.map((assignedRoom, index) => {
+                          const room = assignedRoom.roomInfo;
+                          return (
+                            <div key={index} className="bg-white p-3 rounded border">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="font-medium text-lg">Phòng {room.soPhong}</p>
+                                  <p className="text-sm text-gray-600">Tầng {room.tang}</p>
+                                  {room.loaiView && (
+                                    <p className="text-sm text-gray-600">View: {getViewText(room.loaiView)}</p>
+                                  )}
+                                </div>
+                                <span className={`px-2 py-1 ${getVietnameseStatusColor(room.trangThaiPhong)} text-xs rounded-full`}>
+                                  {getVietnameseStatusText(room.trangThaiPhong)}
+                                </span>
                               </div>
-                              <span className={`px-2 py-1 ${getVietnameseStatusColor(room.trangThaiPhong)} text-xs rounded-full`}>
-                                {getVietnameseStatusText(room.trangThaiPhong)}
-                              </span>
+                              {room.ghiChuPhong && (
+                                <p className="text-sm text-gray-500 mt-2 italic">{room.ghiChuPhong}</p>
+                              )}
+                              <p className="text-xs text-gray-400 mt-1">
+                                Gán lúc: {formatDate(room.thoiGianGiaoPhong)}
+                              </p>
                             </div>
-                            {room.ghiChuPhong && (
-                              <p className="text-sm text-gray-500 mt-2 italic">{room.ghiChuPhong}</p>
-                            )}
-                            <p className="text-xs text-gray-400 mt-1">
-                              Gán lúc: {formatDate(room.thoiGianGiaoPhong)}
-                            </p>
-                          </div>
-                        ))}
+                          );
+
+                        })}
                       </div>
                     </div>
                   )}
@@ -2326,7 +2285,7 @@ const Booking = ({ bookings, setBookings, expandedBooking, setExpandedBooking, f
                             className="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 flex items-center justify-center"
                           >
                             <Home className="h-4 w-4 mr-1" />
-                            Gán phòng
+                            Thêm phòng
                           </button>
                           <button
                             onClick={() => {

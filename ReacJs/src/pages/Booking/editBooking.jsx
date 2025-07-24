@@ -194,20 +194,20 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
     );
   };
 
-  // ✅ SỬA: Hàm cập nhật booking với booking type và time tracking
+  // Hàm cập nhật booking với booking type và time tracking
   const updateBookingServices = async (bookingId, services, paymentMethod, bookingStatus, bookingTypeChanges, actualTimes) => {
     try {
       const updateData = {
         ...(services && services.length > 0 && { service: services }),
         ...(paymentMethod && { paymentMethod }),
         ...(bookingStatus && { status: bookingStatus }),
-        // ✅ THÊM: Booking type changes
+
         ...(bookingTypeChanges.newBookingType && { newBookingType: bookingTypeChanges.newBookingType }),
         ...(bookingTypeChanges.newCheckInDate && { newCheckInDate: bookingTypeChanges.newCheckInDate }),
         ...(bookingTypeChanges.newCheckOutDate && { newCheckOutDate: bookingTypeChanges.newCheckOutDate }),
         ...(bookingTypeChanges.newCheckInTime && { newCheckInTime: bookingTypeChanges.newCheckInTime }),
         ...(bookingTypeChanges.newCheckOutTime && { newCheckOutTime: bookingTypeChanges.newCheckOutTime }),
-        // ✅ THÊM: Actual time tracking
+
         ...(actualTimes.actualCheckInTime && { actualCheckInTime: actualTimes.actualCheckInTime }),
         ...(actualTimes.actualCheckOutTime && { actualCheckOutTime: actualTimes.actualCheckOutTime }),
         ...(actualTimes.roomIndex !== undefined && { roomIndex: actualTimes.roomIndex })
@@ -227,7 +227,7 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
           paymentMethod: paymentMethod || booking.paymentMethod,
           status: bookingStatus || booking.status,
           bookingType: bookingTypeChanges.newBookingType || booking.bookingType,
-          // Update other fields based on response
+    
           ...(response.data.updatedBooking || {})
         };
         
@@ -251,7 +251,7 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
     }
   };
 
-  // ✅ SỬA: Hàm lưu thay đổi với nhiều options
+  // Hàm lưu thay đổi với nhiều options
   const saveChanges = async () => {
     if (!booking) {
       toast.error('Không có thông tin đơn đặt phòng!');
@@ -262,8 +262,6 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
       toast.error('Vui lòng chọn phương thức thanh toán!');
       return;
     }
-
-    // ✅ Prepare booking type changes
     const bookingTypeChanges = {};
     if (newBookingType && newBookingType !== booking.bookingType) {
       bookingTypeChanges.newBookingType = newBookingType;
@@ -273,7 +271,6 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
       bookingTypeChanges.newCheckOutTime = newCheckOutTime;
     }
 
-    // ✅ Prepare actual time changes
     const actualTimes = {};
     if (actualCheckInTime || actualCheckOutTime) {
       actualTimes.actualCheckInTime = actualCheckInTime;

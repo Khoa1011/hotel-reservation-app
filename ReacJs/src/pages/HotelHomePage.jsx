@@ -28,7 +28,7 @@ import axios from '../utils/axiosConfig';
 import moment from 'moment-timezone';
 import { toast } from 'react-toastify';
 import RoomManagementTabs from '../components/RoomManagementTabs';
-import HotelSelector from '../components/HotelSelector'; // Import component mới
+import HotelSelector from '../components/HotelSelector'; 
 
 const HotelManagement = () => {
     const [activeMenu, setActiveMenu] = useState(() => {
@@ -43,7 +43,9 @@ const HotelManagement = () => {
     const [loading, setLoading] = useState(false);
     const token = localStorage.getItem('token');
     const [error, setError] = useState(null);
+    const [hotels, setHotels] = useState([]);
 
+    
     // State cho hotel selector - ✅ Initialize từ localStorage
     const [selectedHotelId, setSelectedHotelId] = useState(() => {
         const saved = localStorage.getItem("selectedHotelId") || '';
@@ -130,6 +132,20 @@ const HotelManagement = () => {
             .format('HH:mm DD/MM/YYYY');
     };
 
+    const fetchHotels = async () => {
+    try {
+        const response = await axios.get(`${baseUrl}/api/booking-hotel/hotelowner/hotels`, {
+            withCredentials: true
+        });
+        console.log("Danh sách khách sạn", response.data);
+        if (response.data.success) {
+            setHotels(response.data.hotels);
+        }
+    } catch (error) {
+        console.error('Lỗi fetch hotels:', error);
+    }
+};
+
     // Fetch bookings khi component mount
     const fetchBookings = async () => {
         setLoading(true);
@@ -147,6 +163,7 @@ const HotelManagement = () => {
                 window.location.href = '/';
                 return;
             }
+            console.log("đơn mới", response.data);
             setBookings(response.data);
         } catch (error) {
             console.error('Lỗi khi lấy danh sách đặt phòng:', error.response?.data || error.message);
@@ -159,8 +176,8 @@ const HotelManagement = () => {
     };
 
     useEffect(() => {
+        fetchHotels();
         fetchBookings();
-        // ✅ Bỏ phần load saved hotel selection vì đã có trong useState
     }, []);
 
     const renderRooms = () => {
@@ -214,6 +231,7 @@ const HotelManagement = () => {
                 getStatusColor={getStatusColor}
                 getStatusText={getStatusText}
                 selectedHotelId={selectedHotelId}
+                hotels={hotels}
             />
         );
     };
@@ -287,9 +305,11 @@ const HotelManagement = () => {
                 {/* Hotel Selector */}
                 <div className="p-6 border-b">
                     <HotelSelector
+                    hotels={hotels}
                         bookings={bookings}
                         onHotelChange={handleHotelChange}
                         selectedHotelId={selectedHotelId}
+
                     />
                 </div>
 
@@ -302,7 +322,7 @@ const HotelManagement = () => {
                                 onClick={() => {
                                     console.log('🏨 Switching to menu:', item.id);
                                     setActiveMenu(item.id);
-                                    // ✅ Lưu vào localStorage
+                                 
                                     localStorage.setItem('activeMenu', item.id);
                                 }}
                                 className={`w-full flex items-center px-6 py-3 text-left hover:bg-blue-50 hover:text-blue-600 transition-colors ${activeMenu === item.id ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : 'text-gray-700'

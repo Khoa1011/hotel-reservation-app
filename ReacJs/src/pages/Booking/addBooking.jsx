@@ -83,7 +83,7 @@ const AddBooking = ({ onClose }) => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.customerName.trim()) newErrors.customerName = 'Vui lòng nhập tên khách hàng';
+    // if (!formData.customerName.trim()) newErrors.customerName = 'Vui lòng nhập tên khách hàng';
     if (!formData.phoneNumber.trim()) newErrors.phoneNumber = 'Vui lòng nhập số điện thoại';
     if (!formData.maLoaiPhong) newErrors.maLoaiPhong = 'Vui lòng chọn loại phòng';
 

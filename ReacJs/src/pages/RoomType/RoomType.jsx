@@ -6,7 +6,8 @@ import {
   Search,
   Edit,
   Trash2,
-  Home
+  Home,
+  Users
 } from 'lucide-react';
 import axios from '../../utils/axiosConfig';
 import { toast } from 'react-toastify';
@@ -298,7 +299,8 @@ const RoomTypeManagement = ({ selectedHotelId }) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              {/* ✅ SỬA: Statistics Grid với 4 columns */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                 <div className="flex items-center gap-2">
                   <DollarSign className="w-5 h-5 text-green-600" />
                   <div>
@@ -306,21 +308,111 @@ const RoomTypeManagement = ({ selectedHotelId }) => {
                     <p className="font-semibold">{formatCurrency(roomType.giaCa)}</p>
                   </div>
                 </div>
-                {/* <div className="flex items-center gap-2">
-                  <Home className="w-5 h-5 text-purple-600" />
+
+                <div className="flex items-center gap-2">
+                  <Home className="w-5 h-5 text-blue-600" />
                   <div>
-                    <p className="text-sm text-gray-600">Tổng số phòng</p>
-                    <p className="font-semibold">{roomType.tongSoPhong} phòng</p>
+                    <p className="text-sm text-gray-600">Tổng phòng</p>
+                    <p className="font-semibold">{roomType.thongKePhong?.tongSoPhong || 0} phòng</p>
                   </div>
-                </div> */}
+                </div>
+
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-green-600" />
                   <div>
-                    <p className="text-sm text-gray-600">Tiện nghi</p>
-                    <p className="font-semibold">{roomType.tienNghiDacBiet?.length || 0} tiện nghi</p>
+                    <p className="text-sm text-gray-600">Phòng trống</p>
+                    <p className="font-semibold text-green-600">{roomType.thongKePhong?.phongTrong || 0}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-red-600" />
+                  <div>
+                    <p className="text-sm text-gray-600">Đã đặt</p>
+                    <p className="font-semibold text-red-600">
+                      {(roomType.thongKePhong?.phongDaDat || 0) + (roomType.thongKePhong?.phongDangSuDung || 0)}
+                    </p>
                   </div>
                 </div>
               </div>
+
+              {/* ✅ THÊM: Detailed Room Status Bar */}
+              {roomType.thongKePhong && roomType.thongKePhong.tongSoPhong > 0 && (
+                <div className="mb-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-gray-700">Trạng thái phòng</span>
+                    <span className="text-sm text-gray-500">
+                      Tỷ lệ lấp đầy: {roomType.thongKePhong.tyLeLapDay}%
+                    </span>
+                  </div>
+
+                  <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                    <div className="flex h-3 rounded-full overflow-hidden">
+                      {/* Phòng trống */}
+                      {roomType.thongKePhong.phongTrong > 0 && (
+                        <div
+                          className="bg-green-500"
+                          style={{
+                            width: `${(roomType.thongKePhong.phongTrong / roomType.thongKePhong.tongSoPhong) * 100}%`
+                          }}
+                        ></div>
+                      )}
+
+                      {/* Đã đặt */}
+                      {roomType.thongKePhong.phongDaDat > 0 && (
+                        <div
+                          className="bg-orange-500"
+                          style={{
+                            width: `${(roomType.thongKePhong.phongDaDat / roomType.thongKePhong.tongSoPhong) * 100}%`
+                          }}
+                        ></div>
+                      )}
+
+                      {/* Đang sử dụng */}
+                      {roomType.thongKePhong.phongDangSuDung > 0 && (
+                        <div
+                          className="bg-red-500"
+                          style={{
+                            width: `${(roomType.thongKePhong.phongDangSuDung / roomType.thongKePhong.tongSoPhong) * 100}%`
+                          }}
+                        ></div>
+                      )}
+
+                      {/* Bảo trì */}
+                      {roomType.thongKePhong.phongBaoTri > 0 && (
+                        <div
+                          className="bg-yellow-500"
+                          style={{
+                            width: `${(roomType.thongKePhong.phongBaoTri / roomType.thongKePhong.tongSoPhong) * 100}%`
+                          }}
+                        ></div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Legend */}
+                  <div className="flex flex-wrap gap-4 text-xs">
+                    <div className="flex items-center gap-1">
+                      <div className="w-3 h-3 bg-green-500 rounded"></div>
+                      <span>Trống ({roomType.thongKePhong.phongTrong})</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-3 h-3 bg-orange-500 rounded"></div>
+                      <span>Đã đặt ({roomType.thongKePhong.phongDaDat})</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-3 h-3 bg-red-500 rounded"></div>
+                      <span>Đang sử dụng ({roomType.thongKePhong.phongDangSuDung})</span>
+                    </div>
+                    {roomType.thongKePhong.phongBaoTri > 0 && (
+                      <div className="flex items-center gap-1">
+                        <div className="w-3 h-3 bg-yellow-500 rounded"></div>
+                        <span>Bảo trì ({roomType.thongKePhong.phongBaoTri})</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <p className="text-gray-700 mb-3">{roomType.moTa}</p>
 
@@ -336,6 +428,36 @@ const RoomTypeManagement = ({ selectedHotelId }) => {
                         {amenity}
                       </span>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ✅ THÊM: Quick Actions */}
+              {roomType.thongKePhong && roomType.thongKePhong.tongSoPhong > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        // Navigate to room management with this room type selected
+                        // This would depend on your routing setup
+                        console.log('Navigate to rooms for room type:', roomType._id);
+                      }}
+                      className="px-3 py-1 text-sm bg-blue-50 text-blue-600 rounded hover:bg-blue-100"
+                    >
+                      Xem phòng ({roomType.thongKePhong.tongSoPhong})
+                    </button>
+
+                    {roomType.thongKePhong.phongTrong > 0 && (
+                      <button
+                        onClick={() => {
+                          // Quick action for available rooms
+                          console.log('Show available rooms for:', roomType._id);
+                        }}
+                        className="px-3 py-1 text-sm bg-green-50 text-green-600 rounded hover:bg-green-100"
+                      >
+                        Phòng trống ({roomType.thongKePhong.phongTrong})
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

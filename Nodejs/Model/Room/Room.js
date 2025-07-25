@@ -22,6 +22,7 @@ const RoomSchema = new mongoose.Schema({
     type: String,
     enum: [
       "trong",           // Phòng trống, sẵn sàng cho khách
+      "da_dat",
       "dang_su_dung",    // Khách đang ở
       "dang_don_dep",    // Đang dọn dẹp sau khách trả phòng
       "bao_tri",         // Đang bảo trì, sửa chữa

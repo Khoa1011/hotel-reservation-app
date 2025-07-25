@@ -144,6 +144,30 @@ const BookingSchema = new mongoose.Schema({
     required: [true, "Tổng tiền là bắt buộc"],
     min: [0, "Tổng tiền không được âm"]
   },
+  chiTietGia: {
+      basePrice: { type: Number, default: 0 },
+      subtotalBeforeDiscount: { type: Number, default: 0 },
+      duration: { type: Number, default: 1 },
+      unit: { type: String, enum: ["gio", "dem", "ngay"], default: "dem" },
+      multiplier: { type: Number, default: 1 },
+      
+      discounts: {
+        weekend: { type: Boolean, default: false },
+        longStay: { type: Boolean, default: false },
+        discountPercent: { type: Number, default: 0, min: 0, max: 100 },
+        discountAmount: { type: Number, default: 0, min: 0 }
+      },
+      
+      breakdown: {
+        baseRate: { type: Number, default: 0 },
+        duration: { type: Number, default: 1 },
+        subtotal: { type: Number, default: 0 },
+        taxPrice: { type: Number, default: 0 },
+        discountAmount: { type: Number, default: 0 },
+        multiplier: { type: Number, default: 1 },
+        total: { type: Number, default: 0 }
+      }
+    }
   
   },
   // ✅ HOÀN THIỆN THÔNG TIN THANH TOÁN

@@ -200,6 +200,7 @@ roomHotelRouter.post("/hotelowner/create-room",
         }
     }
 );
+
 // 2. Lấy danh sách phòng theo loại với hình ảnh
 roomHotelRouter.get("/hotelowner/rooms/:roomTypeId", authorizeRoles("chuKhachSan"), async (req, res) => {
     try {
@@ -520,6 +521,247 @@ roomHotelRouter.get("/hotelowner/room-detail/:roomId", authorizeRoles("chuKhachS
         });
     }
 });
+
+// 6. Lấy tất cả phòng trong khách sạn với thống kê
+roomHotelRouter.get("/hotelowner/hotel-rooms/:hotelId", 
+    authorizeRoles("chuKhachSan"), 
+    async (req, res) => {
+        try {
+            const { hotelId } = req.params;
+            const { roomTypeId, status, page = 1, limit = 50 } = req.query;
+
+            if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "ID khách sạn không hợp lệ"
+                });
+            }
+
+            // Kiểm tra khách sạn tồn tại
+            const hotel = await Hotel.findById(hotelId);
+            if (!hotel) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Không tìm thấy khách sạn"
+                });
+            }
+
+            // Lấy tất cả loại phòng của khách sạn
+            const roomTypes = await RoomType.find({ maKhachSan: hotelId })
+                .select('_id tenLoaiPhong giaCa')
+                .sort({ tenLoaiPhong: 1 });
+
+            if (roomTypes.length === 0) {
+                return res.status(200).json({
+                    success: true,
+                    message: "Khách sạn chưa có loại phòng nào",
+                    data: {
+                        hotel: {
+                            _id: hotel._id,
+                            tenKhachSan: hotel.tenKhachSan
+                        },
+                        roomTypes: [],
+                        rooms: [],
+                        statistics: {
+                            totalRooms: 0,
+                            availableRooms: 0,
+                            occupiedRooms: 0,
+                            maintenanceRooms: 0,
+                            byRoomType: []
+                        },
+                        pagination: {
+                            currentPage: parseInt(page),
+                            totalPages: 0,
+                            totalItems: 0,
+                            itemsPerPage: parseInt(limit)
+                        }
+                    }
+                });
+            }
+
+            const roomTypeIds = roomTypes.map(rt => rt._id);
+
+            // Tạo query filter cho phòng
+            const roomQuery = { maLoaiPhong: { $in: roomTypeIds } };
+            
+            // Lọc theo loại phòng nếu có
+            if (roomTypeId && mongoose.Types.ObjectId.isValid(roomTypeId)) {
+                roomQuery.maLoaiPhong = roomTypeId;
+            }
+            
+            // Lọc theo trạng thái nếu có
+            if (status && status !== 'all') {
+                if (status === 'available') {
+                    roomQuery.trangThaiPhong = 'trong';
+                } else if (status === 'occupied') {
+                    roomQuery.trangThaiPhong = { $in: ['da_dat', 'dang_su_dung'] };
+                } else if (status === 'maintenance') {
+                    roomQuery.trangThaiPhong = 'bao_tri';
+                } else {
+                    roomQuery.trangThaiPhong = status;
+                }
+            }
+
+            // Đếm tổng số phòng để phân trang
+            const totalRooms = await Room.countDocuments(roomQuery);
+
+            // Lấy danh sách phòng với phân trang
+            const skip = (page - 1) * limit;
+            const rooms = await Room.find(roomQuery)
+                .populate('maLoaiPhong', 'tenLoaiPhong giaCa tienNghiDacBiet')
+                .sort({ soPhong: 1 })
+                .skip(skip)
+                .limit(parseInt(limit));
+
+            // Lấy hình ảnh cho từng phòng
+            const roomsWithImages = await Promise.all(
+                rooms.map(async (room) => {
+                    const images = await RoomImage.find({ maPhong: room._id }).sort({ thuTuAnh: 1 });
+                    return {
+                        ...room.toObject(),
+                        hinhAnh: images
+                    };
+                })
+            );
+
+            // Tính thống kê tổng quan (không áp dụng filter roomTypeId và status)
+            const allRoomsQuery = { maLoaiPhong: { $in: roomTypeIds } };
+            const allRooms = await Room.find(allRoomsQuery).select('trangThaiPhong maLoaiPhong');
+
+            // Thống kê tổng quan
+            const totalAllRooms = allRooms.length;
+            const availableRooms = allRooms.filter(r => r.trangThaiPhong === 'trong').length;
+            const occupiedRooms = allRooms.filter(r => ['da_dat', 'dang_su_dung'].includes(r.trangThaiPhong)).length;
+            const maintenanceRooms = allRooms.filter(r => r.trangThaiPhong === 'bao_tri').length;
+
+            // Thống kê theo từng loại phòng
+            const statisticsByRoomType = roomTypes.map(roomType => {
+                const roomsOfType = allRooms.filter(r => r.maLoaiPhong.toString() === roomType._id.toString());
+                const total = roomsOfType.length;
+                const available = roomsOfType.filter(r => r.trangThaiPhong === 'trong').length;
+                const occupied = roomsOfType.filter(r => ['da_dat', 'dang_su_dung'].includes(r.trangThaiPhong)).length;
+                const maintenance = roomsOfType.filter(r => r.trangThaiPhong === 'bao_tri').length;
+
+                return {
+                    roomType: {
+                        _id: roomType._id,
+                        tenLoaiPhong: roomType.tenLoaiPhong,
+                        giaCa: roomType.giaCa
+                    },
+                    total,
+                    available,
+                    occupied,
+                    maintenance,
+                    occupancyRate: total > 0 ? Math.round((occupied / total) * 100) : 0
+                };
+            });
+
+            console.log(`✅ Fetched ${roomsWithImages.length} rooms for hotel "${hotel.tenKhachSan}"`);
+
+            res.status(200).json({
+                success: true,
+                message: "Lấy danh sách phòng thành công",
+                data: {
+                    hotel: {
+                        _id: hotel._id,
+                        tenKhachSan: hotel.tenKhachSan
+                    },
+                    roomTypes,
+                    rooms: roomsWithImages,
+                    statistics: {
+                        totalRooms: totalAllRooms,
+                        availableRooms,
+                        occupiedRooms,
+                        maintenanceRooms,
+                        occupancyRate: totalAllRooms > 0 ? Math.round((occupiedRooms / totalAllRooms) * 100) : 0,
+                        byRoomType: statisticsByRoomType
+                    },
+                    pagination: {
+                        currentPage: parseInt(page),
+                        totalPages: Math.ceil(totalRooms / limit),
+                        totalItems: totalRooms,
+                        itemsPerPage: parseInt(limit)
+                    }
+                }
+            });
+
+        } catch (error) {
+            console.error("Lỗi lấy danh sách phòng khách sạn:", error);
+            res.status(500).json({
+                success: false,
+                message: "Lỗi server khi lấy danh sách phòng",
+                error: error.message
+            });
+        }
+    }
+);
+
+// 7. API cập nhật trạng thái phòng (toggle)
+roomHotelRouter.put("/hotelowner/update-room-status/:roomId",
+    authorizeRoles("chuKhachSan"),
+    async (req, res) => {
+        try {
+            const { roomId } = req.params;
+            const { trangThaiPhong } = req.body;
+
+            if (!mongoose.Types.ObjectId.isValid(roomId)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "ID phòng không hợp lệ"
+                });
+            }
+
+            if (!trangThaiPhong || !['trong', 'da_dat', 'dang_su_dung', 'bao_tri'].includes(trangThaiPhong)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Trạng thái phòng không hợp lệ"
+                });
+            }
+
+            const room = await Room.findById(roomId).populate({
+                path: 'maLoaiPhong',
+                populate: {
+                    path: 'maKhachSan',
+                    select: 'tenKhachSan'
+                }
+            });
+
+            if (!room) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Không tìm thấy phòng"
+                });
+            }
+
+            // Cập nhật trạng thái
+            room.trangThaiPhong = trangThaiPhong;
+            room.capNhatCuoi = new Date();
+            await room.save();
+
+            const hotelName = room.maLoaiPhong.maKhachSan.tenKhachSan;
+            console.log(`✅ Updated room ${room.soPhong} status to ${trangThaiPhong} in hotel "${hotelName}"`);
+
+            res.status(200).json({
+                success: true,
+                message: `Cập nhật trạng thái phòng ${room.soPhong} thành công!`,
+                room: {
+                    _id: room._id,
+                    soPhong: room.soPhong,
+                    trangThaiPhong: room.trangThaiPhong,
+                    capNhatCuoi: room.capNhatCuoi
+                }
+            });
+
+        } catch (error) {
+            console.error("Lỗi cập nhật trạng thái phòng:", error);
+            res.status(500).json({
+                success: false,
+                message: "Lỗi server khi cập nhật trạng thái phòng",
+                error: error.message
+            });
+        }
+    }
+);
 
 
 

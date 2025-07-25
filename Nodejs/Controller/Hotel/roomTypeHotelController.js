@@ -139,19 +139,85 @@ roomHotelRouter.get("/hotelowner/roomtypes/:hotelId", authorizeRoles("chuKhachSa
 
         const skip = (page - 1) * limit;
 
+        // ✅ THÊM: Lấy room types với populate
         const roomTypes = await RoomType.find(searchQuery)
             .populate('maKhachSan', 'tenKhachSan')
             .sort({ createdAt: -1 })
             .skip(skip)
-            .limit(parseInt(limit));
+            .limit(parseInt(limit))
+            .lean(); // Sử dụng lean() để có thể modify data
+
+        // ✅ THÊM: Lấy thống kê phòng cho từng loại phòng
+        const roomTypesWithStats = await Promise.all(
+            roomTypes.map(async (roomType) => {
+                // Aggregate để lấy thống kê phòng theo loại phòng
+                const roomStats = await Room.aggregate([
+                    {
+                        $match: {
+                            maLoaiPhong: roomType._id
+                        }
+                    },
+                    {
+                        $group: {
+                            _id: "$trangThaiPhong",
+                            count: { $sum: 1 }
+                        }
+                    }
+                ]);
+
+                // Tính tổng và phân loại theo trạng thái
+                let tongSoPhong = 0;
+                let phongTrong = 0;
+                let phongDaDat = 0;
+                let phongDangSuDung = 0;
+                let phongBaoTri = 0;
+
+                roomStats.forEach(stat => {
+                    tongSoPhong += stat.count;
+                    
+                    switch (stat._id) {
+                        case 'trong':
+                            phongTrong = stat.count;
+                            break;
+                        case 'da_dat':
+                            phongDaDat = stat.count;
+                            break;
+                        case 'dang_su_dung':
+                            phongDangSuDung = stat.count;
+                            break;
+                        case 'bao_tri':
+                            phongBaoTri = stat.count;
+                            break;
+                        default:
+                            break;
+                    }
+                });
+
+                // Trả về room type với thông tin thống kê
+                return {
+                    ...roomType,
+                    thongKePhong: {
+                        tongSoPhong,
+                        phongTrong,
+                        phongDaDat,
+                        phongDangSuDung,
+                        phongBaoTri,
+                        tyLeLapDay: tongSoPhong > 0 ? 
+                            Math.round(((phongDaDat + phongDangSuDung) / tongSoPhong) * 100) : 0
+                    }
+                };
+            })
+        );
 
         const total = await RoomType.countDocuments(searchQuery);
+
+        console.log(`✅ Loaded ${roomTypesWithStats.length} room types with statistics`);
 
         res.status(200).json({
             success: true,
             message: "Lấy danh sách loại phòng thành công",
             data: {
-                loaiPhong: roomTypes,
+                loaiPhong: roomTypesWithStats,
                 phanTrang: {
                     trangHienTai: parseInt(page),
                     tongTrang: Math.ceil(total / limit),

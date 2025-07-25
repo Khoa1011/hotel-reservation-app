@@ -6,6 +6,7 @@ const cookieParser = require("cookie-parser");
 const upload = require("./config/upload");
 const pathUrl = require("./Router/pathUrl");
 const app = express();
+const fs = require("fs");
 const ngrok = require('ngrok');
 const { initializeFirebase } = require('./config/firebase');
 
@@ -15,7 +16,65 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 const db = require("./config/key").mongoURI;
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ✅ SỬA: Cải thiện static file serving
+app.use('/uploads', (req, res, next) => {
+  // Thêm headers cho ngrok
+  res.header('ngrok-skip-browser-warning', 'true');
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, ngrok-skip-browser-warning');
+  
+  // Decode URL để xử lý ký tự đặc biệt
+  req.url = decodeURIComponent(req.url);
+  
+  console.log('📁 Static file request:', req.url);
+  
+  // Kiểm tra file có tồn tại không
+  const filePath = path.join(__dirname, 'uploads', req.url);
+  if (fs.existsSync(filePath)) {
+    console.log('✅ File exists:', filePath);
+  } else {
+    console.log('❌ File not found:', filePath);
+    console.log('📂 Directory contents:', fs.readdirSync(path.dirname(filePath)).slice(0, 5));
+  }
+  
+  next();
+});
+
+// ✅ SỬA: Cấu hình static với options tốt hơn
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  maxAge: '1d', // Cache 1 ngày
+  etag: false,
+  lastModified: false,
+  setHeaders: (res, path) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('ngrok-skip-browser-warning', 'true');
+  }
+}));
+
+// ✅ THÊM: Route riêng để test images
+app.get('/test-image/:path(*)', (req, res) => {
+  const imagePath = req.params.path;
+  const fullPath = path.join(__dirname, 'uploads', imagePath);
+  
+  console.log('🧪 Testing image:', {
+    requested: imagePath,
+    fullPath: fullPath,
+    exists: fs.existsSync(fullPath)
+  });
+  
+  if (fs.existsSync(fullPath)) {
+    res.sendFile(fullPath);
+  } else {
+    res.status(404).json({ 
+      error: 'Image not found',
+      path: imagePath,
+      exists: false 
+    });
+  }
+});
+
 const cors = require("cors");
 
 // Cấu hình CORS chi tiết để xử lý yêu cầu cross-origin và credentials

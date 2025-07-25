@@ -3,8 +3,9 @@ const mongoose =require ("mongoose");
 const AmenitiesSchema = new mongoose.Schema({
     maNhomTienNghi :{
         type:mongoose.Schema.Types.ObjectId,
-        required:true,
-        ref:"nhomTienNghi"
+        required:false,
+        ref:"nhomTienNghi",
+        default: null
     },
     tenTienNghi:{
         type:String,

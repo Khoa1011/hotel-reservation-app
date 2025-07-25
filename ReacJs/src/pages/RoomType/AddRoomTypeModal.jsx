@@ -100,7 +100,7 @@ const AddRoomTypeModal = ({ showModal, onClose, onSubmit }) => {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tên loại phòng *
+                Tên loại phòng <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -116,7 +116,7 @@ const AddRoomTypeModal = ({ showModal, onClose, onSubmit }) => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Giá phòng/đêm *
+                  Giá phòng/đêm <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"

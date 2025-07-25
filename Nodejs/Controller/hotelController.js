@@ -719,7 +719,7 @@ router.post('/:hotelId/room-suggestions', async (req, res) => {
     }
 });
 
-// ✅ ENHANCED: Kiểm tra availability chi tiết
+// Kiểm tra availability chi tiết
 async function checkEnhancedRoomAvailability({
     hotelId, roomTypeId, bookingType, checkInDate, checkOutDate,
     checkInTime, checkOutTime, requestedRooms
@@ -766,7 +766,7 @@ async function checkEnhancedRoomAvailability({
     }
 }
 
-// ✅ Kiểm tra availability theo giờ - ENHANCED
+// Kiểm tra availability theo giờ - ENHANCED
 async function checkHourlyAvailabilityEnhanced({
     hotelId, roomTypeId, totalRooms, checkInDate, checkInTime, checkOutTime, requestedRooms
 }) {
@@ -887,7 +887,7 @@ async function checkHourlyAvailabilityEnhanced({
     }
 }
 
-// ✅ Kiểm tra availability qua đêm - ENHANCED
+// Kiểm tra availability qua đêm - ENHANCED
 async function checkOvernightAvailabilityEnhanced({
     hotelId, roomTypeId, totalRooms, checkInDate, checkOutDate, requestedRooms
 }) {
@@ -984,7 +984,7 @@ async function checkOvernightAvailabilityEnhanced({
     }
 }
 
-// ✅ Kiểm tra availability dài ngày - ENHANCED
+// Kiểm tra availability dài ngày - ENHANCED
 async function checkLongStayAvailabilityEnhanced({
     hotelId, roomTypeId, totalRooms, checkInDate, checkOutDate, requestedRooms
 }) {
@@ -1013,7 +1013,7 @@ async function checkLongStayAvailabilityEnhanced({
     }
 }
 
-// ✅ Enhanced pricing calculation
+// Enhanced pricing calculation
 function calculateEnhancedPricing({
     roomType, bookingType, checkInDate, checkOutDate, checkInTime, checkOutTime
 }) {

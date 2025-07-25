@@ -273,7 +273,26 @@ hotelBookingRouter.get("/hotelowner/bookings", authorizeRoles("chuKhachSan", "nh
                 soDienThoai: booking.maKhachSan.soDienThoai
             },
             // Thông tin giá chi tiết
-            priceDetails: booking.thongTinGia,
+            priceDetails: {
+                ...booking.thongTinGia,
+                // ✅ THÊM: Đảm bảo có chiTietGia
+                chiTietGia: booking.thongTinGia?.chiTietGia || {
+                    basePrice: booking.maLoaiPhong?.giaCa || 0,
+                    subtotalBeforeDiscount: (booking.maLoaiPhong?.giaCa || 0) * (booking.thongTinGia?.soLuongDonVi || 1),
+                    discounts: {
+                        weekend: false,
+                        longStay: false,
+                        discountPercent: 0,
+                        discountAmount: 0
+                    },
+                    breakdown: {
+                        subtotal: (booking.maLoaiPhong?.giaCa || 0) * (booking.thongTinGia?.soLuongDonVi || 1),
+                        taxPrice: booking.thongTinGia?.phuPhiCuoiTuan || 0,
+                        discountAmount: booking.thongTinGia?.giamGia || 0,
+                        total: booking.thongTinGia?.tongDonDat || 0
+                    }
+                }
+            },
             // Thông tin thanh toán chi tiết
             paymentDetails: booking.thongTinThanhToan
         }));
@@ -948,7 +967,7 @@ hotelBookingRouter.post("/hotelowner/create-booking", authorizeRoles("chuKhachSa
         let checkOut = checkOutDate ? moment(checkOutDate) : null;
 
         let duration = 1;
-        let unit = "dem";
+        let unit = "dem"; // ✅ SỬA: Sử dụng format phù hợp với schema
 
         switch (bookingType) {
             case 'theo_gio':
@@ -968,13 +987,11 @@ hotelBookingRouter.post("/hotelowner/create-booking", authorizeRoles("chuKhachSa
                 }
 
                 duration = Math.ceil(endTime.diff(startTime, 'hours', true));
-                unit = "gio";
+                unit = "gio"; // ✅ SỬA: Sử dụng "gio" thay vì "giờ"
                 checkOut = checkIn; // Cùng ngày
                 break;
 
             case 'qua_dem':
-
-
                 checkOut = checkIn.clone().add(1, 'day');
 
                 const nightDiff = checkOut.diff(checkIn, 'days');
@@ -986,7 +1003,7 @@ hotelBookingRouter.post("/hotelowner/create-booking", authorizeRoles("chuKhachSa
                 }
 
                 duration = 1;
-                unit = "dem";
+                unit = "dem"; // ✅ GIỮ NGUYÊN: "dem"
                 break;
 
             case 'dai_ngay':
@@ -1006,7 +1023,7 @@ hotelBookingRouter.post("/hotelowner/create-booking", authorizeRoles("chuKhachSa
                 }
 
                 duration = longDiff;
-                unit = "ngay";
+                unit = "ngay"; // ✅ SỬA: Thử "ngay" thay vì "ngày"
                 break;
         }
 
@@ -1019,21 +1036,35 @@ hotelBookingRouter.post("/hotelowner/create-booking", authorizeRoles("chuKhachSa
             });
         }
 
-        // ✅ Tính giá theo booking type
-        let unitPrice = roomType.giaCa;
+        // ✅ **SỬA: Sử dụng enhanced pricing calculation**
+        const pricingDetails = calculateEnhancedPricing({
+            roomType,
+            bookingType,
+            checkInDate,
+            checkOutDate,
+            checkInTime,
+            checkOutTime
+        });
 
-        if (bookingType === 'theo_gio') {
-            // Giá theo giờ = giá phòng / 14 giờ (quy ước)
-            unitPrice = Math.round(roomType.giaCa / 14);
+        console.log("💰 Enhanced pricing details:", pricingDetails);
+
+        // ✅ **THÊM: Validation unit value trước khi lưu**
+        const validUnits = ["gio", "dem", "ngay"];
+        if (!validUnits.includes(pricingDetails.unit)) {
+            console.error("❌ Invalid unit:", pricingDetails.unit);
+            return res.status(400).json({
+                msgBody: `Đơn vị không hợp lệ: ${pricingDetails.unit}. Chỉ chấp nhận: ${validUnits.join(', ')}`,
+                msgError: true,
+            });
         }
 
-        const roomTotal = unitPrice * duration * roomQuantity;
-
+        // Tính tổng giá cho số lượng phòng
+        const roomTotal = pricingDetails.finalPrice * roomQuantity;
 
         let finalCheckInTime = checkInTime;
         let finalCheckOutTime = checkOutTime;
         const now = moment().tz('Asia/Ho_Chi_Minh');
-        
+
         if (bookingType === 'qua_dem') {
             finalCheckInTime = now.format('HH:mm');
             finalCheckOutTime = '12:00';
@@ -1045,13 +1076,10 @@ hotelBookingRouter.post("/hotelowner/create-booking", authorizeRoles("chuKhachSa
             finalCheckOutTime = null;
         }
 
-
-
         const newBooking = new Booking({
             maNguoiDung: guestUserId,
             maKhachSan,
             maLoaiPhong,
-
             cccd: cccd || "",
             loaiDatPhong: bookingType,
             soLuongPhong: roomQuantity,
@@ -1065,18 +1093,41 @@ hotelBookingRouter.post("/hotelowner/create-booking", authorizeRoles("chuKhachSa
             ghiChu: notes || "",
             soDienThoai: phoneNumber || "",
 
-            // ✅ Thông tin giá chi tiết
+            // ✅ **SỬA: Thông tin giá chi tiết từ enhanced pricing**
             thongTinGia: {
-                donGia: unitPrice,
-                soLuongDonVi: duration,
-                donVi: unit,
-                tongTienPhong: roomTotal,
+                donGia: Math.round(pricingDetails.basePrice), // ✅ Giá gốc/đơn vị
+                soLuongDonVi: pricingDetails.duration,
+                donVi: pricingDetails.unit,
+                tongTienPhong: Math.round(pricingDetails.finalPrice * roomQuantity),
                 phiDichVu: 0,
                 thue: 0,
-                giamGia: 0,
+                giamGia: Math.round(pricingDetails.discounts.discountAmount * roomQuantity), // ✅ SỬA
                 phuPhiGio: 0,
-                phuPhiCuoiTuan: 0,
-                tongDonDat: roomTotal
+                phuPhiCuoiTuan: Math.round(pricingDetails.breakdown.taxPrice * roomQuantity),
+                tongDonDat: Math.round(pricingDetails.finalPrice * roomQuantity),
+
+                chiTietGia: {
+                    basePrice: pricingDetails.basePrice,
+                    subtotalBeforeDiscount: Math.round(pricingDetails.breakdown.subtotal), // ✅ SỬA: Dùng từ breakdown
+                    duration: pricingDetails.duration,
+                    unit: pricingDetails.unit,
+                    multiplier: pricingDetails.multiplier,
+                    discounts: {
+                        weekend: pricingDetails.discounts.weekend,
+                        longStay: pricingDetails.discounts.longStay,
+                        discountPercent: pricingDetails.discounts.discountPercent,
+                        discountAmount: pricingDetails.discounts.discountAmount
+                    },
+                    breakdown: {
+                        baseRate: pricingDetails.basePrice,
+                        duration: pricingDetails.duration,
+                        subtotal: Math.round(pricingDetails.breakdown.subtotal), // ✅ SỬA
+                        taxPrice: pricingDetails.breakdown.taxPrice,
+                        discountAmount: pricingDetails.discounts.discountAmount,
+                        multiplier: pricingDetails.multiplier,
+                        total: pricingDetails.finalPrice,
+                    }
+                }
             },
 
             phongDuocGiao: []
@@ -1094,14 +1145,40 @@ hotelBookingRouter.post("/hotelowner/create-booking", authorizeRoles("chuKhachSa
                 customerName: customerName || "Khách lẻ",
                 roomType: roomType.tenLoaiPhong,
                 bookingType: bookingType,
-                duration: `${duration} ${unit}`,
+                duration: `${pricingDetails.duration} ${pricingDetails.unit}`,
                 checkInTime: finalCheckInTime,
                 checkOutTime: finalCheckOutTime,
                 totalAmount: roomTotal,
                 status: newBooking.trangThai,
                 roomQuantity: roomQuantity,
                 needsRoomAssignment: true,
-                assignedRooms: []
+                assignedRooms: [],
+
+                // ✅ **THÊM: Chi tiết giá trong response**
+                pricingDetails: {
+                    basePrice: pricingDetails.basePrice,
+                    unitPrice: pricingDetails.unitPrice,
+                    finalPrice: pricingDetails.finalPrice,
+                    totalPrice: roomTotal,
+
+                    // Thông tin discount/surcharge
+                    discounts: {
+                        weekend: pricingDetails.discounts.weekend,
+                        longStay: pricingDetails.discounts.longStay,
+                        discountPercent: pricingDetails.discounts.discountPercent,
+                        discountAmount: pricingDetails.discounts.discountAmount * roomQuantity
+                    },
+
+                    // Breakdown chi tiết
+                    breakdown: {
+                        baseRate: pricingDetails.breakdown.baseRate,
+                        duration: pricingDetails.breakdown.duration,
+                        subtotal: pricingDetails.breakdown.subtotal * roomQuantity,
+                        weekendSurcharge: pricingDetails.breakdown.taxPrice * roomQuantity,
+                        longStayDiscount: pricingDetails.breakdown.discountAmount * roomQuantity,
+                        finalTotal: roomTotal
+                    }
+                }
             }
         });
 
@@ -1397,11 +1474,11 @@ hotelBookingRouter.post("/hotelowner/transfer-room/:assignmentId", authorizeRole
         if (transferFee > 0) {
             updatedBooking = await Booking.findById(oldAssignment.maDatPhong._id);
             updatedBooking.thongTinGia.phuPhiNangCap = (updatedBooking.thongTinGia.phuPhiNangCap || 0) + transferFee;
-            updatedBooking.thongTinGia.tongDonDat = updatedBooking.thongTinGia.tongTienPhong + 
-                                                   updatedBooking.thongTinGia.phiDichVu + 
-                                                   (updatedBooking.thongTinGia.phuPhiNangCap || 0) +
-                                                   (updatedBooking.thongTinGia.thue || 0) -
-                                                   (updatedBooking.thongTinGia.giamGia || 0);
+            updatedBooking.thongTinGia.tongDonDat = updatedBooking.thongTinGia.tongTienPhong +
+                updatedBooking.thongTinGia.phiDichVu +
+                (updatedBooking.thongTinGia.phuPhiNangCap || 0) +
+                (updatedBooking.thongTinGia.thue || 0) -
+                (updatedBooking.thongTinGia.giamGia || 0);
             await updatedBooking.save();
             console.log(`💰 Added transfer fee ${transferFee}đ to booking total`);
         }
@@ -1441,7 +1518,7 @@ hotelBookingRouter.post("/hotelowner/transfer-room/:assignmentId", authorizeRole
                     guestInfo: oldAssignment.thongTinKhachPhong,
                     // ✅ Copy services to new assignment  
                     services: oldAssignment.dichVuSuDung || [],
-                    serviceTotal: oldAssignment.dichVuSuDung?.reduce((total, service) => 
+                    serviceTotal: oldAssignment.dichVuSuDung?.reduce((total, service) =>
                         total + (service.thanhTien || 0), 0) || 0,
                     // ✅ Transfer details
                     transferHistory: [{
@@ -1476,7 +1553,7 @@ hotelBookingRouter.post("/hotelowner/transfer-room/:assignmentId", authorizeRole
                 status: 'da_gan',
                 guestInfo: oldAssignment.thongTinKhachPhong,
                 services: oldAssignment.dichVuSuDung || [],
-                serviceTotal: oldAssignment.dichVuSuDung?.reduce((total, service) => 
+                serviceTotal: oldAssignment.dichVuSuDung?.reduce((total, service) =>
                     total + (service.thanhTien || 0), 0) || 0,
                 createdAt: transferTime.toISOString(),
                 notes: `Đổi từ phòng ${oldAssignment.maPhong.soPhong} - ${reason}`
@@ -1915,14 +1992,14 @@ hotelBookingRouter.get("/hotelowner/assignment/:assignmentId", authorizeRoles("c
 hotelBookingRouter.post('/:hotelId/available-rooms-for-assignment', async (req, res) => {
     try {
         const { hotelId } = req.params;
-        const { 
-            maLoaiPhong, 
-            checkInDate, 
-            checkOutDate, 
-            checkInTime, 
-            checkOutTime, 
+        const {
+            maLoaiPhong,
+            checkInDate,
+            checkOutDate,
+            checkInTime,
+            checkOutTime,
             bookingType,
-            excludeBookingId 
+            excludeBookingId
         } = req.body;
 
         console.log(`🔍 === SIMPLIFIED AVAILABLE ROOMS ===`);
@@ -1978,9 +2055,9 @@ hotelBookingRouter.post('/:hotelId/available-rooms-for-assignment', async (req, 
 
         for (const assignment of conflictingAssignments) {
             const booking = assignment.maDatPhong;
-            
+
             if (!booking || !assignment.maPhong) continue;
-            
+
             // Skip excluded booking
             if (excludeBookingId && booking._id.toString() === excludeBookingId) {
                 console.log(`⏭️ Skipping excluded booking assignment: ${excludeBookingId}`);
@@ -2010,7 +2087,7 @@ hotelBookingRouter.post('/:hotelId/available-rooms-for-assignment', async (req, 
         }
 
         // ✅ 5. SIMPLE LOGIC: Available = Empty - Assigned with conflict
-        const availableRooms = allEmptyRooms.filter(room => 
+        const availableRooms = allEmptyRooms.filter(room =>
             !unavailableRoomIds.has(room._id.toString())
         );
 
@@ -2048,7 +2125,7 @@ hotelBookingRouter.post('/:hotelId/available-rooms-for-assignment', async (req, 
                 totalEmptyRooms: allEmptyRooms.length,
                 unavailableRooms: unavailableRoomIds.size,
                 availableRooms: formattedRooms.length,
-                message: formattedRooms.length > 0 
+                message: formattedRooms.length > 0
                     ? `Có ${formattedRooms.length} phòng có thể gán`
                     : "Không có phòng trống phù hợp"
             },
@@ -2271,6 +2348,115 @@ hotelBookingRouter.delete("/hotelowner/unassign-room/:assignmentId", authorizeRo
 });
 
 // ==========================Hepper xử lý===================================== 
+
+
+function calculateEnhancedPricing({
+    roomType, bookingType, checkInDate, checkOutDate, checkInTime, checkOutTime
+}) {
+    let basePrice = roomType.giaCa;         // ✅ Giá gốc 1 đơn vị
+    let duration = 1;
+    let unit = "dem";
+    let multiplier = 1;
+    let priceDiscountPercent = 0;
+    let taxPrice = 0;
+
+    // ⏰ TÍNH KHOẢNG THỜI GIAN
+    if (bookingType === "theo_gio") {
+        const startTime = moment(`${checkInDate} ${checkInTime}`, "YYYY-MM-DD HH:mm");
+        let endTime = moment(`${checkInDate} ${checkOutTime}`, "YYYY-MM-DD HH:mm");
+
+        if (endTime.isSameOrBefore(startTime)) {
+            endTime.add(1, "day");
+        }
+
+        duration = Math.ceil(endTime.diff(startTime, "hours", true));
+        unit = "gio";
+
+        // ✅ SỬA: Giữ basePrice là giá gốc, tính riêng total
+        // basePrice = Math.round((roomType.giaCa / 14) * duration); // ❌ Sai
+        basePrice = Math.round(roomType.giaCa / 14); // ✅ Giá gốc/giờ
+    } else if (checkOutDate) {
+        duration = moment(checkOutDate).diff(moment(checkInDate), "days");
+        unit = bookingType === "qua_dem" ? "dem" : "ngay";
+        // ✅ basePrice giữ nguyên = giá gốc/ngày
+    }
+
+    // ✅ SỬA: Tính subtotal = basePrice * duration
+    const subtotalBeforeDiscount = basePrice * duration;
+
+    // 🔼 PHỤ THU CUỐI TUẦN  
+    const weekendMultiplier = isWeekend(checkInDate) ? 1.2 : 1;
+    if (weekendMultiplier > 1) {
+        taxPrice = Math.round(subtotalBeforeDiscount * (weekendMultiplier - 1));
+    }
+
+    // 🔽 GIẢM GIÁ DÀI NGÀY
+    let longStayMultiplier = 1;
+    let discountAmount = 0;
+
+    if (bookingType === 'dai_ngay') {
+        if (duration >= 7) {
+            longStayMultiplier = 0.85;
+            priceDiscountPercent = 15;
+        } else if (duration >= 5) {
+            longStayMultiplier = 0.90;
+            priceDiscountPercent = 10;
+        } else if (duration >= 3) {
+            longStayMultiplier = 0.95;
+            priceDiscountPercent = 5;
+        }
+    }
+
+    const totalBeforeDiscount = subtotalBeforeDiscount + taxPrice;
+    discountAmount = Math.round(totalBeforeDiscount * (1 - longStayMultiplier));
+    const finalPrice = totalBeforeDiscount - discountAmount;
+
+    console.log("💰 Pricing calculation:", {
+        basePrice,            // ✅ 1M (giá gốc/ngày)
+        duration,            // ✅ 15
+        subtotalBeforeDiscount, // ✅ 15M (1M x 15)
+        taxPrice,            // ✅ 3M (20% của 15M)
+        totalBeforeDiscount, // ✅ 18M (15M + 3M)
+        priceDiscountPercent, // ✅ 15
+        discountAmount,      // ✅ 2.7M (15% của 18M)
+        finalPrice          // ✅ 15.3M (18M - 2.7M)
+    });
+
+    return {
+        basePrice: roomType.giaCa,           // ✅ Giá gốc 1 đơn vị
+        unitPrice: basePrice,                // ✅ = basePrice
+        finalPrice,
+        duration,
+        unit,
+        multiplier,
+        discounts: {
+            weekend: isWeekend(checkInDate),
+            longStay: bookingType === 'dai_ngay' && duration >= 3,
+            discountPercent: priceDiscountPercent,
+            discountAmount: discountAmount
+        },
+        breakdown: {
+            baseRate: roomType.giaCa,        // ✅ Giá gốc
+            duration: duration,
+            subtotal: subtotalBeforeDiscount, // ✅ SỬA: = basePrice * duration
+            taxPrice: taxPrice,
+            discountAmount: discountAmount,
+            multiplier: multiplier,
+            total: finalPrice,
+        },
+    };
+}
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+const isWeekend = (date) => {
+    const dayOfWeek = moment(date).day();
+    return dayOfWeek === 0 || dayOfWeek === 6; // Sunday = 0, Saturday = 6
+};
+
+
 // Tính tổng giá từ các phòng đã gán
 const calculateTotalFromAssignments = async (bookingId) => {
     const assignments = await ChiTietPhong.find({
@@ -2298,10 +2484,10 @@ function checkTimeOverlap({
     try {
         // Convert to moment objects for comparison
         const moment = require('moment');
-        
+
         // Parse request time range
         const reqStart = moment(`${requestStart} ${requestStartTime}`, 'YYYY-MM-DD HH:mm');
-        const reqEnd = requestEnd 
+        const reqEnd = requestEnd
             ? moment(`${requestEnd} ${requestEndTime}`, 'YYYY-MM-DD HH:mm')
             : reqStart.clone().add(1, 'day').hour(12).minute(0); // Default checkout next day 12:00
 
@@ -2311,7 +2497,7 @@ function checkTimeOverlap({
 
         // Check overlap: (start1 < end2) && (start2 < end1)
         const hasOverlap = reqStart.isBefore(existEnd) && existStart.isBefore(reqEnd);
-        
+
         return hasOverlap;
     } catch (error) {
         console.error('Error in checkTimeOverlap:', error);

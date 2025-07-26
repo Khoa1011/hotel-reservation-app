@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Booking from './Booking/Bookings';
 import Rooms from './Room/Rooms';
+import Customer from './Customer/Customer';
+import Reviews from './Reviewss/Reviews';
+import Revenue from './Revenue/Revenue';
+
 import { rooms, stats } from '../services/dataTest';
 import {
     Calendar,
@@ -21,14 +25,15 @@ import {
     Clock,
     CheckCircle,
     XCircle,
-    AlertCircle
+    AlertCircle,
+    Star
 } from 'lucide-react';
 import Cookies from 'js-cookie';
 import axios from '../utils/axiosConfig';
 import moment from 'moment-timezone';
 import { toast } from 'react-toastify';
 import RoomManagementTabs from '../components/RoomManagementTabs';
-import HotelSelector from '../components/HotelSelector'; 
+import HotelSelector from '../components/HotelSelector';
 
 const HotelManagement = () => {
     const [activeMenu, setActiveMenu] = useState(() => {
@@ -45,7 +50,7 @@ const HotelManagement = () => {
     const [error, setError] = useState(null);
     const [hotels, setHotels] = useState([]);
 
-    
+
     // State cho hotel selector - ✅ Initialize từ localStorage
     const [selectedHotelId, setSelectedHotelId] = useState(() => {
         const saved = localStorage.getItem("selectedHotelId") || '';
@@ -64,7 +69,8 @@ const HotelManagement = () => {
         { id: 'guests', label: 'Khách Hàng', icon: Users },
         { id: 'revenue', label: 'Doanh Thu', icon: DollarSign },
         { id: 'notifications', label: 'Thông Báo', icon: Bell },
-        { id: 'settings', label: 'Cài Đặt', icon: Settings }
+
+        { id: 'reviews', label: 'Đánh Giá', icon: Star }
     ];
 
     // Handle hotel selection change
@@ -133,18 +139,18 @@ const HotelManagement = () => {
     };
 
     const fetchHotels = async () => {
-    try {
-        const response = await axios.get(`${baseUrl}/api/booking-hotel/hotelowner/hotels`, {
-            withCredentials: true
-        });
-        console.log("Danh sách khách sạn", response.data);
-        if (response.data.success) {
-            setHotels(response.data.hotels);
+        try {
+            const response = await axios.get(`${baseUrl}/api/booking-hotel/hotelowner/hotels`, {
+                withCredentials: true
+            });
+            console.log("Danh sách khách sạn", response.data);
+            if (response.data.success) {
+                setHotels(response.data.hotels);
+            }
+        } catch (error) {
+            console.error('Lỗi fetch hotels:', error);
         }
-    } catch (error) {
-        console.error('Lỗi fetch hotels:', error);
-    }
-};
+    };
 
     // Fetch bookings khi component mount
     const fetchBookings = async () => {
@@ -246,27 +252,11 @@ const HotelManagement = () => {
                 console.log('🏨 selectedHotelId type:', typeof selectedHotelId);
                 return <RoomManagementTabs selectedHotelId={selectedHotelId} />;
             case 'guests':
-                return (
-                    <div className="text-center py-12">
-                        <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-xl font-semibold text-gray-600">Quản Lý Khách Hàng</h3>
-                        <p className="text-gray-500 mt-2">Tính năng đang được phát triển...</p>
-                        {selectedHotelName && (
-                            <p className="text-blue-600 mt-2">Khách sạn: {selectedHotelName}</p>
-                        )}
-                    </div>
-                );
+                return <Customer selectedHotelId={selectedHotelId} />;
+            case 'reviews':
+            return <Reviews selectedHotelId={selectedHotelId} />;
             case 'revenue':
-                return (
-                    <div className="text-center py-12">
-                        <DollarSign className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-xl font-semibold text-gray-600">Báo Cáo Doanh Thu</h3>
-                        <p className="text-gray-500 mt-2">Tính năng đang được phát triển...</p>
-                        {selectedHotelName && (
-                            <p className="text-blue-600 mt-2">Khách sạn: {selectedHotelName}</p>
-                        )}
-                    </div>
-                );
+                 return <Revenue selectedHotelId={selectedHotelId} />;
             case 'notifications':
                 return (
                     <div className="text-center py-12">
@@ -278,17 +268,10 @@ const HotelManagement = () => {
                         )}
                     </div>
                 );
-            case 'settings':
-                return (
-                    <div className="text-center py-12">
-                        <Settings className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-xl font-semibold text-gray-600">Cài Đặt</h3>
-                        <p className="text-gray-500 mt-2">Tính năng đang được phát triển...</p>
-                        {selectedHotelName && (
-                            <p className="text-blue-600 mt-2">Khách sạn: {selectedHotelName}</p>
-                        )}
-                    </div>
-                );
+
+
+
+
             default:
                 return renderBookings();
         }
@@ -305,7 +288,7 @@ const HotelManagement = () => {
                 {/* Hotel Selector */}
                 <div className="p-6 border-b">
                     <HotelSelector
-                    hotels={hotels}
+                        hotels={hotels}
                         bookings={bookings}
                         onHotelChange={handleHotelChange}
                         selectedHotelId={selectedHotelId}
@@ -322,7 +305,7 @@ const HotelManagement = () => {
                                 onClick={() => {
                                     console.log('🏨 Switching to menu:', item.id);
                                     setActiveMenu(item.id);
-                                 
+
                                     localStorage.setItem('activeMenu', item.id);
                                 }}
                                 className={`w-full flex items-center px-6 py-3 text-left hover:bg-blue-50 hover:text-blue-600 transition-colors ${activeMenu === item.id ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : 'text-gray-700'

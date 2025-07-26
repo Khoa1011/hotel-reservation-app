@@ -10,7 +10,7 @@ const menuItems = [
   { id: 'guests', label: 'Khách Hàng', icon: Users },
   { id: 'revenue', label: 'Doanh Thu', icon: DollarSign },
   { id: 'notifications', label: 'Thông Báo', icon: Bell },
-  { id: 'settings', label: 'Cài Đặt', icon: Settings }
+  { id: 'reviews', label: 'Đánh Giá', icon: Star }
 ];
 
 const Sidebar = ({ activeMenu, setActiveMenu, stats }) => {

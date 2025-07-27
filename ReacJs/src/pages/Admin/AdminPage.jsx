@@ -31,6 +31,8 @@ import {
 } from 'lucide-react';
 import axios from '../../utils/axiosConfig';
 import { toast } from 'react-toastify';
+import HotelManagement from './HotelManagement';
+import UserManagement from './userManagement';
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
 const AdminDashboard = () => {
@@ -963,21 +965,9 @@ const AdminDashboard = () => {
             case 'registrations':
                 return renderRegistrations();
             case 'hotels':
-                return (
-                    <div className="text-center py-12">
-                        <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-base font-medium text-gray-700">Quản lý khách sạn</h3>
-                        <p className="text-sm text-gray-500">Tính năng đang phát triển...</p>
-                    </div>
-                );
+                return <HotelManagement />;
             case 'users':
-                return (
-                    <div className="text-center py-12">
-                        <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-base font-medium text-gray-700">Quản lý người dùng</h3>
-                        <p className="text-sm text-gray-500">Tính năng đang phát triển...</p>
-                    </div>
-                );
+                return <UserManagement />;
             case 'analytics':
                 return (
                     <div className="text-center py-12">

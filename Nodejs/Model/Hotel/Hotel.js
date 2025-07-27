@@ -81,6 +81,11 @@ const HotelSchema = new mongoose.Schema({
       enum: ["khachSan", "khuNghiDuong", "nhaNghi", "kyTucXa", "canHo", "bietThu","homestay"],
       default: "khachSan"
    },
+   trangThai:{
+      type: String,
+      enum: ["hoatDong", "biCam", "ngungKinhDoanh","tamNghi"],
+      default: "hoatDong"
+   }
 });
 
 module.exports = mongoose.model("khachSan", HotelSchema);

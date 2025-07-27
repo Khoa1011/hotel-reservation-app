@@ -18,6 +18,7 @@ import axios from '../../utils/axiosConfig';
 import { toast } from 'react-toastify';
 import AddRoomModal from './AddRoom';
 import EditRoomModal from './EditRoom';
+import RoomDetailModal from './RoomDetails';
 
 const RoomManagement = ({ selectedHotelId }) => {
   const [hotelData, setHotelData] = useState(null);
@@ -35,6 +36,8 @@ const RoomManagement = ({ selectedHotelId }) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedRoomId, setSelectedRoomId] = useState(null);
 
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -218,6 +221,16 @@ const RoomManagement = ({ selectedHotelId }) => {
     setShowEditModal(false);
     setEditingRoom(null);
   };
+  
+  // Room detail modal handlers
+  const openDetailModal = (roomId) => {
+    setSelectedRoomId(roomId);
+    setShowDetailModal(true);
+  };
+  const closeDetailModal = () => {
+    setShowDetailModal(false);
+    setSelectedRoomId(null);
+  };
 
   const handleRoomAdded = () => {
     fetchHotelRooms(currentPage);
@@ -312,8 +325,6 @@ const RoomManagement = ({ selectedHotelId }) => {
           </div>
         </div>
       )}
-
-
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
@@ -431,6 +442,18 @@ const RoomManagement = ({ selectedHotelId }) => {
                 <p className="text-gray-600 text-sm mb-4 line-clamp-2">{room.moTa}</p>
 
                 <div className="flex gap-2">
+                  {/* Nút Chi tiết - chỉ hiển thị cho phòng đã đặt hoặc đang sử dụng */}
+                  {(room.trangThaiPhong === 'da_dat' || room.trangThaiPhong === 'dang_su_dung') && (
+                    <button
+                      onClick={() => openDetailModal(room._id)}
+                      className="px-3 py-2 border border-blue-300 text-blue-600 text-sm rounded hover:bg-blue-50 flex items-center gap-1"
+                      title="Xem chi tiết"
+                    >
+                      <Eye className="w-4 h-4" />
+                      Chi tiết
+                    </button>
+                  )}
+                  
                   <button
                     onClick={() => toggleRoomStatus(room._id, room.trangThaiPhong, room.soPhong)}
                     className={`flex-1 px-3 py-2 text-sm rounded flex items-center justify-center gap-1 text-white ${room.trangThaiPhong === 'trong'
@@ -582,6 +605,12 @@ const RoomManagement = ({ selectedHotelId }) => {
         onSuccess={handleRoomUpdated}
         roomTypes={roomTypes}
         room={editingRoom}
+      />
+
+      <RoomDetailModal
+        showModal={showDetailModal}
+        onClose={closeDetailModal}
+        roomId={selectedRoomId}
       />
     </div>
   );

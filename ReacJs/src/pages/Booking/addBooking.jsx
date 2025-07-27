@@ -73,7 +73,7 @@ const AddBooking = ({ onClose }) => {
   // ✅ THÊM: Danh sách loại đặt phòng
   const bookingTypes = [
     { value: 'theo_gio', label: 'Theo giờ', description: 'Đặt phòng theo số giờ sử dụng' },
-    { value: 'qua_dem', label: 'Qua đêm', description: 'Đặt phòng qua đêm (1 ngày)' },
+    { value: 'qua_dem', label: 'Qua đêm', description: 'Đặt phòng qua đêm (1 đêm)' },
     { value: 'dai_ngay', label: 'Dài ngày', description: 'Đặt phòng nhiều ngày (2+ ngày)' }
   ];
 
@@ -185,7 +185,8 @@ const AddBooking = ({ onClose }) => {
           name: room.roomTypeName,
           price: room.roomTypePrice,
           maxGuests: room.roomcapacity,
-          description: room.roomTypeDescription
+          description: room.roomTypeDescription,
+          availableRooms: room.availableRooms || 0 // ✅ THÊM: số phòng trống
         }));
 
         const uniqueRoomTypes = Array.from(
@@ -198,6 +199,28 @@ const AddBooking = ({ onClose }) => {
     } catch (error) {
       console.error("Lỗi khi lấy danh sách loại phòng:", error);
       toast.error("Lỗi lấy dữ liệu loại phòng khách sạn");
+    }
+  };
+
+  const calculateDisplayPrice = (roomPrice, bookingType) => {
+    switch (bookingType) {
+      case 'theo_gio':
+        return Math.round(roomPrice / 14); // Giá theo giờ
+      case 'qua_dem':
+        return roomPrice; // Giá qua đêm
+      case 'dai_ngay':
+        return roomPrice; // Giá theo ngày
+      default:
+        return roomPrice;
+    }
+  };
+
+  const getPriceUnit = (bookingType) => {
+    switch (bookingType) {
+      case 'theo_gio': return 'giờ';
+      case 'qua_dem': return 'đêm';
+      case 'dai_ngay': return 'ngày';
+      default: return 'đơn vị';
     }
   };
 
@@ -459,19 +482,78 @@ const AddBooking = ({ onClose }) => {
                 }`}
             >
               <option value="">Chọn loại phòng</option>
-              {roomTypes.map(room => (
-                <option key={room.id} value={room.id}>
-                  {room.name} - {formatCurrency(room.price)}/{
-                    formData.bookingType === 'theo_gio' ? 'giờ' :
-                      formData.bookingType === 'qua_dem' ? 'đêm' : 'ngày'
-                  }
-                </option>
-              ))}
+              {roomTypes.map(room => {
+                const displayPrice = calculateDisplayPrice(room.price, formData.bookingType);
+                const unit = getPriceUnit(formData.bookingType);
+                const availableRooms = room.availableRooms || 0;
+                return (
+                  <option
+                    key={room.id}
+                    value={room.id}
+                    disabled={availableRooms === 0}
+                  >
+                    {room.name} - {formatCurrency(displayPrice)}/{unit}
+                    {availableRooms > 0 ? ` (Còn ${availableRooms} phòng)` : ' (Hết phòng)'}
+                  </option>
+                );
+              })}
             </select>
             {errors.maLoaiPhong && (
               <p className="text-red-500 text-xs mt-1">{errors.maLoaiPhong}</p>
             )}
+
+            {/* Room info display */}
+            {formData.maLoaiPhong && (
+              <div className="mt-2 p-2 bg-blue-50 rounded text-sm">
+                {(() => {
+                  const selectedRoom = roomTypes.find(r => r.id === formData.maLoaiPhong);
+                  if (!selectedRoom) return null;
+
+                  const displayPrice = calculateDisplayPrice(selectedRoom.price, formData.bookingType);
+                  const unit = getPriceUnit(formData.bookingType);
+
+                  return (
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="text-blue-700 font-medium">
+                          💰 {formatCurrency(displayPrice)}/{unit}
+                        </span>
+                        <span className={`text-xs px-2 py-1 rounded ${selectedRoom.availableRooms > 5
+                            ? 'bg-green-100 text-green-700'
+                            : selectedRoom.availableRooms > 0
+                              ? 'bg-yellow-100 text-yellow-700'
+                              : 'bg-red-100 text-red-700'
+                          }`}>
+                          {selectedRoom.availableRooms > 0
+                            ? `${selectedRoom.availableRooms} phòng trống`
+                            : 'Hết phòng'
+                          }
+                        </span>
+                      </div>
+
+                      {/*Hiển thị giá gốc nếu booking type là theo giờ */}
+                      {formData.bookingType === 'theo_gio' && (
+                        <div className="text-gray-600 text-xs">
+                          Giá gốc: {formatCurrency(selectedRoom.price)}/đêm
+                        </div>
+                      )}
+
+                      <div className="text-gray-600 text-xs">
+                        {selectedRoom.description}
+                      </div>
+
+                      <div className="text-gray-600 text-xs">
+                        👥 Tối đa {selectedRoom.maxGuests} khách
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
           </div>
+
+
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

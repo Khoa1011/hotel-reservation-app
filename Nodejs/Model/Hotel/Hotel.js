@@ -78,7 +78,7 @@ const HotelSchema = new mongoose.Schema({
    },
    loaiKhachSan: {
       type: String,
-      enum: ["khachSan", "khuNghiDuong", "nhaNghi", "kyTucXa", "canHo", "bietThu"],
+      enum: ["khachSan", "khuNghiDuong", "nhaNghi", "kyTucXa", "canHo", "bietThu","homestay"],
       default: "khachSan"
    },
 });

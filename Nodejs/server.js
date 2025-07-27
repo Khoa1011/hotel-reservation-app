@@ -12,10 +12,19 @@ const { initializeFirebase } = require('./config/firebase');
 
 initializeFirebase();
 
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:3000', 
+    'https://db64570085c1.ngrok-free.app',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:3000'
+];
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 const db = require("./config/key").mongoURI;
+
 
 // ✅ SỬA: Cải thiện static file serving
 app.use('/uploads', (req, res, next) => {
@@ -80,7 +89,7 @@ const cors = require("cors");
 // Cấu hình CORS chi tiết để xử lý yêu cầu cross-origin và credentials
 
 // Cho phép các origin này
-const allowedOrigins = process.env.CORS_ORIGIN.split(',');
+// const allowedOrigins = process.env.CORS_ORIGIN.split(',');
 
 const corsOptions = {
     origin: function (origin, callback) {
@@ -108,7 +117,8 @@ const corsOptions = {
         'Pragma'
     ],
     exposedHeaders: ['Set-Cookie'],
-    optionsSuccessStatus: 200 // Hỗ trợ legacy browsers
+    optionsSuccessStatus: 200, // Hỗ trợ legacy browsers
+    preflightContinue: false
 };
 app.use(cors(corsOptions)); // Sử dụng cấu hình CORS đã định nghĩa
 

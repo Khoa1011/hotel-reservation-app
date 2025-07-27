@@ -284,7 +284,8 @@ router.post('/:hotelId/search-roomtypes', async (req, res) => {
                         pricePerRoom: singleRoomPricing.finalPrice,
                         totalPriceAllRooms: singleRoomPricing.finalPrice * requestedRooms,
                         roomCount: requestedRooms,
-                        // Giảm giá nhóm cho >= 3 phòng
+                        baseSubtotal: singleRoomPricing.basePrice * requestedRooms,
+                        taxAllRoomPrice: singleRoomPricing.breakdown.taxPrice * requestedRooms,
                         groupDiscount: requestedRooms >= 3 ? 0.05 : 0,
                         finalTotalPrice: Math.round(singleRoomPricing.finalPrice * requestedRooms * (1 - (requestedRooms >= 3 ? 0.05 : 0)))
                     };
@@ -318,6 +319,7 @@ router.post('/:hotelId/search-roomtypes', async (req, res) => {
                         pricing: multiRoomPricing,
 
                         displayInfo: {
+
                             pricePerRoom: singleRoomPricing.finalPrice,
                             totalPrice: multiRoomPricing.finalTotalPrice,
                             unit: getUnitText(bookingType),
@@ -1040,7 +1042,6 @@ function calculateEnhancedPricing({
         duration = Math.ceil(endTime.diff(startTime, "hours", true)); // Làm tròn lên số giờ
         unit = "giờ";
 
-        // ⚠️ Quy ước: giá phòng theo giờ được tính theo tỷ lệ 1/8 giá cơ bản
         basePrice = Math.round((roomType.giaCa / 14) * duration);
     } else if (checkOutDate) {
         duration = moment(checkOutDate).diff(moment(checkInDate), "days");
@@ -1104,6 +1105,7 @@ function calculateEnhancedPricing({
             baseRate: roomType.giaCa,
             duration: duration,
             subtotal: basePrice,
+            discountPercent: priceDiscountPercent,
             taxPrice: taxPrice, // ✅ Phần tiền phụ thu (nếu có)
             discountAmount: discountAmount, // ✅ Phần tiền giảm giá (nếu có)
             multiplier: multiplier,

@@ -68,8 +68,6 @@ const HotelManagement = () => {
         { id: 'rooms', label: 'Quản Lý Phòng', icon: Bed },
         { id: 'guests', label: 'Khách Hàng', icon: Users },
         { id: 'revenue', label: 'Doanh Thu', icon: DollarSign },
-        { id: 'notifications', label: 'Thông Báo', icon: Bell },
-
         { id: 'reviews', label: 'Đánh Giá', icon: Star }
     ];
 
@@ -254,24 +252,9 @@ const HotelManagement = () => {
             case 'guests':
                 return <Customer selectedHotelId={selectedHotelId} />;
             case 'reviews':
-            return <Reviews selectedHotelId={selectedHotelId} />;
+                return <Reviews selectedHotelId={selectedHotelId} />;
             case 'revenue':
-                 return <Revenue selectedHotelId={selectedHotelId} />;
-            case 'notifications':
-                return (
-                    <div className="text-center py-12">
-                        <Bell className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-xl font-semibold text-gray-600">Thông Báo</h3>
-                        <p className="text-gray-500 mt-2">Không có thông báo mới</p>
-                        {selectedHotelName && (
-                            <p className="text-blue-600 mt-2">Khách sạn: {selectedHotelName}</p>
-                        )}
-                    </div>
-                );
-
-
-
-
+                return <Revenue selectedHotelId={selectedHotelId} />;
             default:
                 return renderBookings();
         }

@@ -1205,24 +1205,69 @@ function getBookingTypeText(type) {
 //Danh sách loại phòng cho khách sạn 
 hotelBookingRouter.get("/hotelowner/getRoomInHotel/:hotelId", authorizeRoles("chuKhachSan", "nhanVien"), async (req, res) => {
     const { hotelId } = req.params;
+    const { checkInDate, checkOutDate } = req.query; // ✅ THÊM: date params để check available
+
     try {
         const rooms = await RoomType.find({ maKhachSan: hotelId });
         console.log("Các loại phòng trong khách sạn", rooms);
-        if (!rooms) {
+
+        if (!rooms || rooms.length === 0) {
             return res.status(400).json({
                 msgBody: "Không có phòng nào trong khách sạn này!",
                 msgError: true
             });
         }
-        const result = rooms.map(room => ({
-            roomId: room._id,
-            roomTypeName: room.tenLoaiPhong,
-            roomTypePrice: room.giaCa,
-            roomTypeDescription: room.moTa,
-            roomcapacity: room.soLuongKhach
+
+        // ✅ Tính số phòng trống cho mỗi loại phòng
+        const result = await Promise.all(rooms.map(async (room) => {
+            let availableRooms = 0;
+            let totalRooms = 0;
+
+            try {
+    
+                const allRoomsOfType = await Room.find({ maLoaiPhong: room._id });
+                totalRooms = allRoomsOfType.length;
+
+                
+                const emptyRooms = allRoomsOfType.filter(r => r.trangThaiPhong === 'trong');
+                availableRooms = emptyRooms.length;
+
+                console.log(`📊 ${room.tenLoaiPhong}: ${availableRooms}/${totalRooms} phòng trống`);
+
+            } catch (error) {
+                console.error(`Lỗi tính available rooms cho ${room.tenLoaiPhong}:`, error);
+                availableRooms = 0;
+                totalRooms = 0;
+            }
+
+            // Thêm vào backend để check
+            console.log('🏨 Room schema fields:');
+            const sampleRoom = await Room.findOne({ maLoaiPhong: room._id });
+            console.log('📄 Sample room:', sampleRoom);
+
+            console.log('🔍 All rooms for this type:');
+            const allRooms = await Room.find({ maLoaiPhong: room._id });
+            console.log('📊 Count:', allRooms.length);
+            console.log('📋 Status values:', allRooms.map(r => r.trangThai || r.trangThaiPhong));
+            return {
+                roomId: room._id,
+                roomTypeName: room.tenLoaiPhong,
+                roomTypePrice: room.giaCa,
+                roomTypeDescription: room.moTa,
+                roomcapacity: room.soLuongKhach,
+                availableRooms: availableRooms,
+                totalRooms: await Room.countDocuments({
+                    maLoaiPhong: room._id,
+                    trangThaiPhong: "trong"
+                })
+            };
         }));
+
+        console.log("✅ Room types with availability:", result);
         return res.status(200).json(result);
+
     } catch (error) {
+        console.error("Lỗi truy xuất phòng trong khách sạn:", error);
         return res.status(400).json({
             msgBody: "Lỗi truy xuất phòng trong khách sạn!",
             msgError: true,
@@ -1230,7 +1275,6 @@ hotelBookingRouter.get("/hotelowner/getRoomInHotel/:hotelId", authorizeRoles("ch
         });
     }
 });
-
 
 // API lấy thông báo mới
 hotelBookingRouter.get('/hotelowner/notifications/:hotelId', async (req, res) => {
@@ -1763,232 +1807,6 @@ hotelBookingRouter.get("/hotelowner/assignment/:assignmentId", authorizeRoles("c
     }
 });
 
-// ✅ SỬA: API available rooms với debug chi tiết
-// hotelBookingRouter.post('/:hotelId/available-rooms-for-assignment', async (req, res) => {
-//     try {
-//         const { hotelId } = req.params;
-//         const {
-//             maLoaiPhong,
-//             checkInDate,
-//             checkOutDate,
-//             checkInTime,
-//             checkOutTime,
-//             bookingType,
-//             excludeBookingId
-//         } = req.body;
-
-//         console.log(`🔍 Loading available rooms for hotel ${hotelId}, room type ${maLoaiPhong}`);
-
-//         // Kiểm tra room type
-//         const roomType = await RoomType.findOne({
-//             _id: maLoaiPhong,
-//             maKhachSan: hotelId
-//         });
-
-//         if (!roomType) {
-//             return res.status(400).json({
-//                 success: false,
-//                 message: "Loại phòng không thuộc khách sạn này!"
-//             });
-//         }
-
-//         // ✅ Lấy phòng trống với null safety
-//         const allRoomsRaw = await Room.find({
-//             maLoaiPhong: maLoaiPhong,
-//             trangThaiPhong: "trong"
-//         });
-
-//         // ✅ Filter out null/undefined rooms
-//         const allRooms = allRoomsRaw.filter(room => room && room._id);
-
-//         console.log(`🏠 Found ${allRooms.length} valid empty rooms (filtered from ${allRoomsRaw.length} raw results)`);
-
-//         if (allRooms.length === 0) {
-//             return res.json({
-//                 success: true,
-//                 availableRooms: [],
-//                 totalRooms: 0,
-//                 occupiedCount: 0,
-//                 debug: {
-//                     message: "No valid available rooms found",
-//                     roomType: roomType.tenLoaiPhong,
-//                     rawCount: allRoomsRaw.length,
-//                     validCount: allRooms.length
-//                 }
-//             });
-//         }
-
-//         // ✅ Kiểm tra assignments với null safety
-//         const conflictingAssignments = await RoomBookingAssignment.find({
-//             trangThaiHoatDong: true,
-//             trangThaiGanPhong: { $in: ['da_gan', 'dang_su_dung'] },
-//             maPhong: { $in: allRooms.map(r => r._id) } // ✅ Đã filter null ở trên
-//         }).populate({
-//             path: 'maDatPhong',
-//             select: 'ngayNhanPhong ngayTraPhong gioNhanPhong gioTraPhong loaiDatPhong _id'
-//         });
-
-//         // ✅ Lấy bookings với better query
-//         const conflictingBookings = await Booking.find({
-//             maKhachSan: hotelId,
-//             maLoaiPhong: maLoaiPhong,
-//             trangThai: { $in: ['da_xac_nhan', 'da_nhan_phong', 'dang_su_dung'] }, // ✅ Chỉ lấy active
-//             ngayTraPhong: { $gte: new Date() } // ✅ Chỉ lấy chưa hết hạn
-//         }).select('ngayNhanPhong ngayTraPhong gioNhanPhong gioTraPhong loaiDatPhong soLuongPhong _id');
-
-//         console.log(`🚫 Found ${conflictingBookings.length} conflicting bookings, ${conflictingAssignments.length} conflicting assignments`);
-
-//         // ✅ Lọc assignments với null safety
-//         const validAssignments = conflictingAssignments.filter(a =>
-//             a && a.maDatPhong && a.maPhong
-//         );
-
-//         const assignedBookingIds = new Set(
-//             validAssignments.map(a => a.maDatPhong._id.toString())
-//         );
-
-//         const unassignedBookings = conflictingBookings.filter(booking =>
-//             booking && booking._id && !assignedBookingIds.has(booking._id.toString())
-//         );
-
-//         console.log(`📋 After filtering: Assigned: ${assignedBookingIds.size}, Unassigned: ${unassignedBookings.length}`);
-
-//         const occupiedRoomIds = new Set();
-
-//         // BƯỚC 1: Check assignments với null safety
-//         for (const assignment of validAssignments) {
-//             const booking = assignment.maDatPhong;
-
-//             if (!booking || !assignment.maPhong) {
-//                 console.log('⚠️ Skipping invalid assignment:', assignment._id);
-//                 continue;
-//             }
-
-//             if (excludeBookingId && booking._id.toString() === excludeBookingId) {
-//                 console.log(`⏭️ Skipping assignment from excluded booking: ${excludeBookingId}`);
-//                 continue;
-//             }
-
-//             const hasOverlap = checkTimeOverlap({
-//                 requestType: bookingType,
-//                 requestStart: checkInDate,
-//                 requestEnd: checkOutDate || checkInDate,
-//                 requestStartTime: checkInTime,
-//                 requestEndTime: checkOutTime,
-//                 existingType: booking.loaiDatPhong,
-//                 existingStart: booking.ngayNhanPhong,
-//                 existingEnd: booking.ngayTraPhong,
-//                 existingStartTime: booking.gioNhanPhong,
-//                 existingEndTime: booking.gioTraPhong
-//             });
-
-//             if (hasOverlap) {
-//                 occupiedRoomIds.add(assignment.maPhong.toString());
-//                 console.log(`🚫 Room ${assignment.maPhong} occupied by assignment`);
-//             }
-//         }
-
-//         // BƯỚC 2: Check unassigned bookings
-//         let totalBookedRooms = 0;
-//         let validConflicts = 0;
-
-//         for (const booking of unassignedBookings) {
-//             if (!booking || !booking._id) {
-//                 console.log('⚠️ Skipping invalid booking');
-//                 continue;
-//             }
-
-//             if (excludeBookingId && booking._id.toString() === excludeBookingId) {
-//                 console.log(`⏭️ Excluding unassigned booking: ${excludeBookingId}`);
-//                 continue;
-//             }
-
-//             const hasOverlap = checkTimeOverlap({
-//                 requestType: bookingType,
-//                 requestStart: checkInDate,
-//                 requestEnd: checkOutDate || checkInDate,
-//                 requestStartTime: checkInTime,
-//                 requestEndTime: checkOutTime,
-//                 existingType: booking.loaiDatPhong,
-//                 existingStart: booking.ngayNhanPhong,
-//                 existingEnd: booking.ngayTraPhong,
-//                 existingStartTime: booking.gioNhanPhong,
-//                 existingEndTime: booking.gioTraPhong
-//             });
-
-//             if (hasOverlap) {
-//                 totalBookedRooms += booking.soLuongPhong || 1;
-//                 validConflicts++;
-//                 console.log(`🚫 Booking ${booking._id}: ${booking.soLuongPhong || 1} rooms conflict`);
-
-//                 // Safety: Giới hạn conflicts
-//                 if (totalBookedRooms >= allRooms.length * 2) {
-//                     console.log(`⚠️ Too many conflicts detected (${totalBookedRooms}) - breaking`);
-//                     break;
-//                 }
-//             }
-//         }
-
-//         // BƯỚC 3: Tính phòng available với null safety
-//         const roomsOccupiedByAssignments = occupiedRoomIds.size;
-//         const unassignedRooms = allRooms.filter(room =>
-//             room && room._id && !occupiedRoomIds.has(room._id.toString())
-//         );
-
-//         console.log(`📊 Final calculation:`);
-//         console.log(`   Total valid rooms: ${allRooms.length}`);
-//         console.log(`   Assigned rooms: ${roomsOccupiedByAssignments}`);
-//         console.log(`   Valid conflicts: ${validConflicts} bookings = ${totalBookedRooms} rooms`);
-//         console.log(`   Free rooms: ${unassignedRooms.length}`);
-
-//         const maxPossibleConflict = Math.min(totalBookedRooms, unassignedRooms.length);
-//         const finalAvailableCount = Math.max(0, unassignedRooms.length - maxPossibleConflict);
-//         const finalAvailableRooms = finalAvailableCount > 0 ? unassignedRooms.slice(0, finalAvailableCount) : [];
-
-//         // ✅ Format response với null safety
-//         const formattedRooms = finalAvailableRooms
-//             .filter(room => room && room._id && room.soPhong) // ✅ Extra safety
-//             .map(room => ({
-//                 roomId: room._id,
-//                 soPhong: room.soPhong,
-//                 tang: room.tang || 1,
-//                 loaiView: room.loaiView || 'none',
-//                 displayName: `Phòng ${room.soPhong} - Tầng ${room.tang || 1}${room.loaiView && room.loaiView !== 'none' ? ` (${getViewText(room.loaiView)})` : ''}`
-//             }));
-
-//         console.log(`✅ FINAL RESULT: ${formattedRooms.length} available rooms`);
-
-//         res.json({
-//             success: true,
-//             availableRooms: formattedRooms,
-//             totalRooms: allRooms.length,
-//             occupiedCount: roomsOccupiedByAssignments + maxPossibleConflict,
-//             debug: {
-//                 roomType: roomType.tenLoaiPhong,
-//                 rawRoomsFound: allRoomsRaw.length,
-//                 validRoomsAfterFilter: allRooms.length,
-//                 totalActiveBookings: conflictingBookings.length,
-//                 validAssignments: validAssignments.length,
-//                 unassignedBookings: unassignedBookings.length,
-//                 validConflicts,
-//                 roomsOccupiedByAssignments,
-//                 totalBookedRooms,
-//                 maxPossibleConflict,
-//                 finalAvailableCount
-//             }
-//         });
-
-//     } catch (error) {
-//         console.error('❌ Error fetching available rooms:', error);
-//         res.status(500).json({
-//             success: false,
-//             message: 'Lỗi khi lấy danh sách phòng trống',
-//             error: error.message,
-//             stack: error.stack
-//         });
-//     }
-// });
-
 hotelBookingRouter.post('/:hotelId/available-rooms-for-assignment', async (req, res) => {
     try {
         const { hotelId } = req.params;
@@ -2372,8 +2190,6 @@ function calculateEnhancedPricing({
         duration = Math.ceil(endTime.diff(startTime, "hours", true));
         unit = "gio";
 
-        // ✅ SỬA: Giữ basePrice là giá gốc, tính riêng total
-        // basePrice = Math.round((roomType.giaCa / 14) * duration); // ❌ Sai
         basePrice = Math.round(roomType.giaCa / 14); // ✅ Giá gốc/giờ
     } else if (checkOutDate) {
         duration = moment(checkOutDate).diff(moment(checkInDate), "days");

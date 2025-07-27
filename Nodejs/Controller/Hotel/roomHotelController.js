@@ -479,44 +479,244 @@ roomHotelRouter.delete("/hotelowner/delete-room/:roomId", authorizeRoles("chuKha
 });
 
 // 5. Lấy chi tiết phòng với hình ảnh
-roomHotelRouter.get("/hotelowner/room-detail/:roomId", authorizeRoles("chuKhachSan"), async (req, res) => {
+roomHotelRouter.get("/hotelowner/room-detail/:roomId", authorizeRoles("chuKhachSan", "nhanVien"), async (req, res) => {
     try {
         const { roomId } = req.params;
+        const user = await User.findById(req.user.id);
 
-        if (!mongoose.Types.ObjectId.isValid(roomId)) {
-            return res.status(400).json({
+        if (!user || user.vaiTro !== "chuKhachSan") {
+            return res.status(403).json({
                 success: false,
-                message: "ID phòng không hợp lệ"
+                message: "Không có quyền truy cập!"
             });
         }
 
+        // ✅ 1. Lấy thông tin phòng
         const room = await Room.findById(roomId)
-            .populate('maLoaiPhong', 'tenLoaiPhong giaCa tienNghiDacBiet')
+            .populate('maLoaiPhong', 'tenLoaiPhong giaCa soLuongKhach moTa')
+            .populate({
+                path: 'maLoaiPhong',
+                populate: {
+                    path: 'maKhachSan',
+                    select: 'tenKhachSan maChuKhachSan'
+                }
+            });
 
         if (!room) {
             return res.status(404).json({
                 success: false,
-                message: "Không tìm thấy phòng"
+                message: "Không tìm thấy phòng!"
             });
         }
 
-        // Lấy hình ảnh của phòng
-        const roomImages = await RoomImage.find({ maPhong: roomId }).sort({ thuTuAnh: 1 });
+        // ✅ Kiểm tra quyền sở hữu khách sạn
+        if (room.maLoaiPhong.maKhachSan.maChuKhachSan.toString() !== user._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: "Bạn không có quyền xem phòng này!"
+            });
+        }
 
-        res.status(200).json({
+        // ✅ 2. Tìm room assignment hiện tại của phòng
+        let currentAssignment = null;
+        let currentBooking = null;
+        let guestInfo = null;
+
+        if (room.trangThaiPhong === 'da_dat' || room.trangThaiPhong === 'dang_su_dung') {
+            // Tìm assignment đang active cho phòng này
+            currentAssignment = await mongoose.model('chiTietPhong').findOne({
+                maPhong: roomId,
+                trangThaiGanPhong: { $in: ['da_gan', 'dang_cho_checkin', 'da_checkin', 'dang_su_dung'] }
+            }).populate({
+                path: 'maDatPhong',
+                populate: {
+                    path: 'maNguoiDung',
+                    select: 'tenNguoiDung email soDienThoai'
+                }
+            });
+
+            if (currentAssignment && currentAssignment.maDatPhong) {
+                currentBooking = currentAssignment.maDatPhong;
+
+                // ✅ 3. Lấy thông tin khách hàng
+                if (currentBooking.maNguoiDung && currentBooking.maNguoiDung.tenNguoiDung) {
+                    // Khách có tài khoản
+                    guestInfo = {
+                        customerId: currentBooking.maNguoiDung._id,
+                        customerName: currentBooking.maNguoiDung.tenNguoiDung,
+                        email: currentBooking.maNguoiDung.email || "Không có email",
+                        phoneNumber: currentBooking.maNguoiDung.soDienThoai || currentBooking.soDienThoai || "Không có SĐT",
+                        cccd: currentBooking.cccd || "Chưa cập nhật"
+                    };
+                } else {
+                    // Khách đặt tại quầy hoặc thông tin từ assignment
+                    guestInfo = {
+                        customerId: null,
+                        customerName: currentAssignment.thongTinKhachPhong?.tenKhachChinh || "Khách đặt tại quầy",
+                        email: "Khách đặt tại quầy",
+                        phoneNumber: currentAssignment.thongTinKhachPhong?.soDienThoaiLienHe || currentBooking.soDienThoai || "Không có SĐT",
+                        cccd: currentBooking.cccd || "Chưa cập nhật"
+                    };
+                }
+            }
+        }
+
+        // ✅ 4. Tính toán thời gian và giá tiền
+        let durationInfo = null;
+        let pricingInfo = null;
+
+        if (currentBooking) {
+            const checkInDate = moment(currentBooking.ngayNhanPhong);
+            const checkOutDate = moment(currentBooking.ngayTraPhong);
+            const now = moment();
+
+            // Tính thời gian
+            const totalDuration = checkOutDate.diff(checkInDate);
+            const elapsedTime = now.diff(checkInDate);
+
+            if (currentBooking.loaiDatPhong === 'theo_gio') {
+                const totalHours = Math.ceil(moment.duration(totalDuration).asHours());
+                const elapsedHours = Math.max(0, Math.floor(moment.duration(elapsedTime).asHours()));
+                const remainingHours = Math.max(0, totalHours - elapsedHours);
+
+                durationInfo = {
+                    type: 'theo_gio',
+                    total: totalHours,
+                    elapsed: elapsedHours,
+                    remaining: remainingHours,
+                    unit: 'giờ',
+                    checkInTime: currentBooking.gioNhanPhong,
+                    checkOutTime: currentBooking.gioTraPhong
+                };
+            } else {
+                const totalDays = Math.ceil(moment.duration(totalDuration).asDays());
+                const elapsedDays = Math.max(0, Math.floor(moment.duration(elapsedTime).asDays()));
+                const remainingDays = Math.max(0, totalDays - elapsedDays);
+
+                const unit = currentBooking.loaiDatPhong === 'qua_dem' ? 'đêm' : 'ngày';
+
+                durationInfo = {
+                    type: currentBooking.loaiDatPhong,
+                    total: totalDays,
+                    elapsed: elapsedDays,
+                    remaining: remainingDays,
+                    unit: unit
+                };
+            }
+
+            // Thông tin giá
+            const serviceCharges = (currentAssignment?.dichVuSuDung || []).reduce((total, service) => 
+                total + (service.thanhTien || 0), 0
+            );
+
+            pricingInfo = {
+                basePrice: room.maLoaiPhong.giaCa,
+                unitPrice: currentBooking.thongTinGia.donGia,
+                totalAmount: currentBooking.thongTinGia.tongDonDat,
+                roomPrice: currentBooking.thongTinGia.tongTienPhong,
+                discount: currentBooking.thongTinGia.giamGia || 0,
+                surcharge: currentBooking.thongTinGia.phuPhiCuoiTuan || 0,
+                serviceCharges: serviceCharges,
+                paymentMethod: currentBooking.phuongThucThanhToan,
+                paymentStatus: currentBooking.trangThaiThanhToan
+            };
+        }
+
+        // ✅ 5. Lịch sử phòng (booking gần đây)
+        const recentAssignments = await mongoose.model('chiTietPhong').find({
+            maPhong: roomId
+        })
+        .populate({
+            path: 'maDatPhong',
+            populate: {
+                path: 'maNguoiDung',
+                select: 'tenNguoiDung'
+            }
+        })
+        .sort({ createdAt: -1 })
+        .limit(5);
+
+        const recentHistory = recentAssignments.map(assignment => {
+            const booking = assignment.maDatPhong;
+            return {
+                bookingId: booking._id,
+                guestName: booking.maNguoiDung?.tenNguoiDung || assignment.thongTinKhachPhong?.tenKhachChinh || "Khách đặt tại quầy",
+                bookingType: booking.loaiDatPhong,
+                checkIn: moment(booking.ngayNhanPhong).format('DD/MM/YYYY'),
+                checkOut: moment(booking.ngayTraPhong).format('DD/MM/YYYY'),
+                status: booking.trangThai,
+                amount: booking.thongTinGia.tongDonDat,
+                createdAt: moment(booking.thoiGianTaoDon).format('DD/MM/YYYY')
+            };
+        });
+
+        // ✅ 6. Dịch vụ đang sử dụng
+        const servicesUsed = currentAssignment?.dichVuSuDung || [];
+
+        const result = {
+            // Thông tin phòng
+            room: {
+                roomId: room._id,
+                roomNumber: room.soPhong,
+                floor: room.tang,
+                viewType: room.loaiView,
+                area: room.dienTich,
+                maxGuests: room.soLuongNguoiToiDa,
+                bedCount: room.soLuongGiuong,
+                bedConfig: room.cauHinhGiuong,
+                description: room.moTa,
+                status: room.trangThaiPhong,
+                images: room.hinhAnh || []
+            },
+
+            // Thông tin loại phòng
+            roomType: {
+                name: room.maLoaiPhong.tenLoaiPhong,
+                basePrice: room.maLoaiPhong.giaCa,
+                capacity: room.maLoaiPhong.soLuongKhach,
+                description: room.maLoaiPhong.moTa
+            },
+
+            // Thông tin khách hiện tại
+            currentGuest: guestInfo,
+
+            // Thông tin booking hiện tại
+            currentBooking: currentBooking ? {
+                bookingId: currentBooking._id,
+                bookingType: currentBooking.loaiDatPhong,
+                checkInDate: moment(currentBooking.ngayNhanPhong).format('DD/MM/YYYY'),
+                checkOutDate: moment(currentBooking.ngayTraPhong).format('DD/MM/YYYY'),
+                checkInTime: currentBooking.gioNhanPhong,
+                checkOutTime: currentBooking.gioTraPhong,
+                status: currentBooking.trangThai,
+                createdAt: moment(currentBooking.thoiGianTaoDon).format('DD/MM/YYYY HH:mm'),
+                notes: currentBooking.ghiChu
+            } : null,
+
+            // Thông tin thời gian
+            duration: durationInfo,
+
+            // Thông tin giá cả
+            pricing: pricingInfo,
+
+            // Dịch vụ đang sử dụng
+            services: servicesUsed,
+
+            // Lịch sử booking gần đây
+            recentHistory: recentHistory
+        };
+
+        return res.status(200).json({
             success: true,
             message: "Lấy chi tiết phòng thành công",
-            room: {
-                ...room.toObject(),
-                hinhAnh: roomImages
-            }
+            data: result
         });
 
     } catch (error) {
         console.error("Lỗi lấy chi tiết phòng:", error);
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
-            message: "Lỗi server khi lấy chi tiết phòng",
+            message: "Lỗi server khi lấy chi tiết phòng.",
             error: error.message
         });
     }
@@ -762,6 +962,8 @@ roomHotelRouter.put("/hotelowner/update-room-status/:roomId",
         }
     }
 );
+
+// ✅ API lấy chi tiết phòng và thông tin khách đang sử dụng
 
 
 

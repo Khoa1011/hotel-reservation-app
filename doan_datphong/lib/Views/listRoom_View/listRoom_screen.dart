@@ -371,10 +371,11 @@ class _ListRoomState extends State<ListRoomScreen> {
       NotificationDialog.showWarning(context, message: S.of(context).roomIsCurrentlyUnavailable);
       return;
     }
+
     NotificationDialog.showBookingConfirmation(
       context,
       roomTypeName: roomType.tenLoaiPhong,
-      price: CurrencyHelper.formatVND(roomType.giaCuoiCung),
+      price: CurrencyHelper.formatVND(roomType.giaLoaiPhong!.giaChoTatCaPhong),
       dates: '${DateTimeHelper.formatDate(widget.lichPhongTrong.ngayNhanPhong)} • ${DateTimeHelper.formatDate(widget.lichPhongTrong.ngayTraPhong ?? S.of(context).notYet)}',
       guests: _buildSummaryTextTotalGuese(context),
       rooms: _buildSummaryTextToTalRooms(context),

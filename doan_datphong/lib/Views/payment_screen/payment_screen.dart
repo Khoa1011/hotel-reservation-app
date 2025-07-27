@@ -57,6 +57,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   String? _currentOrderId;
   PhuongThucThanhToan selectedPaymentMethod = PhuongThucThanhToan.tien_mat;
 
+
   late String checkInDate = widget.lichPhongTrong.ngayNhanPhong;
   late String? checkOutDate = widget.lichPhongTrong.ngayTraPhong;
   late String formattedCheckInTime = widget.lichPhongTrong.gioNhanPhong;
@@ -1120,10 +1121,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
               ],
             ),
             SizedBox(height: 12),
-            _buildPriceRow(S
+            _buildPriceRow("${S
                 .of(context)
-                .roomPrice, CurrencyHelper.formatVND(
-                widget.loaiPhong.giaLoaiPhong?.giaCoBan ?? 0.0)),
+                .roomPrice} (${_buildSummaryTextTotalRooms(context)})", CurrencyHelper.formatVND(
+                widget.loaiPhong.giaLoaiPhong?.giaChoTatCaPhong  ?? 0.0)),
             _buildPriceRow(S
                 .of(context)
                 .totalDuration,
@@ -1132,21 +1133,21 @@ class _PaymentScreenState extends State<PaymentScreen> {
             _buildPriceRow(S
                 .of(context)
                 .subtotalBeforeDiscount, CurrencyHelper.formatVND(
-                widget.loaiPhong.giaLoaiPhong!.phanTichGia.tongPhu)),
+                widget.loaiPhong.giaLoaiPhong!.giaChoTatCaPhong)),
             _buildPriceRow(S
                 .of(context)
                 .weekendSurcharge, CurrencyHelper.formatVND(
-                widget.loaiPhong.giaLoaiPhong!.phanTichGia.phuThuCuoiTuan)),
-            _buildPriceRow(S
+                widget.loaiPhong.giaLoaiPhong!.giaThueChoTatCaPhong)),
+            _buildPriceRow("${S
                 .of(context)
-                .discount, CurrencyHelper.formatVND(
+                .discount} (${widget.loaiPhong.giaLoaiPhong?.phanTichGia.phanTramGiamGia}%)", CurrencyHelper.formatVND(
                 widget.loaiPhong.giaLoaiPhong!.phanTichGia.giamGiaTheoNgay)),
             Divider(height: 24),
             _buildPriceRow(
               S
                   .of(context)
                   .totalAmount,
-              CurrencyHelper.formatVND(widget.loaiPhong.giaCuoiCung),
+              CurrencyHelper.formatVND(widget.loaiPhong.giaLoaiPhong!.giaCuoiCung ),
               isTotal: true,
             ),
           ],

@@ -6,6 +6,7 @@ class PhanTichGia{
   final double tongTien;
   final double giamGiaTheoNgay; //7 ngay 0.85(15%), 5 ngay 0.90(10%), 3 ngay 0.95(5%)
   final double phuThuCuoiTuan;
+  final int phanTramGiamGia;
 
 
   PhanTichGia({
@@ -16,6 +17,7 @@ class PhanTichGia{
     required this.tongPhu,
     required this.giamGiaTheoNgay,
     required this.phuThuCuoiTuan,
+    required this.phanTramGiamGia,
 });
 
   factory PhanTichGia.fromJson(Map<String, dynamic> json) {
@@ -27,6 +29,7 @@ class PhanTichGia{
       tongPhu:  (json ['subtotal'] ?? 0).toDouble(),
       giamGiaTheoNgay: (json['discountAmount'] as num?)?.toDouble() ?? 0.0,
       phuThuCuoiTuan: (json['taxPrice']as num?)?.toDouble() ?? 0.0,
+      phanTramGiamGia: json['discountPercent'].toInt() ?? 0,
     );
   }
   Map<String, dynamic> toJson() {

@@ -31,10 +31,10 @@ const generateUniqueFilename = (prefix, originalname) => {
     const randomNum = Math.round(Math.random() * 1E9);
     const ext = path.extname(originalname).toLowerCase();
     const nameWithoutExt = path.basename(originalname, ext);
-    
+
     // Sanitize filename - remove special characters
     const sanitizedName = nameWithoutExt.replace(/[^a-zA-Z0-9]/g, '_');
-    
+
     return `${prefix}_${timestamp}_${randomNum}_${sanitizedName}${ext}`;
 };
 
@@ -42,14 +42,14 @@ const generateUniqueFilename = (prefix, originalname) => {
 const createFileFilter = (allowedTypes = ['jpeg', 'jpg', 'png', 'gif', 'webp']) => {
     return (req, file, cb) => {
         console.log(`🔍 Validating file: ${file.fieldname} - ${file.originalname} (${file.mimetype})`);
-        
+
         // Check file extension
         const ext = path.extname(file.originalname).toLowerCase().slice(1);
         const isValidExt = allowedTypes.includes(ext);
-        
+
         // Check MIME type
         const allowedMimeTypes = allowedTypes.map(type => {
-            switch(type) {
+            switch (type) {
                 case 'jpg':
                 case 'jpeg': return 'image/jpeg';
                 case 'png': return 'image/png';
@@ -58,14 +58,14 @@ const createFileFilter = (allowedTypes = ['jpeg', 'jpg', 'png', 'gif', 'webp']) 
                 default: return `image/${type}`;
             }
         });
-        
+
         const isValidMime = allowedMimeTypes.includes(file.mimetype);
-        
+
         // Additional security: check if file size is reasonable
         if (file.size && file.size > 10 * 1024 * 1024) { // 10MB max
             return cb(new Error("File quá lớn. Kích thước tối đa 10MB"));
         }
-        
+
         if (isValidExt && isValidMime) {
             console.log(`✅ File accepted: ${file.originalname}`);
             cb(null, true);
@@ -82,36 +82,36 @@ const createRoomFolderStructure = async (hotelId, roomTypeId) => {
     try {
         const Hotel = require('../Model/Hotel/Hotel');
         const RoomType = require('../Model/RoomType/RoomType');
-        
+
         // Lấy thông tin khách sạn và loại phòng
         const [hotel, roomType] = await Promise.all([
             Hotel.findById(hotelId).select('tenKhachSan'),
             RoomType.findById(roomTypeId).select('tenLoaiPhong')
         ]);
-        
+
         if (!hotel || !roomType) {
             throw new Error('Không tìm thấy khách sạn hoặc loại phòng');
         }
-        
+
         // Sanitize tên folder
         const hotelFolderName = sanitizeFolderName(hotel.tenKhachSan);
         const roomTypeFolderName = sanitizeFolderName(roomType.tenLoaiPhong);
-        
+
         // Tạo đường dẫn: uploads/hotels/TenKhachSan/LoaiPhong
         const hotelPath = path.join('uploads', 'hotels', hotelFolderName);
         const roomTypePath = path.join(hotelPath, roomTypeFolderName);
-        
+
         // Tạo folders nếu chưa tồn tại
         if (!fs.existsSync(hotelPath)) {
             fs.mkdirSync(hotelPath, { recursive: true });
             console.log(`📁 Created hotel directory: ${hotelPath}`);
         }
-        
+
         if (!fs.existsSync(roomTypePath)) {
             fs.mkdirSync(roomTypePath, { recursive: true });
             console.log(`📁 Created room type directory: ${roomTypePath}`);
         }
-        
+
         return {
             hotelPath,
             roomTypePath,
@@ -120,7 +120,7 @@ const createRoomFolderStructure = async (hotelId, roomTypeId) => {
             hotelFolderName,
             roomTypeFolderName
         };
-        
+
     } catch (error) {
         console.error('❌ Error creating room folder structure:', error);
         throw error;
@@ -132,22 +132,22 @@ const createHotelFolderStructure = async (hotelName) => {
     try {
         // Sanitize tên folder
         const hotelFolderName = sanitizeFolderName(hotelName);
-        
+
         // Tạo đường dẫn: uploads/hotels/TenKhachSan
         const hotelPath = path.join('uploads', 'hotels', hotelFolderName);
-        
+
         // Tạo folder nếu chưa tồn tại
         if (!fs.existsSync(hotelPath)) {
             fs.mkdirSync(hotelPath, { recursive: true });
             console.log(`📁 Created hotel directory: ${hotelPath}`);
         }
-        
+
         return {
             hotelPath,
             hotelName,
             hotelFolderName
         };
-        
+
     } catch (error) {
         console.error('❌ Error creating hotel folder structure:', error);
         throw error;
@@ -159,33 +159,33 @@ const roomStorage = multer.diskStorage({
     destination: async (req, file, cb) => {
         try {
             const { maLoaiPhong } = req.body;
-            
+
             if (!maLoaiPhong) {
                 return cb(new Error("Thiếu thông tin mã loại phòng"));
             }
-            
+
             // Lấy thông tin khách sạn từ roomType
             const RoomType = require('../Model/RoomType/RoomType');
             const roomType = await RoomType.findById(maLoaiPhong).populate('maKhachSan', 'tenKhachSan');
-            
+
             if (!roomType || !roomType.maKhachSan) {
                 return cb(new Error("Không tìm thấy thông tin khách sạn"));
             }
-            
+
             // Tạo folder structure
             const folderInfo = await createRoomFolderStructure(
-                roomType.maKhachSan._id, 
+                roomType.maKhachSan._id,
                 maLoaiPhong
             );
-            
+
             console.log(`📁 Room file destination: ${folderInfo.roomTypePath}`);
             console.log(`🏨 Hotel: ${folderInfo.hotelName} | Room Type: ${folderInfo.roomTypeName}`);
-            
+
             // Lưu thông tin folder vào req để dùng sau
             req.folderInfo = folderInfo;
-            
+
             cb(null, folderInfo.roomTypePath);
-            
+
         } catch (error) {
             console.error('❌ Error in room destination:', error);
             // Fallback to default room path
@@ -207,23 +207,23 @@ const roomStorage = multer.diskStorage({
 const hotelStorage = multer.diskStorage({
     destination: async (req, file, cb) => {
         try {
-            const { tenKhachSan } = req.body;
-            
+            const tenKhachSan = req.body.tenKhachSan || req.body.hotelName;
+
             if (!tenKhachSan) {
                 return cb(new Error("Thiếu thông tin tên khách sạn"));
             }
-            
+
             // Tạo folder structure cho hotel
             const folderInfo = await createHotelFolderStructure(tenKhachSan);
-            
+
             console.log(`📁 Hotel file destination: ${folderInfo.hotelPath}`);
             console.log(`🏨 Hotel: ${folderInfo.hotelName}`);
-            
+
             // Lưu thông tin folder vào req để dùng sau
             req.folderInfo = folderInfo;
-            
+
             cb(null, folderInfo.hotelPath);
-            
+
         } catch (error) {
             console.error('❌ Error in hotel destination:', error);
             // Fallback to default hotel path
@@ -274,18 +274,21 @@ const uploadHotel = multer({
 const logUploadProcess = (req, res, next) => {
     console.log(`🚀 Upload process started: ${req.method} ${req.path}`);
     console.log(`📋 Content-Type: ${req.get('Content-Type')}`);
-    
+
     // Log files after multer processes them
     const originalSend = res.send;
-    res.send = function(data) {
+    res.send = function (data) {
         if (req.files) {
-            console.log(`📸 Files uploaded:`, req.files.map(f => ({
-                fieldname: f.fieldname,
-                filename: f.filename,
-                size: f.size,
-                path: f.path
-            })));
-            
+            if (req.files) {
+                const allFiles = Object.values(req.files).flat();
+                console.log(`📸 Files uploaded:`, allFiles.map(f => ({
+                    fieldname: f.fieldname,
+                    filename: f.filename,
+                    size: f.size,
+                    path: f.path
+                })));
+            }
+
             // Log folder structure info if available
             if (req.folderInfo) {
                 console.log(`📁 Folder structure:`, {
@@ -297,14 +300,14 @@ const logUploadProcess = (req, res, next) => {
         }
         originalSend.call(this, data);
     };
-    
+
     next();
 };
 
 // ✅ Error handling middleware cho multer
 const handleMulterError = (err, req, res, next) => {
     console.error("❌ Multer error:", err);
-    
+
     if (err instanceof multer.MulterError) {
         switch (err.code) {
             case 'LIMIT_FILE_SIZE':
@@ -333,7 +336,7 @@ const handleMulterError = (err, req, res, next) => {
                 });
         }
     }
-    
+
     // Other errors (from fileFilter, etc.)
     if (err.message) {
         return res.status(400).json({
@@ -342,7 +345,7 @@ const handleMulterError = (err, req, res, next) => {
             error: err.message
         });
     }
-    
+
     next(err);
 };
 

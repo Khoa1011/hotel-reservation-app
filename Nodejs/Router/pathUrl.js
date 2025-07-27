@@ -16,6 +16,7 @@ const roomTypeHotelRouter = require("../Controller/Hotel/roomTypeHotelController
 const roomHotelRouter = require("../Controller/Hotel/roomHotelController");
 const amenitiesHotelRouter = require("../Controller/Hotel/AmenitiesHotelController");
 const statisticHotelController = require("../Controller/Hotel/statisticHotelController");
+const registrationsRouter = require("../Controller/Admin/registrationsController");
 
 
 module.exports = function (app) {
@@ -42,6 +43,6 @@ module.exports = function (app) {
     app.use("/api/statistic-hotel",statisticHotelController);
 
     // //Admin
-    // app.use("/api/admin", userRouter); 
+    app.use("/api/registration",registrationsRouter);
 
 }

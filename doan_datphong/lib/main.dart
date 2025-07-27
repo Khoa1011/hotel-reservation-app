@@ -112,7 +112,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    //_handleLogout();
+    // _handleLogout();
     // _setupFirebaseMessaging();
     return MultiProvider(
 

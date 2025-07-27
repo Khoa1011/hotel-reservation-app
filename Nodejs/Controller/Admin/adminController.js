@@ -28,7 +28,7 @@ userHotelRouter.get("/admin-or-user", authorizeRoles("admin", "nguoiDung"), (req
 });
 
 //Đăng ký tài khoản admin
-userHotelRouter.post("/hotelowner/register", async (req, res) => {
+userHotelRouter.post("/admin/register", async (req, res) => {
     try {
         const { email, matKhau } = req.body;
 
@@ -41,11 +41,11 @@ userHotelRouter.post("/hotelowner/register", async (req, res) => {
         }
 
         // Tạo người dùng mới
-        const newUser = new User({ email, matKhau, vaiTro: "chuKhachSan" });
+        const newUser = new User({ email, matKhau, vaiTro: "admin" });
         await newUser.save(); // Lưu user vào database
 
         return res.status(200).json({
-            message: { msgBody: "Tạo tài khoản cho chủ khách sạn thành công!", msgError: false },
+            message: { msgBody: "Tạo tài khoản cho admin thành công!", msgError: false },
             user: { id: newUser._id, email: newUser.email, vaiTro: newUser.vaiTro }, // Gửi dữ liệu user về client  
         });
     } catch (err) {
@@ -57,7 +57,7 @@ userHotelRouter.post("/hotelowner/register", async (req, res) => {
 });
 
 
-userHotelRouter.post("/hotelowner/login", async (req, res) => {
+userHotelRouter.post("/admin/login", async (req, res) => {
     try {
         const { email, matKhau } = req.body;
 
@@ -71,9 +71,9 @@ userHotelRouter.post("/hotelowner/login", async (req, res) => {
         }
 
         // Kiểm tra role
-        if (user.vaiTro === 'nguoiDung') {
+        if (user.vaiTro !== "admin") {
             return res.status(403).json({
-                msgBody: "Tài khoản này không có quyền đăng nhập trang của khách sạn!",
+                msgBody: "Tài khoản này không có quyền đăng nhập trang của quản trị viên!",
                 msgError: true
             });
         }
@@ -94,7 +94,7 @@ userHotelRouter.post("/hotelowner/login", async (req, res) => {
         res.cookie("access_token", token, { httpOnly: true, sameSite: "strict" });
 
         return res.status(200).json({
-            msgBody: "Đăng nhập thành công!",
+            msgBody: "Đăng nhập cho quản trị viên thành công!",
             msgError: false,
             isAuthenticated: true,
             user: { id: user._id, email: user.email, role: user.vaiTro },

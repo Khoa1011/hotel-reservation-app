@@ -9,7 +9,6 @@ const menuItems = [
   { id: 'rooms', label: 'Quản Lý Phòng', icon: Bed },
   { id: 'guests', label: 'Khách Hàng', icon: Users },
   { id: 'revenue', label: 'Doanh Thu', icon: DollarSign },
-  { id: 'notifications', label: 'Thông Báo', icon: Bell },
   { id: 'reviews', label: 'Đánh Giá', icon: Star }
 ];
 

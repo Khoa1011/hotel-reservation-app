@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, Building, Bell } from 'lucide-react';
 import { useNotifications } from '../contexts/NotificationContext';
 
-const HotelSelector = ({ hotels = [],bookings = [], onHotelChange, selectedHotelId }) => {
+const HotelSelector = ({ hotels = [], bookings = [], onHotelChange, selectedHotelId }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { notifications, markHotelAsRead } = useNotifications();
 
@@ -10,38 +10,38 @@ const HotelSelector = ({ hotels = [],bookings = [], onHotelChange, selectedHotel
   const hasTriggeredInitialLoad = useRef(false);
 
   // Tạo danh sách hotel từ bookings
-const getAllHotels = () => {
+  const getAllHotels = () => {
     console.log('🏨 HotelSelector: hotels prop:', hotels);
     console.log('🏨 HotelSelector: bookings prop:', bookings);
-    
+
     // ✅ Ưu tiên dùng hotels API nếu có
     if (hotels && Array.isArray(hotels) && hotels.length > 0) {
       return hotels.map(h => ({
         id: h.hotelId || h._id,
         name: h.tenKhachSan,
-        notifications: notifications.hotelNotifications[h.hotelId || h._id] || { 
-          newBookings: 0, 
-          pendingBookings: 0, 
-          totalUnread: 0 
+        notifications: notifications.hotelNotifications[h.hotelId || h._id] || {
+          newBookings: 0,
+          pendingBookings: 0,
+          totalUnread: 0
         }
       }));
     }
-    
+
     // ✅ Fallback về bookings với safety check
     if (!Array.isArray(bookings)) {
       console.log('⚠️ No valid data for hotels');
       return [];
     }
-    
+
     const allHotels = Array.from(
       new Map(bookings.map(b => [b.hotelId?._id, b.hotelId?.tenKhachSan])).entries()
     ).map(([id, name]) => ({
       id,
       name,
-      notifications: notifications.hotelNotifications[id] || { 
-        newBookings: 0, 
-        pendingBookings: 0, 
-        totalUnread: 0 
+      notifications: notifications.hotelNotifications[id] || {
+        newBookings: 0,
+        pendingBookings: 0,
+        totalUnread: 0
       }
     })).filter(hotel => hotel.id && hotel.name);
 
@@ -63,14 +63,14 @@ const getAllHotels = () => {
 
     // Lưu vào localStorage
     if (hotelId) {
-      localStorage.setItem("selectedHotelId", hotelId);
-      localStorage.setItem("selectedHotelName", hotelName);
+      localStorage.setItem("hotel_selectedHotelId", hotelId);
+      localStorage.setItem("hotel_selectedHotelName", hotelName);
 
       // Đánh dấu hotel đã đọc khi chọn
       markHotelAsRead(hotelId);
     } else {
-      localStorage.removeItem("selectedHotelId");
-      localStorage.removeItem("selectedHotelName");
+      localStorage.removeItem("hotel_selectedHotelId");
+      localStorage.removeItem("hotel_selectedHotelName");
     }
 
     // Callback để parent component xử lý
@@ -88,8 +88,8 @@ const getAllHotels = () => {
       return;
     }
 
-    const savedHotelId = localStorage.getItem("selectedHotelId");
-    const savedHotelName = localStorage.getItem("selectedHotelName");
+    const savedHotelId = localStorage.getItem("hotel_selectedHotelId");
+    const savedHotelName = localStorage.getItem("hotel_selectedHotelName");
 
     console.log('🏨 HotelSelector initial load:', { savedHotelId, savedHotelName });
 

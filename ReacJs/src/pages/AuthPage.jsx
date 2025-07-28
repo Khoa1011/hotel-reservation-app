@@ -47,13 +47,16 @@ const AuthPage = () => {
 
                 if (!data.msgError && data.token) {
                     localStorage.setItem('token', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
 
                     toast.success('Đăng nhập thành công!');
                     if (data.user.role === 'chuKhachSan') {
+                        localStorage.setItem('hotelowner', JSON.stringify(data.user));
                         window.location.href = '/homepage';
                     } else {
+                        localStorage.setItem('admin', JSON.stringify(data.user));
                         window.location.href = '/admin-hotel';
+                        
                     }
                 } else {
                     toast.error(data.msgBody);

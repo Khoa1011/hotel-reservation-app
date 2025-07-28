@@ -364,7 +364,7 @@ userManagementRouter.get("/admin/users/:id", authorizeRoles("admin"), async (req
 
     // Lấy thống kê chi tiết về booking
     const bookingStats = await Booking.aggregate([
-      { $match: { maNguoiDung: mongoose.Types.ObjectId(userId) } },
+      { $match: { maNguoiDung: new mongoose.Types.ObjectId(userId) } },
       {
         $group: {
           _id: "$trangThai",
@@ -380,7 +380,7 @@ userManagementRouter.get("/admin/users/:id", authorizeRoles("admin"), async (req
     const paidBookingsStats = await Booking.aggregate([
       { 
         $match: { 
-          maNguoiDung: mongoose.Types.ObjectId(userId),
+          maNguoiDung: new mongoose.Types.ObjectId(userId),
           trangThaiThanhToan: "da_thanh_toan"
         } 
       },

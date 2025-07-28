@@ -24,12 +24,85 @@ import {
   Building2,
   Award,
   Clock,
-  MoreHorizontal
+  MoreHorizontal,
+  User
 } from 'lucide-react';
 import axios from '../../utils/axiosConfig';
 import { toast } from 'react-toastify';
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
+
+// Hàm xử lý URL hình ảnh được cải thiện
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return null;
+
+  // Nếu đã là URL đầy đủ (http/https)
+  if (imagePath.startsWith('http')) return imagePath;
+
+  // Nếu là path từ mobile app, trả về null để dùng fallback
+  if (imagePath.includes('/data/user/') || 
+      imagePath.includes('/cache/') || 
+      imagePath.includes('com.example.')) {
+    return null;
+  }
+
+  // Nếu là path server uploads
+  if (imagePath.startsWith('/uploads/')) {
+    return `${baseUrl}${imagePath}`;
+  }
+
+  // Path khác, thêm baseUrl
+  const cleanPath = imagePath.replace(/^\/+/, '');
+  return `${baseUrl}/${cleanPath}`;
+};
+
+// Component hiển thị hình ảnh với fallback
+const ImageWithFallback = ({ src, alt, className, fallback = null, showIcon = false }) => {
+  const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
+  const imageUrl = getImageUrl(src);
+
+  // Nếu không có URL hợp lệ hoặc có lỗi, hiển thị fallback
+  if (!imageUrl || imageError) {
+    return (
+      <div className={`${className} bg-gray-100 flex items-center justify-center`}>
+        {showIcon ? (
+          <User className="w-6 h-6 text-gray-400" />
+        ) : fallback ? (
+          <img
+            src={fallback}
+            alt={alt}
+            className={className}
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <User className="w-6 h-6 text-gray-400" />
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      {imageLoading && (
+        <div className={`${className} bg-gray-100 flex items-center justify-center absolute inset-0`}>
+          <Loader className="w-4 h-4 text-gray-400 animate-spin" />
+        </div>
+      )}
+      <img
+        src={imageUrl}
+        alt={alt}
+        className={className}
+        onLoad={() => setImageLoading(false)}
+        onError={() => {
+          setImageError(true);
+          setImageLoading(false);
+        }}
+        style={{ display: imageLoading ? 'none' : 'block' }}
+      />
+    </div>
+  );
+};
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -42,14 +115,14 @@ const UserManagement = () => {
   const [banReason, setBanReason] = useState('');
   const [banDuration, setBanDuration] = useState('');
   const [showActionsDropdown, setShowActionsDropdown] = useState(null);
-  
+
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 15,
     total: 0,
     totalRecords: 0
   });
-  
+
   const [filters, setFilters] = useState({
     search: '',
     role: '',
@@ -70,9 +143,9 @@ const UserManagement = () => {
         limit: pagination.pageSize,
         ...filters
       };
-      
+
       const response = await axios.get(`${baseUrl}/api/users-management/admin/users`, { params });
-      
+
       if (response.data.success) {
         setUsers(response.data.data);
         setPagination(prev => ({
@@ -92,7 +165,7 @@ const UserManagement = () => {
   const fetchUserDetail = async (userId) => {
     try {
       const response = await axios.get(`${baseUrl}/api/users-management/admin/users/${userId}`);
-      
+
       if (response.data.success) {
         setSelectedUser(response.data.data);
         setShowDetailModal(true);
@@ -106,7 +179,7 @@ const UserManagement = () => {
   const fetchBookingHistory = async (userId) => {
     try {
       const response = await axios.get(`${baseUrl}/api/users-management/admin/users/${userId}/booking-history`);
-      
+
       if (response.data.success) {
         setBookingHistory(response.data.data);
         setShowBookingModal(true);
@@ -126,7 +199,7 @@ const UserManagement = () => {
       const response = await axios.put(`${baseUrl}/api/users-management/admin/users/${userId}/toggle-status`, {
         reason: currentStatus === 'hoatDong' ? 'Vi phạm quy định' : 'Đã khắc phục'
       });
-      
+
       if (response.data.success) {
         toast.success(response.data.message);
         fetchUsers();
@@ -148,7 +221,7 @@ const UserManagement = () => {
       if (banDuration) body.duration = parseInt(banDuration);
 
       const response = await axios.put(`${baseUrl}/api/users-management/admin/users/${selectedUser._id}/toggle-booking`, body);
-      
+
       if (response.data.success) {
         toast.success(response.data.message);
         setShowBanModal(false);
@@ -169,7 +242,7 @@ const UserManagement = () => {
 
     try {
       const response = await axios.put(`${baseUrl}/api/users-management/admin/users/${userId}/reset-no-show`);
-      
+
       if (response.data.success) {
         toast.success('Đã reset số lần không nhận phòng');
         fetchUsers();
@@ -195,12 +268,24 @@ const UserManagement = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('vi-VN');
+    if (!dateString) return 'Chưa cập nhật';
+    
+    // Xử lý định dạng ngày khác nhau
+    let date;
+    if (dateString.includes('/')) {
+      // Định dạng DD/MM/YYYY
+      const [day, month, year] = dateString.split('/');
+      date = new Date(year, month - 1, day);
+    } else {
+      date = new Date(dateString);
+    }
+    
+    return date.toLocaleDateString('vi-VN');
   };
 
   const formatAddress = (address) => {
     if (!address || typeof address !== 'object') return 'Chưa cập nhật';
-    
+
     const parts = [];
     if (address.soNha) parts.push(address.soNha);
     if (address.tenDuong) parts.push(address.tenDuong);
@@ -208,7 +293,7 @@ const UserManagement = () => {
     if (address.quan) parts.push(address.quan);
     if (address.tinhThanh) parts.push(address.tinhThanh);
     if (address.quocGia) parts.push(address.quocGia);
-    
+
     return parts.length > 0 ? parts.join(', ') : 'Chưa cập nhật';
   };
 
@@ -260,9 +345,20 @@ const UserManagement = () => {
         <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-800">
-                Chi tiết người dùng - {selectedUser.tenNguoiDung}
-              </h2>
+              <div className="flex items-center space-x-4">
+                <ImageWithFallback
+                  src={selectedUser.hinhDaiDien}
+                  alt={selectedUser.tenNguoiDung}
+                  className="w-16 h-16 rounded-full object-cover"
+                  showIcon={true}
+                />
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-800">
+                    {selectedUser.tenNguoiDung}
+                  </h2>
+                  <p className="text-sm text-gray-500">{selectedUser.email}</p>
+                </div>
+              </div>
               <button
                 onClick={() => setShowDetailModal(false)}
                 className="text-gray-400 hover:text-gray-600"
@@ -304,7 +400,7 @@ const UserManagement = () => {
                   <div className="flex items-center">
                     <Calendar className="w-4 h-4 text-gray-400 mr-2" />
                     <span className="font-medium mr-2">Ngày sinh:</span>
-                    <span>{selectedUser.ngaySinh ? formatDate(selectedUser.ngaySinh) : 'Chưa cập nhật'}</span>
+                    <span>{formatDate(selectedUser.ngaySinh)}</span>
                   </div>
                   <div className="flex items-start">
                     <MapPin className="w-4 h-4 text-gray-400 mr-2 mt-0.5" />
@@ -320,21 +416,19 @@ const UserManagement = () => {
                   <div className="flex items-center">
                     <Award className="w-4 h-4 text-gray-400 mr-2" />
                     <span className="font-medium mr-2">Vai trò:</span>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      selectedUser.vaiTro === 'admin' ? 'bg-red-100 text-red-800' :
-                      selectedUser.vaiTro === 'chuKhachSan' ? 'bg-blue-100 text-blue-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
+                    <span className={`px-2 py-1 rounded-full text-xs ${selectedUser.vaiTro === 'admin' ? 'bg-red-100 text-red-800' :
+                        selectedUser.vaiTro === 'chuKhachSan' ? 'bg-blue-100 text-blue-800' :
+                          'bg-green-100 text-green-800'
+                      }`}>
                       {formatRole(selectedUser.vaiTro)}
                     </span>
                   </div>
                   <div className="flex items-center">
                     <span className="font-medium mr-2 ml-6">Trạng thái:</span>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      selectedUser.trangThaiTaiKhoan === 'hoatDong' 
-                        ? 'bg-green-100 text-green-800' 
+                    <span className={`px-2 py-1 rounded-full text-xs ${selectedUser.trangThaiTaiKhoan === 'hoatDong'
+                        ? 'bg-green-100 text-green-800'
                         : 'bg-red-100 text-red-800'
-                    }`}>
+                      }`}>
                       {selectedUser.trangThaiTaiKhoan === 'hoatDong' ? 'Hoạt động' : 'Bị cấm'}
                     </span>
                   </div>
@@ -381,7 +475,7 @@ const UserManagement = () => {
                   <div className="text-sm text-gray-600">Không nhận phòng</div>
                 </div>
               </div>
-              
+
               <div className="mt-4 bg-gray-50 p-4 rounded-lg">
                 <div className="flex items-center">
                   <DollarSign className="w-5 h-5 text-green-600 mr-2" />
@@ -425,7 +519,14 @@ const UserManagement = () => {
                   {selectedUser.khachSanSoHuu.map((hotel, index) => (
                     <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                       <div className="flex items-center">
-                        <Building2 className="w-5 h-5 text-blue-600 mr-3" />
+                        <div className="mr-3">
+                          <ImageWithFallback
+                            src={hotel.hinhAnhKhachSan?.[0]}
+                            alt={hotel.tenKhachSan}
+                            className="w-12 h-12 rounded-lg object-cover"
+                            showIcon={true}
+                          />
+                        </div>
                         <div className="flex-1">
                           <h4 className="font-medium text-gray-800">{hotel.tenKhachSan || 'Chưa có tên'}</h4>
                           <p className="text-sm text-gray-600">
@@ -503,8 +604,18 @@ const UserManagement = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {bookingHistory.map((booking) => (
                     <tr key={booking._id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {booking.maKhachSan?.tenKhachSan}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <ImageWithFallback
+                            src={booking.maKhachSan?.hinhAnhKhachSan?.[0]}
+                            alt={booking.maKhachSan?.tenKhachSan}
+                            className="w-10 h-10 rounded-lg object-cover mr-3"
+                            showIcon={true}
+                          />
+                          <div className="text-sm text-gray-900">
+                            {booking.maKhachSan?.tenKhachSan}
+                          </div>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {formatDate(booking.ngayNhanPhong)}
@@ -536,7 +647,7 @@ const UserManagement = () => {
 
   const renderBanModal = () => {
     const isBannedFromBooking = selectedUser?.ngayCamDatPhong && new Date(selectedUser.ngayCamDatPhong) > new Date();
-    
+
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-lg max-w-md w-full">
@@ -602,7 +713,7 @@ const UserManagement = () => {
 
   const renderActionsDropdown = (user) => {
     const isBannedFromBooking = user.ngayCamDatPhong && new Date(user.ngayCamDatPhong) > new Date();
-    
+
     return (
       <div className="absolute right-0 top-8 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
         <button
@@ -615,7 +726,7 @@ const UserManagement = () => {
           <Eye className="w-4 h-4 mr-2" />
           Xem chi tiết
         </button>
-        
+
         <button
           onClick={() => {
             fetchBookingHistory(user._id);
@@ -626,17 +737,16 @@ const UserManagement = () => {
           <History className="w-4 h-4 mr-2" />
           Lịch sử đặt phòng
         </button>
-        
+
         <hr className="my-1" />
-        
+
         <button
           onClick={() => {
             toggleUserStatus(user._id, user.trangThaiTaiKhoan);
             setShowActionsDropdown(null);
           }}
-          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center ${
-            user.trangThaiTaiKhoan === 'hoatDong' ? 'text-red-600' : 'text-green-600'
-          }`}
+          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center ${user.trangThaiTaiKhoan === 'hoatDong' ? 'text-red-600' : 'text-green-600'
+            }`}
         >
           {user.trangThaiTaiKhoan === 'hoatDong' ? (
             <>
@@ -650,7 +760,7 @@ const UserManagement = () => {
             </>
           )}
         </button>
-        
+
         <button
           onClick={() => {
             setSelectedUser(user);
@@ -662,7 +772,7 @@ const UserManagement = () => {
           <AlertTriangle className="w-4 h-4 mr-2" />
           {isBannedFromBooking ? 'Bỏ cấm đặt phòng' : 'Cấm đặt phòng'}
         </button>
-        
+
         {user.soLanKhongNhanPhong > 0 && (
           <button
             onClick={() => {
@@ -695,7 +805,7 @@ const UserManagement = () => {
                 onChange={(e) => handleSearch(e.target.value)}
               />
             </div>
-            
+
             <select
               value={filters.role}
               onChange={(e) => handleFilterChange('role', e.target.value)}
@@ -707,7 +817,7 @@ const UserManagement = () => {
               <option value="admin">Admin</option>
               <option value="nhanVienKhachSan">Nhân viên</option>
             </select>
-            
+
             <select
               value={filters.status}
               onChange={(e) => handleFilterChange('status', e.target.value)}
@@ -719,7 +829,7 @@ const UserManagement = () => {
               <option value="khongHoatDong">Không hoạt động</option>
             </select>
           </div>
-          
+
           <div className="flex items-center space-x-3">
             <select
               value={filters.sortBy}
@@ -731,7 +841,7 @@ const UserManagement = () => {
               <option value="tongSoDonDat">Số đơn đặt</option>
               <option value="tongTienDaThanhToan">Tổng tiền</option>
             </select>
-            
+
             <select
               value={filters.sortOrder}
               onChange={(e) => handleFilterChange('sortOrder', e.target.value)}
@@ -740,7 +850,7 @@ const UserManagement = () => {
               <option value="asc">Tăng dần</option>
               <option value="desc">Giảm dần</option>
             </select>
-            
+
             <button
               onClick={fetchUsers}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
@@ -796,10 +906,11 @@ const UserManagement = () => {
                     {/* User Info */}
                     <td className="px-4 py-4">
                       <div className="flex items-center">
-                        <img
-                          src={user.hinhDaiDien || '/default-avatar.jpg'}
+                        <ImageWithFallback
+                          src={user.hinhDaiDien}
                           alt={user.tenNguoiDung}
                           className="w-10 h-10 rounded-full object-cover mr-3 flex-shrink-0"
+                          showIcon={true}
                         />
                         <div className="min-w-0 flex-1">
                           <div className="font-medium text-gray-900 truncate">
@@ -826,11 +937,10 @@ const UserManagement = () => {
 
                     {/* Role */}
                     <td className="px-4 py-4">
-                      <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                        user.vaiTro === 'admin' ? 'bg-red-100 text-red-800' :
-                        user.vaiTro === 'chuKhachSan' ? 'bg-blue-100 text-blue-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
+                      <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${user.vaiTro === 'admin' ? 'bg-red-100 text-red-800' :
+                          user.vaiTro === 'chuKhachSan' ? 'bg-blue-100 text-blue-800' :
+                            'bg-green-100 text-green-800'
+                        }`}>
                         {formatRole(user.vaiTro)}
                       </span>
                     </td>
@@ -838,20 +948,19 @@ const UserManagement = () => {
                     {/* Status */}
                     <td className="px-4 py-4">
                       <div className="flex flex-col gap-1">
-                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                          user.trangThaiTaiKhoan === 'hoatDong' 
-                            ? 'bg-green-100 text-green-800' 
+                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${user.trangThaiTaiKhoan === 'hoatDong'
+                            ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
-                        }`}>
+                          }`}>
                           {user.trangThaiTaiKhoan === 'hoatDong' ? 'Hoạt động' : 'Bị cấm'}
                         </span>
-                        
+
                         {user.ngayCamDatPhong && new Date(user.ngayCamDatPhong) > new Date() && (
                           <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
                             Cấm ĐP
                           </span>
                         )}
-                        
+
                         {user.soLanKhongNhanPhong >= 3 && (
                           <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
                             Cảnh báo
@@ -933,8 +1042,8 @@ const UserManagement = () => {
 
       {/* Close dropdown when clicking outside */}
       {showActionsDropdown && (
-        <div 
-          className="fixed inset-0 z-5" 
+        <div
+          className="fixed inset-0 z-5"
           onClick={() => setShowActionsDropdown(null)}
         />
       )}

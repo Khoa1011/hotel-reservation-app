@@ -74,7 +74,7 @@ hotelManagementRouter.get("/admin/hotels", authorizeRoles("admin"), async (req, 
           paidBookings: {
             $filter: {
               input: "$allBookings",
-              cond: { 
+              cond: {
                 $and: [
                   { $in: ["$$this.trangThai", ["da_tra_phong", "dang_su_dung"]] },
                   { $eq: ["$$this.trangThaiThanhToan", "da_thanh_toan"] }
@@ -216,7 +216,7 @@ hotelManagementRouter.get("/admin/hotels/:id", authorizeRoles("admin"), async (r
       });
     }
 
-    console.log('🏨 [HOTEL DETAIL] Found hotel:', { 
+    console.log('🏨 [HOTEL DETAIL] Found hotel:', {
       tenKhachSan: hotel.tenKhachSan,
       chuKhachSan: hotel.maChuKhachSan?.tenNguoiDung
     });
@@ -234,12 +234,12 @@ hotelManagementRouter.get("/admin/hotels/:id", authorizeRoles("admin"), async (r
       });
 
       // Thống kê manual
-      const paidBookings = allHotelBookings.filter(b => 
-        b.trangThaiThanhToan === "da_thanh_toan" && 
+      const paidBookings = allHotelBookings.filter(b =>
+        b.trangThaiThanhToan === "da_thanh_toan" &&
         ["da_tra_phong", "dang_su_dung"].includes(b.trangThai)
       );
       const allPaidBookings = allHotelBookings.filter(b => b.trangThaiThanhToan === "da_thanh_toan");
-      
+
       const totalRevenue = paidBookings.reduce((sum, b) => sum + (b.thongTinGia?.tongDonDat || 0), 0);
       const allPaidRevenue = allPaidBookings.reduce((sum, b) => sum + (b.thongTinGia?.tongDonDat || 0), 0);
 
@@ -256,7 +256,7 @@ hotelManagementRouter.get("/admin/hotels/:id", authorizeRoles("admin"), async (r
     const revenueStats = await Booking.aggregate([
       {
         $match: {
-          maKhachSan: mongoose.Types.ObjectId(hotelId),
+          maKhachSan: new mongoose.Types.ObjectId(hotelId),
           trangThaiThanhToan: "da_thanh_toan",
           trangThai: { $in: ["da_tra_phong", "dang_su_dung"] }
         }
@@ -275,9 +275,9 @@ hotelManagementRouter.get("/admin/hotels/:id", authorizeRoles("admin"), async (r
 
     // Doanh thu theo tháng (6 tháng gần nhất)
     const monthlyRevenue = await Booking.aggregate([
-      {
+      { 
         $match: {
-          maKhachSan: mongoose.Types.ObjectId(hotelId),
+          maKhachSan: new mongoose.Types.ObjectId(hotelId),
           trangThaiThanhToan: "da_thanh_toan",
           trangThai: { $in: ["da_tra_phong", "dang_su_dung"] },
           thoiGianTaoDon: {
@@ -316,9 +316,9 @@ hotelManagementRouter.get("/admin/hotels/:id", authorizeRoles("admin"), async (r
         .filter(b => {
           const bookingDate = new Date(b.thoiGianTaoDon);
           const thisMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-          return bookingDate >= thisMonth && 
-                 b.trangThaiThanhToan === "da_thanh_toan" && 
-                 ["da_tra_phong", "dang_su_dung"].includes(b.trangThai);
+          return bookingDate >= thisMonth &&
+            b.trangThaiThanhToan === "da_thanh_toan" &&
+            ["da_tra_phong", "dang_su_dung"].includes(b.trangThai);
         })
         .reduce((sum, b) => sum + (b.thongTinGia?.tongDonDat || 0), 0)
     };
@@ -477,7 +477,7 @@ hotelManagementRouter.get("/admin/hotels-stats", authorizeRoles("admin"), async 
     console.log('📊 [HOTEL STATS] Generating hotel statistics...');
 
     const totalHotels = await Hotel.countDocuments();
-    
+
     const hotelsByType = await Hotel.aggregate([
       {
         $group: {

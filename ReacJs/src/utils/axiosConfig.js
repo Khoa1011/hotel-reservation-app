@@ -21,7 +21,7 @@ instance.interceptors.request.use(
     const tokenFromCookie = Cookies.get("token");
     const tokenFromStorage = localStorage.getItem('token');
     const token = tokenFromCookie || tokenFromStorage;
-   
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
       console.log('🔑 Token added to request:', token.substring(0, 20) + '...');
@@ -29,7 +29,7 @@ instance.interceptors.request.use(
 
     // Log request để debug
     console.log(`📤 ${config.method?.toUpperCase()} ${config.url}`);
-    
+
     return config;
   },
   (error) => {
@@ -46,28 +46,32 @@ instance.interceptors.response.use(
   },
   (error) => {
     console.error('❌ Response interceptor error:', error);
-    
+
     // Xử lý lỗi CORS
     if (error.code === 'ERR_NETWORK') {
       console.error('🚫 Network Error - Possible CORS issue or server down');
       console.error('Request URL:', error.config?.url);
       console.error('Request Method:', error.config?.method);
     }
-    
+
     // Xử lý lỗi 401 - Token hết hạn
     if (error.response?.status === 401) {
       console.warn('🔒 Unauthorized - Token may be expired');
       // Xóa token và redirect to login
       Cookies.remove('token');
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      localStorage.removeItem('admin_activeMenu');
+      localStorage.removeItem('hotel_activeMenu');
+      localStorage.removeItem('hotel_selectedHotelId');
+      localStorage.removeItem('hotel_selectedHotelName');
+      window.location.href = '/';
     }
-    
+
     // Xử lý lỗi 403 - CORS
     if (error.response?.status === 403) {
       console.error('🚫 Forbidden - CORS or permission issue');
     }
-    
+
     return Promise.reject(error);
   }
 );

@@ -18,7 +18,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, stats }) => {
   const { notifications, fetchHotelNotifications, markHotelAsRead } = useNotifications();
 
   // Lấy hotel ID hiện tại
-  const currentHotelId = localStorage.getItem("selectedHotelId");
+  const currentHotelId = localStorage.getItem("hotel_selectedHotelId");
 
   // Fetch notifications khi component mount
   useEffect(() => {

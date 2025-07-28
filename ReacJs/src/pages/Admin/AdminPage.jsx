@@ -36,7 +36,11 @@ import UserManagement from './userManagement';
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
 const AdminDashboard = () => {
-    const [activeMenu, setActiveMenu] = useState('overview');
+    const [activeMenu, setActiveMenu] = useState(() => {
+        const savedMenu = localStorage.getItem('admin_activeMenu');
+        console.log('👑 Loading saved admin menu:', savedMenu);
+        return savedMenu || 'overview';
+    });
     const [registrations, setRegistrations] = useState([]);
     const [selectedRegistration, setSelectedRegistration] = useState(null);
     const [showRegistrationModal, setShowRegistrationModal] = useState(false);
@@ -159,6 +163,24 @@ const AdminDashboard = () => {
         };
         return viewType[type] || "Không xác định";
     }
+    useEffect(() => {
+        console.log('👑 Admin Dashboard mounted');
+        
+        // ✅ Optional: Clear hotel-specific localStorage để tránh conflict
+        localStorage.removeItem('hotel_activeMenu');
+        localStorage.removeItem('hotel_selectedHotelId');
+        localStorage.removeItem('hotel_selectedHotelName');
+        
+        return () => {
+            console.log('👑 Admin Dashboard cleanup');
+        };
+    }, []);
+
+    const handleAdminMenuChange = (menuId) => {
+        console.log('👑 Admin switching to menu:', menuId);
+        setActiveMenu(menuId);
+        localStorage.setItem('admin_activeMenu', menuId); // ✅ Thêm prefix
+    };
 
     // Fetch dashboard stats
     const fetchStats = async () => {
@@ -965,9 +987,9 @@ const AdminDashboard = () => {
             case 'registrations':
                 return renderRegistrations();
             case 'hotels':
-                return <HotelManagement />;
+                return <HotelManagement key="admin-hotel-management" />;
             case 'users':
-                return <UserManagement />;
+                return <UserManagement key="admin-user-management" />;
             case 'analytics':
                 return (
                     <div className="text-center py-12">
@@ -1013,7 +1035,7 @@ const AdminDashboard = () => {
                         return (
                             <button
                                 key={item.id}
-                                onClick={() => setActiveMenu(item.id)}
+                                onClick={() => handleAdminMenuChange(item.id)}
                                 className={`w-full flex items-center px-3 py-2 mb-1 text-left rounded-lg transition-colors ${activeMenu === item.id
                                     ? 'bg-blue-50 text-blue-700 border border-blue-200'
                                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'

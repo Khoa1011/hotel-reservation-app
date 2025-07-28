@@ -19,12 +19,94 @@ import {
   Calendar,
   Loader,
   X,
-  MoreHorizontal
+  MoreHorizontal,
+  User,
+  Home
 } from 'lucide-react';
 import axios from '../../utils/axiosConfig';
 import { toast } from 'react-toastify';
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
+
+// Hàm xử lý URL hình ảnh được cải thiện
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return null;
+
+  // Nếu đã là URL đầy đủ (http/https)
+  if (imagePath.startsWith('http')) return imagePath;
+
+  // Nếu là path từ mobile app, trả về null để dùng fallback
+  if (imagePath.includes('/data/user/') || 
+      imagePath.includes('/cache/') || 
+      imagePath.includes('com.example.')) {
+    return null;
+  }
+
+  // Nếu là path server uploads
+  if (imagePath.startsWith('/uploads/')) {
+    return `${baseUrl}${imagePath}`;
+  }
+
+  // Path khác, thêm baseUrl
+  const cleanPath = imagePath.replace(/^\/+/, '');
+  return `${baseUrl}/${cleanPath}`;
+};
+
+// Component hiển thị hình ảnh với fallback
+const ImageWithFallback = ({ src, alt, className, fallback = null, showIcon = false, iconType = 'hotel' }) => {
+  const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
+  const imageUrl = getImageUrl(src);
+
+  // Nếu không có URL hợp lệ hoặc có lỗi, hiển thị fallback
+  if (!imageUrl || imageError) {
+    return (
+      <div className={`${className} bg-gray-100 flex items-center justify-center`}>
+        {showIcon ? (
+          iconType === 'user' ? (
+            <User className="w-6 h-6 text-gray-400" />
+          ) : (
+            <Home className="w-6 h-6 text-gray-400" />
+          )
+        ) : fallback ? (
+          <img
+            src={fallback}
+            alt={alt}
+            className={className}
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          iconType === 'user' ? (
+            <User className="w-6 h-6 text-gray-400" />
+          ) : (
+            <Home className="w-6 h-6 text-gray-400" />
+          )
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      {imageLoading && (
+        <div className={`${className} bg-gray-100 flex items-center justify-center absolute inset-0`}>
+          <Loader className="w-4 h-4 text-gray-400 animate-spin" />
+        </div>
+      )}
+      <img
+        src={imageUrl}
+        alt={alt}
+        className={className}
+        onLoad={() => setImageLoading(false)}
+        onError={() => {
+          setImageError(true);
+          setImageLoading(false);
+        }}
+        style={{ display: imageLoading ? 'none' : 'block' }}
+      />
+    </div>
+  );
+};
 
 const HotelManagement = () => {
   const [hotels, setHotels] = useState([]);
@@ -32,14 +114,14 @@ const HotelManagement = () => {
   const [selectedHotel, setSelectedHotel] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showActionsDropdown, setShowActionsDropdown] = useState(null);
-  
+
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 15,
     total: 0,
     totalRecords: 0
   });
-  
+
   const [filters, setFilters] = useState({
     search: '',
     status: '',
@@ -59,9 +141,9 @@ const HotelManagement = () => {
         limit: pagination.pageSize,
         ...filters
       };
-      
+
       const response = await axios.get(`${baseUrl}/api/hotels-management/admin/hotels`, { params });
-      
+
       if (response.data.success) {
         setHotels(response.data.data);
         setPagination(prev => ({
@@ -81,7 +163,7 @@ const HotelManagement = () => {
   const fetchHotelDetail = async (hotelId) => {
     try {
       const response = await axios.get(`${baseUrl}/api/hotels-management/admin/hotels/${hotelId}`);
-      
+
       if (response.data.success) {
         setSelectedHotel(response.data.data);
         setShowDetailModal(true);
@@ -101,7 +183,7 @@ const HotelManagement = () => {
       const response = await axios.put(`${baseUrl}/api/hotels-management/admin/hotels/${hotelId}/toggle-status`, {
         reason: currentStatus === 'hoatDong' ? 'Vi phạm quy định' : 'Đã khắc phục'
       });
-      
+
       if (response.data.success) {
         toast.success(response.data.message);
         fetchHotels();
@@ -119,7 +201,7 @@ const HotelManagement = () => {
 
     try {
       const response = await axios.delete(`${baseUrl}/api/hotels-management/admin/hotels/${hotelId}`);
-      
+
       if (response.data.success) {
         toast.success('Đã xóa khách sạn thành công');
         fetchHotels();
@@ -169,7 +251,18 @@ const HotelManagement = () => {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Chưa cập nhật';
-    return new Date(dateString).toLocaleDateString('vi-VN');
+    
+    // Xử lý định dạng ngày khác nhau
+    let date;
+    if (dateString.includes('/')) {
+      // Định dạng DD/MM/YYYY từ Flutter
+      const [day, month, year] = dateString.split('/');
+      date = new Date(year, month - 1, day);
+    } else {
+      date = new Date(dateString);
+    }
+    
+    return date.toLocaleDateString('vi-VN');
   };
 
   const handleSearch = (value) => {
@@ -197,17 +290,16 @@ const HotelManagement = () => {
           <Eye className="w-4 h-4 mr-2" />
           Xem chi tiết
         </button>
-        
+
         <hr className="my-1" />
-        
+
         <button
           onClick={() => {
             toggleHotelStatus(hotel._id, hotel.trangThai);
             setShowActionsDropdown(null);
           }}
-          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center ${
-            hotel.trangThai === 'hoatDong' ? 'text-red-600' : 'text-green-600'
-          }`}
+          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center ${hotel.trangThai === 'hoatDong' ? 'text-red-600' : 'text-green-600'
+            }`}
         >
           {hotel.trangThai === 'hoatDong' ? (
             <>
@@ -221,7 +313,7 @@ const HotelManagement = () => {
             </>
           )}
         </button>
-        
+
         <button
           onClick={() => {
             deleteHotel(hotel._id);
@@ -244,9 +336,21 @@ const HotelManagement = () => {
         <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-800">
-                Chi tiết khách sạn - {selectedHotel.tenKhachSan || 'Chưa có tên'}
-              </h2>
+              <div className="flex items-center space-x-4">
+                <ImageWithFallback
+                  src={selectedHotel.hinhAnhDayDu?.[0] || selectedHotel.hinhAnh}
+                  alt={selectedHotel.tenKhachSan}
+                  className="w-16 h-16 rounded-lg object-cover"
+                  showIcon={true}
+                  iconType="hotel"
+                />
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-800">
+                    {selectedHotel.tenKhachSan || 'Chưa có tên'}
+                  </h2>
+                  <p className="text-sm text-gray-500">{formatHotelType(selectedHotel.loaiKhachSan)}</p>
+                </div>
+              </div>
               <button
                 onClick={() => setShowDetailModal(false)}
                 className="text-gray-400 hover:text-gray-600"
@@ -295,15 +399,14 @@ const HotelManagement = () => {
                   </div>
                   <div className="flex items-center">
                     <span className="font-medium mr-2 ml-6">Trạng thái:</span>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      selectedHotel.trangThai === 'hoatDong' ? 'bg-green-100 text-green-800' :
-                      selectedHotel.trangThai === 'biCam' ? 'bg-red-100 text-red-800' :
-                      selectedHotel.trangThai === 'ngungKinhDoanh' ? 'bg-gray-100 text-gray-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
+                    <span className={`px-2 py-1 rounded-full text-xs ${selectedHotel.trangThai === 'hoatDong' ? 'bg-green-100 text-green-800' :
+                        selectedHotel.trangThai === 'biCam' ? 'bg-red-100 text-red-800' :
+                          selectedHotel.trangThai === 'ngungKinhDoanh' ? 'bg-gray-100 text-gray-800' :
+                            'bg-yellow-100 text-yellow-800'
+                      }`}>
                       {selectedHotel.trangThai === 'hoatDong' ? 'Hoạt động' :
-                       selectedHotel.trangThai === 'biCam' ? 'Bị cấm' :
-                       selectedHotel.trangThai === 'ngungKinhDoanh' ? 'Ngừng kinh doanh' : 'Tạm nghỉ'}
+                        selectedHotel.trangThai === 'biCam' ? 'Bị cấm' :
+                          selectedHotel.trangThai === 'ngungKinhDoanh' ? 'Ngừng kinh doanh' : 'Tạm nghỉ'}
                     </span>
                   </div>
                 </div>
@@ -313,14 +416,21 @@ const HotelManagement = () => {
                 <h3 className="font-semibold text-gray-800 mb-3">Thông tin chủ sở hữu</h3>
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center">
-                    <Users className="w-4 h-4 text-gray-400 mr-2" />
-                    <span className="font-medium mr-2">Họ tên:</span>
-                    <span>{selectedHotel.chuKhachSan?.tenNguoiDung || 'Chưa cập nhật'}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Mail className="w-4 h-4 text-gray-400 mr-2" />
-                    <span className="font-medium mr-2">Email:</span>
-                    <span>{selectedHotel.chuKhachSan?.email || 'Chưa cập nhật'}</span>
+                    <ImageWithFallback
+                      src={selectedHotel.chuKhachSan?.hinhDaiDien}
+                      alt={selectedHotel.chuKhachSan?.tenNguoiDung}
+                      className="w-10 h-10 rounded-full object-cover mr-3"
+                      showIcon={true}
+                      iconType="user"
+                    />
+                    <div>
+                      <div className="font-medium text-gray-900">
+                        {selectedHotel.chuKhachSan?.tenNguoiDung || 'Chưa cập nhật'}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {selectedHotel.chuKhachSan?.email || 'Chưa cập nhật'}
+                      </div>
+                    </div>
                   </div>
                   <div className="flex items-center">
                     <Phone className="w-4 h-4 text-gray-400 mr-2" />
@@ -338,11 +448,10 @@ const HotelManagement = () => {
                   </div>
                   <div className="flex items-center">
                     <span className="font-medium mr-2 ml-6">Trạng thái:</span>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      selectedHotel.chuKhachSan?.trangThaiTaiKhoan === 'hoatDong' 
-                        ? 'bg-green-100 text-green-800' 
+                    <span className={`px-2 py-1 rounded-full text-xs ${selectedHotel.chuKhachSan?.trangThaiTaiKhoan === 'hoatDong'
+                        ? 'bg-green-100 text-green-800'
                         : 'bg-red-100 text-red-800'
-                    }`}>
+                      }`}>
                       {selectedHotel.chuKhachSan?.trangThaiTaiKhoan === 'hoatDong' ? 'Hoạt động' : 'Bị cấm'}
                     </span>
                   </div>
@@ -366,7 +475,7 @@ const HotelManagement = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <div className="flex items-center">
                       <Calendar className="w-5 h-5 text-blue-600 mr-2" />
@@ -378,7 +487,7 @@ const HotelManagement = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="bg-purple-50 p-4 rounded-lg">
                     <div className="flex items-center">
                       <DollarSign className="w-5 h-5 text-purple-600 mr-2" />
@@ -428,11 +537,13 @@ const HotelManagement = () => {
                 <h3 className="font-semibold text-gray-800 mb-3">Hình ảnh khách sạn</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {selectedHotel.hinhAnhDayDu.slice(0, 8).map((image, index) => (
-                    <img
+                    <ImageWithFallback
                       key={index}
-                      src={typeof image === 'string' ? image : image.url || image.src || '/default-hotel.jpg'}
+                      src={image}
                       alt={`Hotel ${index + 1}`}
                       className="w-full h-20 object-cover rounded-lg border border-gray-200"
+                      showIcon={true}
+                      iconType="hotel"
                     />
                   ))}
                 </div>
@@ -471,7 +582,7 @@ const HotelManagement = () => {
                 onChange={(e) => handleSearch(e.target.value)}
               />
             </div>
-            
+
             <select
               value={filters.status}
               onChange={(e) => handleFilterChange('status', e.target.value)}
@@ -483,7 +594,7 @@ const HotelManagement = () => {
               <option value="ngungKinhDoanh">Ngừng kinh doanh</option>
             </select>
           </div>
-          
+
           <div className="flex items-center space-x-3">
             <select
               value={filters.sortBy}
@@ -494,7 +605,7 @@ const HotelManagement = () => {
               <option value="tongDoanhThu">Doanh thu</option>
               <option value="soLuongDonDat">Số đơn đặt</option>
             </select>
-            
+
             <select
               value={filters.sortOrder}
               onChange={(e) => handleFilterChange('sortOrder', e.target.value)}
@@ -503,7 +614,7 @@ const HotelManagement = () => {
               <option value="asc">Tăng dần</option>
               <option value="desc">Giảm dần</option>
             </select>
-            
+
             <button
               onClick={fetchHotels}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
@@ -530,7 +641,7 @@ const HotelManagement = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-80">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-64">
                     Khách sạn
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-64">
@@ -553,10 +664,12 @@ const HotelManagement = () => {
                     {/* Hotel Info */}
                     <td className="px-4 py-4">
                       <div className="flex items-center">
-                        <img
-                          src={hotel.hinhAnhDayDu?.[0] || hotel.hinhAnh || '/default-hotel.jpg'}
+                        <ImageWithFallback
+                          src={hotel.hinhAnhDayDu?.[0] || hotel.hinhAnh}
                           alt={hotel.tenKhachSan}
                           className="w-12 h-12 rounded-lg object-cover mr-3 flex-shrink-0"
+                          showIcon={true}
+                          iconType="hotel"
                         />
                         <div className="min-w-0 flex-1">
                           <div className="font-medium text-gray-900 truncate">
@@ -576,10 +689,12 @@ const HotelManagement = () => {
                     {/* Owner Info */}
                     <td className="px-4 py-4">
                       <div className="flex items-center">
-                        <img
-                          src={hotel.chuKhachSan?.hinhDaiDien || '/default-avatar.jpg'}
+                        <ImageWithFallback
+                          src={hotel.chuKhachSan?.hinhDaiDien}
                           alt="Owner"
                           className="w-8 h-8 rounded-full object-cover mr-2 flex-shrink-0"
+                          showIcon={true}
+                          iconType="user"
                         />
                         <div className="min-w-0 flex-1">
                           <div className="text-sm font-medium text-gray-900 truncate">
@@ -610,22 +725,20 @@ const HotelManagement = () => {
                     {/* Status */}
                     <td className="px-4 py-4">
                       <div className="flex flex-col gap-1">
-                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                          hotel.trangThai === 'hoatDong' ? 'bg-green-100 text-green-800' :
-                          hotel.trangThai === 'biCam' ? 'bg-red-100 text-red-800' :
-                          hotel.trangThai === 'ngungKinhDoanh' ? 'bg-gray-100 text-gray-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
+                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${hotel.trangThai === 'hoatDong' ? 'bg-green-100 text-green-800' :
+                            hotel.trangThai === 'biCam' ? 'bg-red-100 text-red-800' :
+                              hotel.trangThai === 'ngungKinhDoanh' ? 'bg-gray-100 text-gray-800' :
+                                'bg-yellow-100 text-yellow-800'
+                          }`}>
                           {hotel.trangThai === 'hoatDong' ? 'Hoạt động' :
-                           hotel.trangThai === 'biCam' ? 'Bị cấm' :
-                           hotel.trangThai === 'ngungKinhDoanh' ? 'Ngừng KD' : 'Tạm nghỉ'}
+                            hotel.trangThai === 'biCam' ? 'Bị cấm' :
+                              hotel.trangThai === 'ngungKinhDoanh' ? 'Ngừng KD' : 'Tạm nghỉ'}
                         </span>
-                        
-                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                          hotel.chuKhachSan?.trangThaiTaiKhoan === 'hoatDong' 
-                            ? 'bg-blue-100 text-blue-800' 
+
+                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${hotel.chuKhachSan?.trangThaiTaiKhoan === 'hoatDong'
+                            ? 'bg-blue-100 text-blue-800'
                             : 'bg-red-100 text-red-800'
-                        }`}>
+                          }`}>
                           Chủ: {hotel.chuKhachSan?.trangThaiTaiKhoan === 'hoatDong' ? 'OK' : 'Cấm'}
                         </span>
                       </div>
@@ -690,8 +803,8 @@ const HotelManagement = () => {
 
       {/* Close dropdown when clicking outside */}
       {showActionsDropdown && (
-        <div 
-          className="fixed inset-0 z-5" 
+        <div
+          className="fixed inset-0 z-5"
           onClick={() => setShowActionsDropdown(null)}
         />
       )}
@@ -702,4 +815,4 @@ const HotelManagement = () => {
   );
 };
 
-export default HotelManagement;
+export default HotelManagement; 

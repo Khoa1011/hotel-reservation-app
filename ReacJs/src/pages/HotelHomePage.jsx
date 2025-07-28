@@ -38,8 +38,8 @@ import HotelSelector from '../components/HotelSelector';
 const HotelManagement = () => {
     const [activeMenu, setActiveMenu] = useState(() => {
         // ✅ Load từ localStorage hoặc mặc định 'bookings'
-        const savedMenu = localStorage.getItem('activeMenu');
-        console.log('🏨 Loading saved menu:', savedMenu);
+        const savedMenu = localStorage.getItem('hotel_activeMenu');
+        console.log('🏨 Loading saved hotel menu:', savedMenu);
         return savedMenu || 'bookings';
     });
     const [bookings, setBookings] = useState([]);
@@ -53,12 +53,12 @@ const HotelManagement = () => {
 
     // State cho hotel selector - ✅ Initialize từ localStorage
     const [selectedHotelId, setSelectedHotelId] = useState(() => {
-        const saved = localStorage.getItem("selectedHotelId") || '';
+        const saved = localStorage.getItem("hotel_selectedHotelId") || '';
         console.log('🏨 HotelManagement: Initializing selectedHotelId with:', saved);
         return saved;
     });
     const [selectedHotelName, setSelectedHotelName] = useState(() => {
-        const saved = localStorage.getItem("selectedHotelName") || '';
+        const saved = localStorage.getItem("hotel_selectedHotelName") || '';
         console.log('🏨 HotelManagement: Initializing selectedHotelName with:', saved);
         return saved;
     });
@@ -75,9 +75,11 @@ const HotelManagement = () => {
     const handleHotelChange = (hotelId, hotelName) => {
         setSelectedHotelId(hotelId);
         setSelectedHotelName(hotelName);
+        localStorage.setItem("hotel_selectedHotelId", hotelId);
+        localStorage.setItem("hotel_selectedHotelName", hotelName);
 
         // Có thể trigger refresh data cho menu hiện tại
-        console.log('Selected hotel changed:', hotelId, hotelName);
+        console.log('Hotel selection changed:', hotelId, hotelName);
 
         // Nếu đang ở tab bookings, có thể filter lại
         if (activeMenu === 'bookings') {
@@ -134,6 +136,12 @@ const HotelManagement = () => {
         return moment(dateString)
             .tz('Asia/Ho_Chi_Minh')
             .format('HH:mm DD/MM/YYYY');
+    };
+
+    const handleMenuChange = (menuId) => {
+        console.log('🏨 Switching to menu:', menuId);
+        setActiveMenu(menuId);
+        localStorage.setItem('hotel_activeMenu', menuId); // ✅ Thêm prefix
     };
 
     const fetchHotels = async () => {
@@ -287,9 +295,9 @@ const HotelManagement = () => {
                                 key={item.id}
                                 onClick={() => {
                                     console.log('🏨 Switching to menu:', item.id);
-                                    setActiveMenu(item.id);
+                                    handleMenuChange(item.id);
 
-                                    localStorage.setItem('activeMenu', item.id);
+                                    localStorage.setItem('hotel_activeMenu', item.id);
                                 }}
                                 className={`w-full flex items-center px-6 py-3 text-left hover:bg-blue-50 hover:text-blue-600 transition-colors ${activeMenu === item.id ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : 'text-gray-700'
                                     }`}

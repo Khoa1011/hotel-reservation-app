@@ -233,6 +233,26 @@ const HotelManagement = () => {
     return types[type] || type;
   };
 
+  const statusHotelMapping = (status) => {
+    const statusText = {
+      'hoatDong': 'Khách sạn',
+      'biCam': 'Bị cấm',
+      'ngungKinhDoanh': 'Ngừng kinh doanh',
+      'tamNghi': 'Tạm nghỉ',
+    };
+    return statusText[status] || status;
+  };
+
+  const getHotelStatusColor = (status) => {
+    const statusColors = {
+      'hoatDong': 'bg-green-100 text-green-800',
+      'biCam': 'bg-red-100 text-red-800', 
+      'ngungKinhDoanh': 'bg-gray-100 text-gray-800',
+      'tamNghi': 'bg-yellow-100 text-yellow-800',
+    };
+    return statusColors[status] || 'bg-gray-100 text-gray-800';
+  };
+
   const formatAddress = (address) => {
     if (!address) return 'Chưa cập nhật';
     if (typeof address === 'string') return address;
@@ -298,7 +318,7 @@ const HotelManagement = () => {
             toggleHotelStatus(hotel._id, hotel.trangThai);
             setShowActionsDropdown(null);
           }}
-          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center ${hotel.trangThai === 'hoatDong' ? 'text-red-600' : 'text-green-600'
+          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center ${getHotelStatusColor(hotel.trangThai)
             }`}
         >
           {hotel.trangThai === 'hoatDong' ? (
@@ -399,10 +419,7 @@ const HotelManagement = () => {
                   </div>
                   <div className="flex items-center">
                     <span className="font-medium mr-2 ml-6">Trạng thái:</span>
-                    <span className={`px-2 py-1 rounded-full text-xs ${selectedHotel.trangThai === 'hoatDong' ? 'bg-green-100 text-green-800' :
-                        selectedHotel.trangThai === 'biCam' ? 'bg-red-100 text-red-800' :
-                          selectedHotel.trangThai === 'ngungKinhDoanh' ? 'bg-gray-100 text-gray-800' :
-                            'bg-yellow-100 text-yellow-800'
+                    <span className={`px-2 py-1 rounded-full text-xs ${getHotelStatusColor(selectedHotel.trangThai)
                       }`}>
                       {selectedHotel.trangThai === 'hoatDong' ? 'Hoạt động' :
                         selectedHotel.trangThai === 'biCam' ? 'Bị cấm' :
@@ -591,6 +608,7 @@ const HotelManagement = () => {
               <option value="">Tất cả trạng thái</option>
               <option value="hoatDong">Hoạt động</option>
               <option value="biCam">Bị cấm</option>
+              <option value="tamNghi">Tạm nghỉ</option>
               <option value="ngungKinhDoanh">Ngừng kinh doanh</option>
             </select>
           </div>

@@ -341,8 +341,6 @@ const AdminDashboard = () => {
         { id: 'registrations', label: 'Đăng Ký Khách Sạn', icon: Building2 },
         { id: 'hotels', label: 'Quản Lý Khách Sạn', icon: Globe },
         { id: 'users', label: 'Người Dùng', icon: Users },
-        { id: 'analytics', label: 'Phân Tích', icon: Activity },
-        { id: 'settings', label: 'Cài Đặt', icon: Settings }
     ];
 
     const renderOverview = () => (
@@ -421,7 +419,9 @@ const AdminDashboard = () => {
                         </div>
                     </button>
 
-                    <button className="flex items-center p-4 bg-white hover:bg-gray-50 rounded-lg border border-gray-200 transition-colors">
+                    <button 
+                    onClick={() => setActiveMenu()}
+                    className="flex items-center p-4 bg-white hover:bg-gray-50 rounded-lg border border-gray-200 transition-colors">
                         <Users className="w-5 h-5 text-blue-600 mr-3" />
                         <div className="text-left">
                             <p className="font-medium text-gray-800">Quản Lý User</p>
@@ -990,22 +990,6 @@ const AdminDashboard = () => {
                 return <HotelManagement key="admin-hotel-management" />;
             case 'users':
                 return <UserManagement key="admin-user-management" />;
-            case 'analytics':
-                return (
-                    <div className="text-center py-12">
-                        <Activity className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-base font-medium text-gray-700">Phân tích & Báo cáo</h3>
-                        <p className="text-sm text-gray-500">Tính năng đang phát triển...</p>
-                    </div>
-                );
-            case 'settings':
-                return (
-                    <div className="text-center py-12">
-                        <Settings className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-base font-medium text-gray-700">Cài đặt hệ thống</h3>
-                        <p className="text-sm text-gray-500">Tính năng đang phát triển...</p>
-                    </div>
-                );
             default:
                 return renderOverview();
         }

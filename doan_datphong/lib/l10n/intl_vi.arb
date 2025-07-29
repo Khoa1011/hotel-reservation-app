@@ -313,6 +313,7 @@
   "@errorConnectionTimeout": {
     "description": "Connection timeout error message"
   },
+  "banedAccount": "Tài khoản của bạn đã bị cấm đăng nhập, hãy liên lạc với admin để có thể được hỗ trợ!",
   "connectionTimeoutAgain": "Vui lòng kiểm tra mạng và thử lại",
   "errorServerRefused": "Server từ chối kết nối. Server có thể đã tắt!",
   "@errorServerRefused": {

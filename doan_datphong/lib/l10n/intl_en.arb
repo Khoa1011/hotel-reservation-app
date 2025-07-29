@@ -313,6 +313,7 @@
 
   "passwordIncorrect": "Password is incorrect. Please try again!",
   "emailNotExist": "Email does not exist. If you do not have one, please register an account!",
+  "banedAccount": "Your account has been locked, please contact the administrator for assistance!",
   "connectionTimeoutAgain": "Please check your network and try again.",
   "errorServerRefused": "Server refused connection. Server may be down!",
   "@errorServerRefused": {

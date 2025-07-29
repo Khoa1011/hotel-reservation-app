@@ -759,6 +759,16 @@ class S {
     );
   }
 
+  /// `Your account has been locked, please contact the administrator for assistance!`
+  String get banedAccount {
+    return Intl.message(
+      'Your account has been locked, please contact the administrator for assistance!',
+      name: 'banedAccount',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Please check your network and try again.`
   String get connectionTimeoutAgain {
     return Intl.message(

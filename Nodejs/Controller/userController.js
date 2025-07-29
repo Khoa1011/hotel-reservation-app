@@ -97,6 +97,13 @@ userRouter.post("/login", async (req, res) => {
             });
         }
 
+        if(user.trangThaiTaiKhoan === 'cam'){
+            return res.status(403).json({
+                msgBody: "Tài khoản của bạn đã bị cấm đăng nhập, hãy liên lạc với admin để có thêm thông tin chi tiết",
+                msgError: true
+            });
+        }
+
         // Tạo JWT Token
         const token = signToken(user);
 

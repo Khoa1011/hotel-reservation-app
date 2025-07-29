@@ -10,4 +10,5 @@ class ErrorCodes {
   static const String emailNotExists = "NOT_EXIST_EMAILS";
   static const String invalidEmail = "ERROR_INVALID_EMAIL";
   static const String weakPassword = "ERROR_WEAK_PASSWORD";
+  static const String banedAccount = "BANED_ACCOUNT";
 }

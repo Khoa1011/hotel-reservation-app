@@ -35,6 +35,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "apply": MessageLookupByLibrary.simpleMessage("Áp dụng"),
     "available": MessageLookupByLibrary.simpleMessage("Có sẵn"),
     "back": MessageLookupByLibrary.simpleMessage("Quay lại"),
+    "banedAccount": MessageLookupByLibrary.simpleMessage(
+      "Tài khoản của bạn đã bị cấm đăng nhập, hãy liên lạc với admin để có thể được hỗ trợ!",
+    ),
     "bed": MessageLookupByLibrary.simpleMessage("Giường"),
     "bedTypeUnknown": MessageLookupByLibrary.simpleMessage(
       "Không rõ loại giường",

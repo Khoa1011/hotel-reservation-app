@@ -31,9 +31,8 @@ class LoginRepository{
 
                 ErrorCodes.connectionTimeout, Duration(seconds: 10));
           });
-
+      final data = jsonDecode(respone.body);
       if(respone.statusCode == 200){
-        final data = jsonDecode(respone.body);
         String token = data["token"]; //Lấy token từ sever
 
         NguoiDung user = NguoiDung.fromJson(data["user"]);
@@ -54,6 +53,8 @@ class LoginRepository{
       }else if (respone.statusCode == 401) {
         print("Lỗi 401");
         return ApiResponse(success: false, message: ErrorCodes.passwordIncorrect);
+      }else if (respone.statusCode == 403){
+        return ApiResponse(success: false, message: ErrorCodes.banedAccount);
       }
       else{
         print("Lỗi server");

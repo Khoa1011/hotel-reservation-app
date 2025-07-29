@@ -77,7 +77,10 @@ router.post("/upload",
 
 router.get("/getHotelList", async (req, res) => {
     try {
+        console.log('🏨 [GET HOTEL LIST] Fetching hotels...');
+
         const hotels = await Hotel.find();
+        
         if (!hotels || hotels.length === 0) {
             return res.status(404).json({
                 message: { msgBody: "Empty list!", msgError: true }
@@ -87,57 +90,79 @@ router.get("/getHotelList", async (req, res) => {
         // Enhance mỗi khách sạn với giá theo đêm
         const enhancedHotels = await Promise.all(hotels.map(async (hotel) => {
             try {
-                // Lấy loại phòng có giá thấp nhất của khách sạn
-                const cheapestRoomType = await RoomType.findOne({
-                    maKhachSan: hotel._id
-                }).sort({ giaCa: 1 });
+                if (hotel.trangThai === 'hoatDong') {
+                    // Lấy loại phòng có giá thấp nhất của khách sạn
+                    const cheapestRoomType = await RoomType.findOne({
+                        maKhachSan: hotel._id
+                    }).sort({ giaCa: 1 });
 
-                // Tính giá theo đêm (starting from price)
-                let giaTheoNgay = hotel.giaCa || 0;
+                    // Tính giá theo đêm (starting from price)
+                    let giaTheoNgay = hotel.giaCa || 0;
 
-                if (cheapestRoomType) {
-                    // Sử dụng giá của room type rẻ nhất
-                    giaTheoNgay = cheapestRoomType.giaCa;
+                    if (cheapestRoomType) {
+                        // Sử dụng giá của room type rẻ nhất
+                        giaTheoNgay = cheapestRoomType.giaCa;
+                    }
+
+                    // Xử lý hình ảnh - ưu tiên hinhAnhDayDu
+                    let hinhAnh = hotel.hinhAnh;
+                    if (hotel.hinhAnhDayDu && hotel.hinhAnhDayDu.length > 0) {
+                        hinhAnh = hotel.hinhAnhDayDu[0];
+                    }
+
+                    // Xử lý thành phố
+                    let thanhPho = 'Chưa cập nhật';
+                    if (hotel.diaChi && typeof hotel.diaChi === 'object') {
+                        thanhPho = hotel.diaChi.tinhThanh || 'Chưa cập nhật';
+                    }
+
+                    return {
+                        _id: hotel._id,
+                        tenKhachSan: hotel.tenKhachSan,
+                        diaChiDayDu: hotel.diaChiDayDu,
+                        thanhPho: thanhPho,
+                        moTa: hotel.moTa,
+                        soSao: hotel.soSao,
+                        soDienThoai: hotel.soDienThoai,
+                        email: hotel.email,
+                        hinhAnh: hinhAnh,
+                        giaTheoNgay: giaTheoNgay
+                    };
                 }
-
-                return {
-                    _id: hotel._id,
-                    tenKhachSan: hotel.tenKhachSan,
-                    diaChiDayDu: hotel.diaChiDayDu,
-                    thanhPho: hotel.diaChi.tinhThanh,
-                    moTa: hotel.moTa,
-                    soSao: hotel.soSao,
-                    soDienThoai: hotel.soDienThoai,
-                    email: hotel.email,
-
-                    hinhAnh: hotel.hinhAnh,
-                    giaTheoNgay: giaTheoNgay
-                };
+                return null; // Trả về null nếu không phải trạng thái hoatDong
             } catch (error) {
                 console.error(`Lỗi xử lý khách sạn ${hotel._id}:`, error);
                 // Fallback về giá gốc nếu có lỗi
-                return {
-                    _id: hotel._id,
-                    tenKhachSan: hotel.tenKhachSan,
-                    diaChi: hotel.diaChiDayDu,
-                    thanhPho: hotel.diaChi.tinhThanh,
-                    moTa: hotel.moTa,
-                    soSao: hotel.soSao,
-                    soDienThoai: hotel.soDienThoai,
-                    email: hotel.email,
-                    giaCa: hotel.giaCa,
-                    hinhAnh: hotel.hinhAnh,
-                    giaTheoNgay: hotel.giaCa || 0
-                };
+                if (hotel.trangThai === 'hoatDong') {
+                    return {
+                        _id: hotel._id,
+                        tenKhachSan: hotel.tenKhachSan,
+                        diaChiDayDu: hotel.diaChiDayDu,
+                        thanhPho: hotel.diaChi?.tinhThanh || 'Chưa cập nhật',
+                        moTa: hotel.moTa,
+                        soSao: hotel.soSao,
+                        soDienThoai: hotel.soDienThoai,
+                        email: hotel.email,
+                        hinhAnh: hotel.hinhAnhDayDu?.[0] || hotel.hinhAnh,
+                        giaTheoNgay: hotel.giaCa || 0
+                    };
+                }
+                return null;
             }
         }));
 
+        // Lọc bỏ các hotel null (không hoạt động hoặc lỗi)
+        const validHotels = enhancedHotels.filter(hotel => hotel !== null);
+
+        console.log(`✅ [GET HOTEL LIST] Successfully processed ${validHotels.length} active hotels`);
+
         return res.status(200).json({
             message: { msgBody: "Successfully!", msgError: false },
-            hotels: enhancedHotels
+            hotels: validHotels
         });
 
     } catch (err) {
+        console.error('❌ [GET HOTEL LIST] Server error:', err);
         return res.status(500).json({
             message: 'Lỗi Server',
             error: err.message
@@ -325,7 +350,7 @@ router.post('/:hotelId/search-roomtypes', async (req, res) => {
                             unit: getUnitText(bookingType),
                             duration: singleRoomPricing.duration,
                             roomCount: requestedRooms,
-                            totalCapacity: effectiveCapacity  * requestedRooms,
+                            totalCapacity: effectiveCapacity * requestedRooms,
                             availableCount: availability.availableRooms,
                             hasImages: roomImages.length > 0,
                             imageCount: roomImages.length,
@@ -693,7 +718,7 @@ router.post('/:hotelId/room-suggestions', async (req, res) => {
                         roomTypeName: roomType.tenLoaiPhong,
                         capacity: effectiveCapacity,
                         suggestedRooms,
-                        totalCapacity:effectiveCapacity * suggestedRooms,
+                        totalCapacity: effectiveCapacity * suggestedRooms,
                         actualRoomCount,
                         pricing,
                         guestDistribution: calculateMultiRoomCapacity({

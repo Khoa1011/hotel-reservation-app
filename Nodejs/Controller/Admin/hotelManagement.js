@@ -16,7 +16,7 @@ hotelManagementRouter.get("/admin/hotels", authorizeRoles("admin"), async (req, 
 
     let query = {};
 
-    // Search and filter logic...
+    // SEARCH LOGIC
     if (search) {
       const users = await User.find({
         $or: [
@@ -34,21 +34,20 @@ hotelManagementRouter.get("/admin/hotels", authorizeRoles("admin"), async (req, 
       ];
     }
 
+    // STATUS FILTER - SỬA LOGIC NÀY
     if (status) {
-      const statusUsers = await User.find({
-        vaiTro: "chuKhachSan",
-        trangThaiTaiKhoan: status
-      }).select("_id");
-
-      const statusUserIds = statusUsers.map(user => user._id);
-      query.maChuKhachSan = { $in: statusUserIds };
+      console.log('🔍 [HOTEL LIST] Filtering by hotel status:', status);
+      // Filter theo trạng thái khách sạn, KHÔNG phải trạng thái user
+      query.trangThai = status;
     }
+
+    console.log('🔍 [HOTEL LIST] Final query:', JSON.stringify(query, null, 2));
 
     const skip = (page - 1) * limit;
     const sort = {};
     sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
-    // SIMPLE HOTEL AGGREGATION
+    // HOTEL AGGREGATION WITH IMPROVED FILTER
     const hotels = await Hotel.aggregate([
       { $match: query },
       {
@@ -106,24 +105,6 @@ hotelManagementRouter.get("/admin/hotels", authorizeRoles("admin"), async (req, 
                 in: "$$booking.thongTinGia.tongDonDat"
               }
             }
-          },
-          // Debug field
-          debugBookings: {
-            $slice: [
-              {
-                $map: {
-                  input: "$allBookings",
-                  as: "booking",
-                  in: {
-                    id: "$$booking._id",
-                    trangThai: "$$booking.trangThai",
-                    trangThaiThanhToan: "$$booking.trangThaiThanhToan",
-                    tongDonDat: "$$booking.thongTinGia.tongDonDat"
-                  }
-                }
-              },
-              3
-            ]
           }
         }
       },
@@ -132,11 +113,12 @@ hotelManagementRouter.get("/admin/hotels", authorizeRoles("admin"), async (req, 
           tenKhachSan: 1,
           diaChi: 1,
           hinhAnh: 1,
+          hinhAnhDayDu: 1, // Thêm field này
           soSao: 1,
           soDienThoai: 1,
           email: 1,
           loaiKhachSan: 1,
-          trangThai: 1,
+          trangThai: 1, // Đảm bảo field này được trả về
           tongDoanhThu: 1,
           doanhThuThang: 1,
           soLuongDonDat: 1,
@@ -144,9 +126,8 @@ hotelManagementRouter.get("/admin/hotels", authorizeRoles("admin"), async (req, 
           "chuKhachSan._id": 1,
           "chuKhachSan.tenNguoiDung": 1,
           "chuKhachSan.email": 1,
-          "chuKhachSan.trangThaiTaiKhoan": 1,
-          // Debug
-          debugBookings: 1
+          "chuKhachSan.hinhDaiDien": 1, // Thêm field này
+          "chuKhachSan.trangThaiTaiKhoan": 1
         }
       },
       { $sort: sort },
@@ -154,22 +135,22 @@ hotelManagementRouter.get("/admin/hotels", authorizeRoles("admin"), async (req, 
       { $limit: parseInt(limit) }
     ]);
 
-    console.log('✅ [HOTEL LIST] Simple aggregation completed. Result count:', hotels.length);
+    console.log('✅ [HOTEL LIST] Aggregation completed. Result count:', hotels.length);
 
     if (hotels.length > 0) {
       const firstHotel = hotels[0];
-      console.log('🏨 [HOTEL LIST] First hotel (SIMPLE):', {
+      console.log('🏨 [HOTEL LIST] First hotel sample:', {
         tenKhachSan: firstHotel.tenKhachSan,
+        trangThai: firstHotel.trangThai, // Log trạng thái
         tongDoanhThu: firstHotel.tongDoanhThu,
-        soLuongDonDat: firstHotel.soLuongDonDat,
-        debugBookings: firstHotel.debugBookings
+        soLuongDonDat: firstHotel.soLuongDonDat
       });
     }
 
-    const hotelsWithBookings = hotels.filter(h => h.soLuongDonDat > 0);
-    console.log('📊 [HOTEL LIST] Hotels with bookings:', hotelsWithBookings.length);
-
+    // Count với cùng query filter
     const total = await Hotel.countDocuments(query);
+
+    console.log('📊 [HOTEL LIST] Total matching hotels:', total);
 
     res.json({
       success: true,
@@ -181,8 +162,9 @@ hotelManagementRouter.get("/admin/hotels", authorizeRoles("admin"), async (req, 
         totalRecords: total
       },
       debug: {
-        hotelsWithBookings: hotelsWithBookings.length,
-        aggregationSuccess: true
+        queryUsed: query,
+        statusFilter: status || 'none',
+        totalFound: total
       }
     });
 
@@ -362,7 +344,7 @@ hotelManagementRouter.put("/admin/hotels/:id/toggle-status", authorizeRoles("adm
 
     console.log('🔄 [TOGGLE HOTEL STATUS] Request for hotel:', hotelId, 'reason:', reason);
 
-    const hotel = await Hotel.findById(hotelId).populate("maChuKhachSan");
+    const hotel = await Hotel.findById(hotelId);
 
     if (!hotel) {
       return res.status(404).json({
@@ -371,17 +353,17 @@ hotelManagementRouter.put("/admin/hotels/:id/toggle-status", authorizeRoles("adm
       });
     }
 
-    const currentStatus = hotel.maChuKhachSan.trangThaiTaiKhoan;
-    const newStatus = currentStatus === "hoatDong" ? "cam" : "hoatDong";
+    const currentStatus = hotel.trangThai;
+    const newStatus = currentStatus === "hoatDong" ? "biCam" : "hoatDong";
 
     console.log('📝 [TOGGLE HOTEL STATUS] Status change:', { currentStatus, newStatus });
 
     // Cập nhật trạng thái chủ khách sạn
-    await User.findByIdAndUpdate(hotel.maChuKhachSan._id, {
-      trangThaiTaiKhoan: newStatus
+    await Hotel.findByIdAndUpdate(hotel._id, {
+      trangThai: newStatus
     });
 
-    const actionText = newStatus === "cam" ? "cấm" : "bỏ cấm";
+    const actionText = newStatus === "biCam" ? "cấm" : "bỏ cấm";
 
     console.log('✅ [TOGGLE HOTEL STATUS] Success:', actionText, 'hotel');
 

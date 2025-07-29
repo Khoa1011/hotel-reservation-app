@@ -35,6 +35,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "apply": MessageLookupByLibrary.simpleMessage("Apply"),
     "available": MessageLookupByLibrary.simpleMessage("Available"),
     "back": MessageLookupByLibrary.simpleMessage("Back"),
+    "banedAccount": MessageLookupByLibrary.simpleMessage(
+      "Your account has been locked, please contact the administrator for assistance!",
+    ),
     "bed": MessageLookupByLibrary.simpleMessage("Bed"),
     "bedTypeUnknown": MessageLookupByLibrary.simpleMessage("Bed type unknown"),
     "bookNow": MessageLookupByLibrary.simpleMessage("Book Now"),

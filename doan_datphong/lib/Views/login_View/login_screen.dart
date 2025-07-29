@@ -152,8 +152,15 @@ class _LoginState extends State<LoginScreen> {
 
           }else if(state.errorMessage == "PASSWORD_IS_INCORRECT"){
             NotificationDialog.showWarning(context,
-                message: S.of(context).passwordIncorrect);
-          }else{
+                message: S.of(context).passwordIncorrect,
+            );
+
+          }else if (state.errorMessage == "BANED_ACCOUNT"){
+            NotificationDialog.showWarning(context,
+              message: S.of(context).banedAccount,
+            );
+          }
+          else{
             NotificationDialog.showWarning(context,
                 message: S.of(context).maintenanceServer);
           }

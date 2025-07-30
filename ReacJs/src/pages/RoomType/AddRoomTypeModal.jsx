@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 
 const AddRoomTypeModal = ({ showModal, onClose, onSubmit }) => {
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
-  const hotelId = localStorage.getItem("selectedHotelId");
+  const hotelId = localStorage.getItem("hotel_selectedHotelId");
   const [roomTypeForm, setRoomTypeForm] = useState({
     tenLoaiPhong: '',
     giaCa: '',

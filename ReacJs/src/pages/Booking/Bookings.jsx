@@ -2507,7 +2507,9 @@ const Booking = ({ hotels = [], bookings, setBookings, expandedBooking, setExpan
         <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-6xl max-h-[90vh] overflow-y-auto relative">
 
-            <AddBooking onClose={() => setShowAddModal(false)} />
+            <AddBooking 
+            selectHotelId={selectedHotelId}
+            onClose={() => setShowAddModal(false)} />
           </div>
         </div>
       )}
@@ -3149,7 +3151,7 @@ const Booking = ({ hotels = [], bookings, setBookings, expandedBooking, setExpan
                               )}
 
                               <p className="text-xs text-gray-400 mt-1">
-                                Gán lúc: {formatDate(assignedRoom.createdAt || room?.thoiGianGiaoPhong)}
+                                Nhận phòng lúc: {formatDate(assignedRoom.createdAt || room?.thoiGianGiaoPhong)}
                               </p>
                             </div>
                           );

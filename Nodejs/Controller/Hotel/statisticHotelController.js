@@ -449,96 +449,97 @@ statisticHotelRouter.get("/hotelowner/reviews", authorizeRoles("chuKhachSan", "n
             });
         }
 
+        // Helper function to safely convert to ObjectId
+        const toObjectId = (id) => {
+            try {
+                return new mongoose.Types.ObjectId(id);
+            } catch (e) {
+                return null;
+            }
+        };
+
+        // Lấy danh sách khách sạn của chủ
         const hotels = await Hotel.find({ maChuKhachSan: user._id });
         const hotelIds = hotels.map(h => h._id);
 
-        let bookingQuery = { maKhachSan: { $in: hotelIds } };
-        if (hotelId && hotelIds.map(id => id.toString()).includes(hotelId)) {
-            bookingQuery.maKhachSan = hotelId;
+        // Tạo query để lấy các booking thuộc khách sạn của chủ
+        let bookingMatch = { maKhachSan: { $in: hotelIds } };
+        
+        if (hotelId) {
+            const hotelObjectId = toObjectId(hotelId);
+            if (hotelObjectId && hotelIds.some(id => id.equals(hotelObjectId))) {
+                bookingMatch.maKhachSan = hotelObjectId;
+            }
         }
 
-        // Pipeline để lấy reviews
-        const pipeline = [
-            {
-                $lookup: {
-                    from: "dondatphongs",
-                    localField: "maDatPhong",
-                    foreignField: "_id",
-                    as: "booking"
-                }
-            },
-            { $unwind: "$booking" },
-            { $match: bookingQuery },
-            {
-                $lookup: {
-                    from: "nguoidungs",
-                    localField: "booking.maNguoiDung",
-                    foreignField: "_id",
-                    as: "customer"
-                }
-            },
-            { $unwind: "$customer" },
-            {
-                $lookup: {
-                    from: "khachsans",
-                    localField: "booking.maKhachSan",
-                    foreignField: "_id",
-                    as: "hotel"
-                }
-            },
-            { $unwind: "$hotel" }
-        ];
+        // Lấy danh sách các booking ID phù hợp
+        const bookingIds = await Booking.find(bookingMatch).distinct('_id');
 
-        // Filter theo số sao nếu có
+        // Tạo query đánh giá
+        let reviewQuery = { maDatPhong: { $in: bookingIds } };
+
+        // Thêm điều kiện số sao nếu có
         if (stars) {
-            pipeline.push({ $match: { soSao: parseInt(stars) } });
+            const starNumber = parseInt(stars);
+            if (!isNaN(starNumber) && starNumber >= 1 && starNumber <= 5) {
+                reviewQuery.soSao = starNumber;
+            }
         }
 
-        // Project final data
-        pipeline.push(
-            {
-                $project: {
-                    reviewId: "$_id",
-                    stars: "$soSao",
-                    comment: "$binhLuan",
-                    reviewDate: "$ngayDanhGia",
-                    customer: {
-                        name: "$customer.tenNguoiDung",
-                        email: "$customer.email"
+        // Lấy danh sách đánh giá với populate
+        const reviews = await Review.find(reviewQuery)
+            .populate({
+                path: 'maDatPhong',
+                populate: [
+                    {
+                        path: 'maNguoiDung',
+                        select: 'tenNguoiDung email',
+                        model: 'nguoiDung'
                     },
-                    booking: {
-                        bookingId: "$booking._id",
-                        checkInDate: "$booking.ngayNhanPhong",
-                        checkOutDate: "$booking.ngayTraPhong",
-                        totalAmount: "$booking.thongTinGia.tongDonDat"
-                    },
-                    hotel: {
-                        name: "$hotel.tenKhachSan"
+                    {
+                        path: 'maKhachSan',
+                        select: 'tenKhachSan',
+                        model: 'khachSan'
                     }
-                }
+                ]
+            })
+            .sort({ ngayDanhGia: -1 })
+            .skip((page - 1) * parseInt(limit))
+            .limit(parseInt(limit));
+
+        // Đếm tổng số đánh giá phù hợp
+        const totalReviews = await Review.countDocuments(reviewQuery);
+
+        // Format dữ liệu trả về
+        const formattedReviews = reviews.map(review => ({
+            reviewId: review._id,
+            stars: review.soSao,
+            comment: review.binhLuan,
+            reviewDate: review.ngayDanhGia,
+            customer: {
+                name: review.maDatPhong?.maNguoiDung?.tenNguoiDung || "Khách ẩn danh",
+                email: review.maDatPhong?.maNguoiDung?.email || ""
             },
-            { $sort: { reviewDate: -1 } },
-            { $skip: (page - 1) * limit },
-            { $limit: parseInt(limit) }
-        );
-
-        const reviews = await Review.aggregate(pipeline);
-
-        // Đếm tổng số reviews
-        const totalPipeline = pipeline.slice(0, -3);
-        totalPipeline.push({ $count: "total" });
-        const totalResult = await Review.aggregate(totalPipeline);
-        const totalReviews = totalResult[0]?.total || 0;
+            booking: {
+                bookingId: review.maDatPhong?._id,
+                checkInDate: review.maDatPhong?.ngayNhanPhong,
+                checkOutDate: review.maDatPhong?.ngayTraPhong,
+                totalAmount: review.maDatPhong?.thongTinGia?.tongDonDat
+            },
+            hotel: {
+                name: review.maDatPhong?.maKhachSan?.tenKhachSan
+            }
+        }));
 
         return res.status(200).json({
             success: true,
             message: "Lấy danh sách đánh giá thành công",
             data: {
-                reviews,
+                reviews: formattedReviews,
                 pagination: {
                     currentPage: parseInt(page),
                     totalPages: Math.ceil(totalReviews / limit),
-                    totalReviews,
+                    totalReviews: totalReviews,
                     limit: parseInt(limit)
                 }
             }
@@ -560,37 +561,49 @@ statisticHotelRouter.get("/hotelowner/reviews/stats", authorizeRoles("chuKhachSa
         const { hotelId } = req.query;
         const user = await User.findById(req.user.id);
 
-        if (!user || user.vaiTro !== "chuKhachSan") {
+        if (!user || !["chuKhachSan", "nhanVien"].includes(user.vaiTro)) {
             return res.status(403).json({
                 success: false,
                 message: "Không có quyền truy cập!"
             });
         }
 
-        const hotels = await Hotel.find({ maChuKhachSan: user._id });
+        // Lấy danh sách khách sạn của chủ/nhân viên
+        const hotels = await Hotel.find({ 
+            maChuKhachSan: user.vaiTro === "chuKhachSan" ? user._id : user.maChuKhachSan 
+        });
+        
         const hotelIds = hotels.map(h => h._id);
-
-        let bookingQuery = { maKhachSan: { $in: hotelIds } };
-        if (hotelId && hotelIds.map(id => id.toString()).includes(hotelId)) {
-            bookingQuery.maKhachSan = hotelId;
+        if (hotelIds.length === 0) {
+            return res.status(200).json({
+                success: true,
+                data: {
+                    stats: [1,2,3,4,5].map(star => ({ stars: star, count: 0, percentage: 0 })),
+                    summary: { totalReviews: 0, averageRating: 0 }
+                }
+            });
         }
 
+        // Tạo query cho booking
+        let bookingMatch = { maKhachSan: { $in: hotelIds } };
+        if (hotelId && hotelIds.some(id => id.equals(hotelId))) {
+            bookingMatch.maKhachSan = hotelId;
+        }
+
+        // Lấy danh sách booking ID phù hợp
+        const bookingIds = await Booking.find(bookingMatch).distinct('_id');
+
+        // Pipeline thống kê
         const pipeline = [
-            {
-                $lookup: {
-                    from: "dondatphongs",
-                    localField: "maDatPhong",
-                    foreignField: "_id",
-                    as: "booking"
-                }
+            { 
+                $match: { 
+                    maDatPhong: { $in: bookingIds } 
+                } 
             },
-            { $unwind: "$booking" },
-            { $match: bookingQuery },
             {
                 $group: {
                     _id: "$soSao",
-                    count: { $sum: 1 },
-                    percentage: { $sum: 1 }
+                    count: { $sum: 1 }
                 }
             },
             { $sort: { _id: 1 } }
@@ -599,27 +612,22 @@ statisticHotelRouter.get("/hotelowner/reviews/stats", authorizeRoles("chuKhachSa
         const stats = await Review.aggregate(pipeline);
         const totalReviews = stats.reduce((sum, stat) => sum + stat.count, 0);
 
-        // Tính phần trăm
-        const formattedStats = stats.map(stat => ({
-            stars: stat._id,
-            count: stat.count,
-            percentage: totalReviews > 0 ? Math.round((stat.count / totalReviews) * 100) : 0
-        }));
-
-        // Đảm bảo có đủ 5 cấp sao
-        const allStars = [1, 2, 3, 4, 5];
-        const completeStats = allStars.map(star => {
-            const existing = formattedStats.find(s => s.stars === star);
-            return existing || { stars: star, count: 0, percentage: 0 };
+        // Tạo dữ liệu thống kê đầy đủ 1-5 sao
+        const completeStats = [1, 2, 3, 4, 5].map(star => {
+            const stat = stats.find(s => s._id === star);
+            return {
+                stars: star,
+                count: stat ? stat.count : 0,
+                percentage: totalReviews > 0 ? Math.round((stat ? stat.count : 0) / totalReviews * 100) : 0
+            };
         });
 
         // Tính điểm trung bình
-        const totalPoints = stats.reduce((sum, stat) => sum + (stat._id * stat.count), 0);
+        const totalPoints = completeStats.reduce((sum, stat) => sum + (stat.stars * stat.count), 0);
         const averageRating = totalReviews > 0 ? (totalPoints / totalReviews).toFixed(1) : 0;
 
         return res.status(200).json({
             success: true,
-            message: "Lấy thống kê đánh giá thành công",
             data: {
                 stats: completeStats,
                 summary: {

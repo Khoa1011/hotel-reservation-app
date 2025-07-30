@@ -51,12 +51,12 @@ const Reviews = ({ selectedHotelId }) => {
             console.log('📥 Reviews response:', response.data);
 
             if (response.data.success) {
-                // ✅ Fix data structure access
+
                 setReviews(response.data.data?.reviews || []);
                 setPagination(response.data.data?.pagination || {
                     currentPage: 1,
                     totalPages: 1,
-                    totalReviews: 0,
+                    totalReviews:0,
                     limit: 20
                 });
             }
@@ -83,7 +83,7 @@ const Reviews = ({ selectedHotelId }) => {
             console.log('📊 Stats response:', response.data);
 
             if (response.data.success) {
-                // ✅ Fix data structure access
+
                 setReviewStats(response.data.data || {
                     stats: [],
                     summary: { totalReviews: 0, averageRating: 0 }
@@ -165,7 +165,7 @@ const Reviews = ({ selectedHotelId }) => {
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-gray-600">
                     <MessageSquare className="h-4 w-4" />
-                    <span>Tổng: {reviewStats.summary?.totalReviews || 0} đánh giá</span>
+                    <span>Tổng: {pagination.totalReviews || 0} đánh giá</span>
                 </div>
             </div>
 

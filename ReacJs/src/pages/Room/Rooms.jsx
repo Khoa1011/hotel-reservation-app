@@ -109,6 +109,8 @@ const RoomManagement = ({ selectedHotelId }) => {
         { withCredentials: true }
       );
 
+      console.log("Phòng của khách sạn:" ,response.data );
+
       if (response.data?.success) {
         const data = response.data.data;
         setHotelData(data.hotel);

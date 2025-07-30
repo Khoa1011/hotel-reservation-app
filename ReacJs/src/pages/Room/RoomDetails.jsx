@@ -92,6 +92,7 @@ const RoomDetailModal = ({ showModal, onClose, roomId }) => {
 
     setLoading(true);
     try {
+      console.log("Mã phòng: ", roomId);
       const response = await axios.get(
         `${baseUrl}/api/room-hotel/hotelowner/room-detail/${roomId}`,
         { withCredentials: true }

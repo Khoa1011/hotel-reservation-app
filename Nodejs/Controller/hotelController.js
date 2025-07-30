@@ -476,7 +476,6 @@ async function getRealRoomCapacity(roomTypeId) {
     }
 }
 
-
 async function validateMultiRoomSearchInput({
     hotelId, bookingType, checkInDate, checkOutDate,
     checkInTime, checkOutTime, guests, requestedRooms, roomTypeId
@@ -1138,7 +1137,6 @@ function calculateEnhancedPricing({
         },
     };
 }
-
 
 // Lấy hình ảnh loại phòng
 router.get('/:hotelId/room-type/:roomTypeId/images', async (req, res) => {

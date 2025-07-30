@@ -313,11 +313,11 @@ roomHotelRouter.put("/hotelowner/update-room/:roomId",
             // ✅ SỬA: Kiểm tra unique số phòng nếu có thay đổi
             if (soPhong && soPhong.trim() !== room.soPhong) {
                 const isAvailable = await Room.isRoomNumberAvailable(
-                    soPhong.trim(), 
-                    hotelId, 
+                    soPhong.trim(),
+                    hotelId,
                     roomId  // Exclude current room
                 );
-                
+
                 if (!isAvailable) {
                     return res.status(400).json({
                         success: false,
@@ -346,17 +346,17 @@ roomHotelRouter.put("/hotelowner/update-room/:roomId",
 
             // ✅ SỬA: Cập nhật thông tin phòng với các field mới
             const updateFields = {};
-            
+
             if (trangThaiPhong !== undefined) updateFields.trangThaiPhong = trangThaiPhong;
-            if (soPhong !== undefined) updateFields.soPhong = soPhong.trim();      
-            if (tang !== undefined) updateFields.tang = parseInt(tang);              
-            if (loaiView !== undefined) updateFields.loaiView = loaiView;              
+            if (soPhong !== undefined) updateFields.soPhong = soPhong.trim();
+            if (tang !== undefined) updateFields.tang = parseInt(tang);
+            if (loaiView !== undefined) updateFields.loaiView = loaiView;
             if (dienTich !== undefined) updateFields.dienTich = parseFloat(dienTich);
             if (moTa !== undefined) updateFields.moTa = moTa.trim();
             if (soLuongGiuong !== undefined) updateFields.soLuongGiuong = parseInt(soLuongGiuong);
             if (soLuongNguoiToiDa !== undefined) updateFields.soLuongNguoiToiDa = parseInt(soLuongNguoiToiDa);
             if (cauHinhGiuong !== undefined) updateFields.cauHinhGiuong = bedConfig;
-            
+
             updateFields.capNhatCuoi = new Date();
 
             const updatedRoom = await Room.findByIdAndUpdate(
@@ -411,7 +411,7 @@ roomHotelRouter.put("/hotelowner/update-room/:roomId",
 
         } catch (error) {
             console.error("Lỗi cập nhật phòng:", error);
-            
+
             // ✅ Handle validation errors
             if (error.message?.includes('đã tồn tại trong khách sạn')) {
                 return res.status(400).json({
@@ -522,27 +522,42 @@ roomHotelRouter.get("/hotelowner/room-detail/:roomId", authorizeRoles("chuKhachS
         let currentBooking = null;
         let guestInfo = null;
 
-        if (room.trangThaiPhong === 'da_dat' || room.trangThaiPhong === 'dang_su_dung') {
+
+
+        if (room.trangThaiPhong === 'da_dat') {
             // Tìm assignment đang active cho phòng này
-            currentAssignment = await mongoose.model('chiTietPhong').findOne({
-                maPhong: roomId,
-                trangThaiGanPhong: { $in: ['da_gan', 'dang_cho_checkin', 'da_checkin', 'dang_su_dung'] }
-            }).populate({
-                path: 'maDatPhong',
-                populate: {
-                    path: 'maNguoiDung',
-                    select: 'tenNguoiDung email soDienThoai'
-                }
-            });
+            currentAssignment = await mongoose.model('chiTietPhong')
+                .findOne({
+                    maPhong: roomId,
+                    trangThaiGanPhong: { $in: ['da_gan', 'dang_cho_checkin', 'da_checkin', 'dang_su_dung'] }
+                })
+                .populate({
+                    path: 'maDatPhong',
+                    match: {
+                        // Chỉ lấy đơn đang hoạt động
+                        trangThai: { $in: ['dang_cho', 'da_xac_nhan', 'da_nhan_phong', 'dang_su_dung'] }
+                    },
+                    populate: {
+                        path: 'maNguoiDung',
+                        select: 'tenNguoiDung email soDienThoai'
+                    }
+                })
+                .sort({ createdAt: -1 })
+                .exec();
+
+            console.log("Mã phòng đã đặt hiện tại: ", roomId);
+            console.log("Đơn hiện tại:", currentAssignment.maDatPhong._id);
+
 
             if (currentAssignment && currentAssignment.maDatPhong) {
                 currentBooking = currentAssignment.maDatPhong;
+
 
                 // ✅ 3. Lấy thông tin khách hàng
                 if (currentBooking.maNguoiDung && currentBooking.maNguoiDung.tenNguoiDung) {
                     // Khách có tài khoản
                     guestInfo = {
-                        customerId: currentBooking.maNguoiDung._id,
+                        customerId: currentBooking.maNguoiDung,
                         customerName: currentBooking.maNguoiDung.tenNguoiDung,
                         email: currentBooking.maNguoiDung.email || "Không có email",
                         phoneNumber: currentBooking.maNguoiDung.soDienThoai || currentBooking.soDienThoai || "Không có SĐT",
@@ -605,7 +620,7 @@ roomHotelRouter.get("/hotelowner/room-detail/:roomId", authorizeRoles("chuKhachS
             }
 
             // Thông tin giá
-            const serviceCharges = (currentAssignment?.dichVuSuDung || []).reduce((total, service) => 
+            const serviceCharges = (currentAssignment?.dichVuSuDung || []).reduce((total, service) =>
                 total + (service.thanhTien || 0), 0
             );
 
@@ -626,15 +641,15 @@ roomHotelRouter.get("/hotelowner/room-detail/:roomId", authorizeRoles("chuKhachS
         const recentAssignments = await mongoose.model('chiTietPhong').find({
             maPhong: roomId
         })
-        .populate({
-            path: 'maDatPhong',
-            populate: {
-                path: 'maNguoiDung',
-                select: 'tenNguoiDung'
-            }
-        })
-        .sort({ createdAt: -1 })
-        .limit(5);
+            .populate({
+                path: 'maDatPhong',
+                populate: {
+                    path: 'maNguoiDung',
+                    select: 'tenNguoiDung'
+                }
+            })
+            .sort({ createdAt: -1 })
+            .limit(5);
 
         const recentHistory = recentAssignments.map(assignment => {
             const booking = assignment.maDatPhong;
@@ -723,8 +738,8 @@ roomHotelRouter.get("/hotelowner/room-detail/:roomId", authorizeRoles("chuKhachS
 });
 
 // 6. Lấy tất cả phòng trong khách sạn với thống kê
-roomHotelRouter.get("/hotelowner/hotel-rooms/:hotelId", 
-    authorizeRoles("chuKhachSan"), 
+roomHotelRouter.get("/hotelowner/hotel-rooms/:hotelId",
+    authorizeRoles("chuKhachSan"),
     async (req, res) => {
         try {
             const { hotelId } = req.params;
@@ -783,12 +798,12 @@ roomHotelRouter.get("/hotelowner/hotel-rooms/:hotelId",
 
             // Tạo query filter cho phòng
             const roomQuery = { maLoaiPhong: { $in: roomTypeIds } };
-            
+
             // Lọc theo loại phòng nếu có
             if (roomTypeId && mongoose.Types.ObjectId.isValid(roomTypeId)) {
                 roomQuery.maLoaiPhong = roomTypeId;
             }
-            
+
             // Lọc theo trạng thái nếu có
             if (status && status !== 'all') {
                 if (status === 'available') {

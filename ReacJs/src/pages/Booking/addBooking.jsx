@@ -23,9 +23,9 @@ import moment from "moment";
 import TimePicker from 'react-time-picker';
 import 'react-time-picker/dist/TimePicker.css';
 
-const AddBooking = ({ onClose }) => {
+const AddBooking = ({ selectHotelId ,onClose }) => {
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
-  const hotelId = localStorage.getItem("selectedHotelId");
+  const hotelId = selectHotelId;
   const now = moment().tz('Asia/Ho_Chi_Minh');
   const checkInTime = now.format('HH:mm');
   const checkOutTime = moment(checkInTime, 'HH:mm').add(1, 'hours').format('HH:mm');
@@ -178,6 +178,8 @@ const AddBooking = ({ onClose }) => {
     try {
       const url = `${baseUrl}/api/booking-hotel/hotelowner/getRoomInHotel/${hotelId}`;
       const response = await axios.get(url, { withCredentials: true });
+
+      console.log("Thông tin thoại phòng", response.data);
 
       if (response.status === 200) {
         const formatted = response.data.map(room => ({
@@ -364,7 +366,7 @@ const AddBooking = ({ onClose }) => {
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
+          {/* <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Tên khách hàng
             </label>
@@ -379,7 +381,7 @@ const AddBooking = ({ onClose }) => {
             {errors.customerName && (
               <p className="text-red-500 text-xs mt-1">{errors.customerName}</p>
             )}
-          </div>
+          </div> */}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -398,7 +400,7 @@ const AddBooking = ({ onClose }) => {
             )}
           </div>
 
-          <div>
+          {/* <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Email
             </label>
@@ -409,7 +411,7 @@ const AddBooking = ({ onClose }) => {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               placeholder="Nhập email (tùy chọn)"
             />
-          </div>
+          </div> */}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -542,9 +544,7 @@ const AddBooking = ({ onClose }) => {
                         {selectedRoom.description}
                       </div>
 
-                      <div className="text-gray-600 text-xs">
-                        👥 Tối đa {selectedRoom.maxGuests} khách
-                      </div>
+                      
                     </div>
                   );
                 })()}

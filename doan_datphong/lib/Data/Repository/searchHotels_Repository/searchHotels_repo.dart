@@ -29,6 +29,7 @@ class HotelSearchRepository {
     // ===== NGÀY & LOẠI ĐẶT PHÒNG =====
     String? checkIn,      // API: checkIn (YYYY-MM-DD)
     String? checkOut,     // API: checkOut (YYYY-MM-DD)
+
     String? bookingType,  // API: bookingType ('theo_gio', 'qua_dem', 'dai_ngay')
   }) async {
     try {

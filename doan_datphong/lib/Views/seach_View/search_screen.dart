@@ -1,3 +1,4 @@
+import 'package:doan_datphong/Helper/FormatDateTime.dart';
 import 'package:doan_datphong/Models/NguoiDung.dart';
 import 'package:doan_datphong/Views/components/bottom_navigation_bar.dart';
 import 'package:doan_datphong/Views/seach_View/filter_modal.dart';
@@ -63,6 +64,7 @@ class _SearchViewState extends State<SearchView> {
     String? tenKhachSan,
     String? loaiLoc,
     bool useCurrentFilters = true,
+
   }) {
     context.read<HotelSearchBloc>().add(
       SearchHotels(
@@ -74,11 +76,12 @@ class _SearchViewState extends State<SearchView> {
         maxPrice: useCurrentFilters ? _currentFilters['maxPrice']?.toDouble() : null,
         guests: useCurrentFilters ? _currentFilters['guests'] : null,
         rooms: useCurrentFilters ? _currentFilters['rooms'] : null,
-        checkIn: useCurrentFilters ? _currentFilters['checkIn'] : null,
-        checkOut: useCurrentFilters ? _currentFilters['checkOut'] : null,
+        checkIn: useCurrentFilters ? _currentFilters['checkInParam'] : null,
+        checkOut: useCurrentFilters ? _currentFilters['checkOutParam'] : null,
         bookingType: useCurrentFilters ? _currentFilters['bookingType'] : null,
       ),
     );
+
   }
 
   void _onSearchChanged(String query) {
@@ -180,8 +183,8 @@ class _SearchViewState extends State<SearchView> {
               maxPrice: filters['maxPrice']?.toDouble(),
               guests: filters['guests'],
               rooms: filters['rooms'],
-              checkIn: filters['checkIn'],
-              checkOut: filters['checkOut'],
+              checkIn: filters['checkInParam'],
+              checkOut: filters['checkOutParam'],
               bookingType: filters['bookingType'],
             ),
           );

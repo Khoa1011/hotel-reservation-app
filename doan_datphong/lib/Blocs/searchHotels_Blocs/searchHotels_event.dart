@@ -4,9 +4,8 @@ class SearchHotels extends HotelSearchEvent {
   final String? loaiLoc;
   final String? tenKhachSan;
 
-  // ✅ CHỈ SỬA: Đổi tên theo API mới
-  final String? thanhPho;      // Trước đây là tinhThanh
-  final String? quan;          // Trước đây là phuongXa
+  final String? thanhPho;
+  final String? quan;
 
   final double? minPrice;
   final double? maxPrice;
@@ -14,6 +13,8 @@ class SearchHotels extends HotelSearchEvent {
   final int? rooms;
   final String? checkIn;
   final String? checkOut;
+  final DateTime? checkInParam;
+  final DateTime? checkOutParam;
   final String? bookingType;
 
   SearchHotels({
@@ -28,6 +29,8 @@ class SearchHotels extends HotelSearchEvent {
     this.checkIn,
     this.checkOut,
     this.bookingType,
+    this.checkInParam,
+    this.checkOutParam
   });
 
   @override
@@ -42,6 +45,8 @@ class SearchHotels extends HotelSearchEvent {
     rooms,
     checkIn,
     checkOut,
+    checkInParam,
+    checkOutParam,
     bookingType
   ];
 }

@@ -165,7 +165,7 @@ const Reviews = ({ selectedHotelId }) => {
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-gray-600">
                     <MessageSquare className="h-4 w-4" />
-                    <span>Tổng: {pagination.totalReviews || 0} đánh giá</span>
+                    <span>Tổng: {reviewStats.summary?.totalReviews || 0} đánh giá</span>
                 </div>
             </div>
 

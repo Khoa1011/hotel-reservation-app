@@ -927,13 +927,18 @@ class _FilterModalState extends State<FilterModal> {
       String formatedCheckInDate = DateTimeHelper.formatDateToString2(
         checkInDate!,
       );
+      String paramCheckInDate = DateTimeHelper.formatDateToString3(checkInDate!);
+
       params['checkIn'] = formatedCheckInDate;
+      params['checkInParam'] = paramCheckInDate;
     }
     if (checkOutDate != null) {
       String formatedCheckOutDate = DateTimeHelper.formatDateToString2(
         checkOutDate!,
       );
+      String paramCheckOutDate = DateTimeHelper.formatDateToString3(checkOutDate!);
       params['checkOut'] = formatedCheckOutDate;
+      params['checkOutParam'] = paramCheckOutDate;
     }
     if (_bookingType != null) params['bookingType'] = _bookingType;
     if (_filters['sortBy'] != null) {

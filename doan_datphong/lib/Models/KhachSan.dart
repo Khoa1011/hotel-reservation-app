@@ -19,6 +19,7 @@ class KhachSan {
   String email;
   double giaCa;
   ViTri? viTri;
+  int? availableRoomsCount;
 
   KhachSan({
     required this.id,
@@ -34,7 +35,7 @@ class KhachSan {
     this.viTri,
     this.loaiMoHinh,
     this.trangThai,
-
+    this.availableRoomsCount
   });
 
   // Chuyển từ JSON sang object
@@ -57,6 +58,7 @@ class KhachSan {
           : null,
       loaiMoHinh: json['loaiKhachSan'],
       trangThai: json['trangThai'],
+      availableRoomsCount: json['availableRoomsCount'] ?? 0,
     );
   }
 

@@ -20,9 +20,8 @@ class HotelSearchBloc extends Bloc<HotelSearchEvent, HotelSearchState> {
       ApiResponse response = await repository.searchHotels(
         loaiLoc: event.loaiLoc,
         tenKhachSan: event.tenKhachSan,
-        // ✅ CHỈ SỬA: Đổi tên parameter theo API mới
-        thanhPho: event.thanhPho,     // Trước đây là tinhThanh
-        quan: event.quan,             // Trước đây là phuongXa
+        thanhPho: event.thanhPho,
+        quan: event.quan,
         minPrice: event.minPrice,
         maxPrice: event.maxPrice,
         guests: event.guests,

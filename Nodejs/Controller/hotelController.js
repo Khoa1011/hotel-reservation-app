@@ -827,7 +827,7 @@ async function checkHourlyAvailabilityEnhanced({
                     ngayTraPhong: { $gte: requestStart.toDate() }
                 }
             ]
-        }).select('loaiDatPhong ngayNhanPhong ngayTraPhong gioNhanPhong gioTraPhong soLuongPhong');
+        }).select('_id loaiDatPhong ngayNhanPhong ngayTraPhong gioNhanPhong gioTraPhong soLuongPhong');
 
         let maxConflictRooms = 0;
         const conflictDetails = [];
@@ -864,6 +864,7 @@ async function checkHourlyAvailabilityEnhanced({
             if (isConflict) {
                 maxConflictRooms += booking.soLuongPhong;
                 conflictDetails.push({
+                    bookingId: booking._id,
                     bookingType: booking.loaiDatPhong,
                     period: conflictPeriod,
                     rooms: booking.soLuongPhong
@@ -951,7 +952,7 @@ async function checkOvernightAvailabilityEnhanced({
                         ngayTraPhong: { $gt: dayEnd.toDate() }
                     }
                 ]
-            }).select('loaiDatPhong soLuongPhong ngayNhanPhong ngayTraPhong');
+            }).select('_id loaiDatPhong soLuongPhong ngayNhanPhong ngayTraPhong');
 
             let dayConflictRooms = 0;
             const dayConflicts = [];
@@ -959,6 +960,7 @@ async function checkOvernightAvailabilityEnhanced({
             for (const booking of conflictingBookings) {
                 dayConflictRooms += booking.soLuongPhong;
                 dayConflicts.push({
+                    bookingId: booking._id,
                     bookingType: booking.loaiDatPhong,
                     rooms: booking.soLuongPhong,
                     period: `${moment(booking.ngayNhanPhong).format('DD/MM')} - ${moment(booking.ngayTraPhong).format('DD/MM')}`

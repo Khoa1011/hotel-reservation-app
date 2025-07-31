@@ -359,6 +359,38 @@ class HotelListWidget extends StatelessWidget {
                     ],
                   ),
 
+                  const SizedBox(height: 8),
+                  if (hotel.availableRoomsCount != null && hotel.availableRoomsCount! > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.green[50],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.green[200]!),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.check_circle,
+                            size: 14,
+                            color: Colors.green[600],
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'Còn ${hotel.availableRoomsCount} phòng trống',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.green[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  const SizedBox(height: 12),
+
                   // Address (if different from city)
                   if (hotel.diaChi.isNotEmpty && hotel.diaChi != hotel.thanhPho) ...[
                     const SizedBox(height: 6),

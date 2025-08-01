@@ -75,11 +75,107 @@ router.post("/upload",
 // })
 
 
+// router.get("/getHotelList", async (req, res) => {
+//     try {
+//         console.log('🏨 [GET HOTEL LIST] Fetching hotels...');
+
+//         const hotels = await Hotel.find();
+        
+//         if (!hotels || hotels.length === 0) {
+//             return res.status(404).json({
+//                 message: { msgBody: "Empty list!", msgError: true }
+//             });
+//         }
+
+//         // Enhance mỗi khách sạn với giá theo đêm
+//         const enhancedHotels = await Promise.all(hotels.map(async (hotel) => {
+//             try {
+//                 if (hotel.trangThai === 'hoatDong') {
+//                     // Lấy loại phòng có giá thấp nhất của khách sạn
+//                     const cheapestRoomType = await RoomType.findOne({
+//                         maKhachSan: hotel._id
+//                     }).sort({ giaCa: 1 });
+
+//                     // Tính giá theo đêm (starting from price)
+//                     let giaTheoNgay = hotel.giaCa || 0;
+
+//                     if (cheapestRoomType) {
+//                         // Sử dụng giá của room type rẻ nhất
+//                         giaTheoNgay = cheapestRoomType.giaCa;
+//                     }
+
+//                     // Xử lý hình ảnh - ưu tiên hinhAnhDayDu
+//                     let hinhAnh = hotel.hinhAnh;
+//                     if (hotel.hinhAnhDayDu && hotel.hinhAnhDayDu.length > 0) {
+//                         hinhAnh = hotel.hinhAnhDayDu[0];
+//                     }
+
+//                     // Xử lý thành phố
+//                     let thanhPho = 'Chưa cập nhật';
+//                     if (hotel.diaChi && typeof hotel.diaChi === 'object') {
+//                         thanhPho = hotel.diaChi.tinhThanh || 'Chưa cập nhật';
+//                     }
+
+//                     return {
+//                         _id: hotel._id,
+//                         tenKhachSan: hotel.tenKhachSan,
+//                         diaChiDayDu: hotel.diaChiDayDu,
+//                         thanhPho: thanhPho,
+//                         moTa: hotel.moTa,
+//                         soSao: hotel.soSao,
+//                         soDienThoai: hotel.soDienThoai,
+//                         email: hotel.email,
+//                         hinhAnh: hinhAnh,
+//                         giaTheoNgay: giaTheoNgay
+//                     };
+//                 }
+//                 return null; // Trả về null nếu không phải trạng thái hoatDong
+//             } catch (error) {
+//                 console.error(`Lỗi xử lý khách sạn ${hotel._id}:`, error);
+//                 // Fallback về giá gốc nếu có lỗi
+//                 if (hotel.trangThai === 'hoatDong') {
+//                     return {
+//                         _id: hotel._id,
+//                         tenKhachSan: hotel.tenKhachSan,
+//                         diaChiDayDu: hotel.diaChiDayDu,
+//                         thanhPho: hotel.diaChi?.tinhThanh || 'Chưa cập nhật',
+//                         moTa: hotel.moTa,
+//                         soSao: hotel.soSao,
+//                         soDienThoai: hotel.soDienThoai,
+//                         email: hotel.email,
+//                         hinhAnh: hotel.hinhAnhDayDu?.[0] || hotel.hinhAnh,
+//                         giaTheoNgay: hotel.giaCa || 0
+//                     };
+//                 }
+//                 return null;
+//             }
+//         }));
+
+//         // Lọc bỏ các hotel null (không hoạt động hoặc lỗi)
+//         const validHotels = enhancedHotels.filter(hotel => hotel !== null);
+
+//         console.log(`✅ [GET HOTEL LIST] Successfully processed ${validHotels.length} active hotels`);
+
+//         return res.status(200).json({
+//             message: { msgBody: "Successfully!", msgError: false },
+//             hotels: validHotels
+//         });
+
+//     } catch (err) {
+//         console.error('❌ [GET HOTEL LIST] Server error:', err);
+//         return res.status(500).json({
+//             message: 'Lỗi Server',
+//             error: err.message
+//         });
+//     }
+// });
+
+
 router.get("/getHotelList", async (req, res) => {
     try {
         console.log('🏨 [GET HOTEL LIST] Fetching hotels...');
 
-        const hotels = await Hotel.find();
+        const hotels = await Hotel.find({ trangThai: 'hoatDong' });
         
         if (!hotels || hotels.length === 0) {
             return res.status(404).json({
@@ -87,74 +183,64 @@ router.get("/getHotelList", async (req, res) => {
             });
         }
 
-        // Enhance mỗi khách sạn với giá theo đêm
+        // Enhance mỗi khách sạn với giá theo đêm và check availability
         const enhancedHotels = await Promise.all(hotels.map(async (hotel) => {
             try {
-                if (hotel.trangThai === 'hoatDong') {
-                    // Lấy loại phòng có giá thấp nhất của khách sạn
-                    const cheapestRoomType = await RoomType.findOne({
-                        maKhachSan: hotel._id
-                    }).sort({ giaCa: 1 });
-
-                    // Tính giá theo đêm (starting from price)
-                    let giaTheoNgay = hotel.giaCa || 0;
-
-                    if (cheapestRoomType) {
-                        // Sử dụng giá của room type rẻ nhất
-                        giaTheoNgay = cheapestRoomType.giaCa;
-                    }
-
-                    // Xử lý hình ảnh - ưu tiên hinhAnhDayDu
-                    let hinhAnh = hotel.hinhAnh;
-                    if (hotel.hinhAnhDayDu && hotel.hinhAnhDayDu.length > 0) {
-                        hinhAnh = hotel.hinhAnhDayDu[0];
-                    }
-
-                    // Xử lý thành phố
-                    let thanhPho = 'Chưa cập nhật';
-                    if (hotel.diaChi && typeof hotel.diaChi === 'object') {
-                        thanhPho = hotel.diaChi.tinhThanh || 'Chưa cập nhật';
-                    }
-
-                    return {
-                        _id: hotel._id,
-                        tenKhachSan: hotel.tenKhachSan,
-                        diaChiDayDu: hotel.diaChiDayDu,
-                        thanhPho: thanhPho,
-                        moTa: hotel.moTa,
-                        soSao: hotel.soSao,
-                        soDienThoai: hotel.soDienThoai,
-                        email: hotel.email,
-                        hinhAnh: hinhAnh,
-                        giaTheoNgay: giaTheoNgay
-                    };
+                // ✅ KIỂM TRA PHÒNG TRỐNG - chỉ cần ít nhất 1 phòng
+                const hasAvailableRooms = await checkHotelHasAvailableRooms(hotel._id);
+                
+                if (!hasAvailableRooms) {
+                    return null; // Bỏ qua hotel không có phòng trống
                 }
-                return null; // Trả về null nếu không phải trạng thái hoatDong
+
+                // Lấy loại phòng có giá thấp nhất của khách sạn
+                const cheapestRoomType = await RoomType.findOne({
+                    maKhachSan: hotel._id
+                }).sort({ giaCa: 1 });
+
+                // Tính giá theo đêm (starting from price)
+                let giaTheoNgay = hotel.giaCa || 0;
+
+                if (cheapestRoomType) {
+                    // Sử dụng giá của room type rẻ nhất
+                    giaTheoNgay = cheapestRoomType.giaCa;
+                }
+
+                // Xử lý hình ảnh - ưu tiên hinhAnhDayDu
+                let hinhAnh = hotel.hinhAnh;
+                if (hotel.hinhAnhDayDu && hotel.hinhAnhDayDu.length > 0) {
+                    hinhAnh = hotel.hinhAnhDayDu[0];
+                }
+
+                // Xử lý thành phố
+                let thanhPho = 'Chưa cập nhật';
+                if (hotel.diaChi && typeof hotel.diaChi === 'object') {
+                    thanhPho = hotel.diaChi.tinhThanh || 'Chưa cập nhật';
+                }
+
+                return {
+                    _id: hotel._id,
+                    tenKhachSan: hotel.tenKhachSan,
+                    diaChiDayDu: hotel.diaChiDayDu,
+                    thanhPho: thanhPho,
+                    moTa: hotel.moTa,
+                    soSao: hotel.soSao,
+                    soDienThoai: hotel.soDienThoai,
+                    email: hotel.email,
+                    hinhAnh: hinhAnh,
+                    giaTheoNgay: giaTheoNgay
+                };
+
             } catch (error) {
                 console.error(`Lỗi xử lý khách sạn ${hotel._id}:`, error);
-                // Fallback về giá gốc nếu có lỗi
-                if (hotel.trangThai === 'hoatDong') {
-                    return {
-                        _id: hotel._id,
-                        tenKhachSan: hotel.tenKhachSan,
-                        diaChiDayDu: hotel.diaChiDayDu,
-                        thanhPho: hotel.diaChi?.tinhThanh || 'Chưa cập nhật',
-                        moTa: hotel.moTa,
-                        soSao: hotel.soSao,
-                        soDienThoai: hotel.soDienThoai,
-                        email: hotel.email,
-                        hinhAnh: hotel.hinhAnhDayDu?.[0] || hotel.hinhAnh,
-                        giaTheoNgay: hotel.giaCa || 0
-                    };
-                }
                 return null;
             }
         }));
 
-        // Lọc bỏ các hotel null (không hoạt động hoặc lỗi)
+        // Lọc bỏ các hotel null (không có phòng trống hoặc lỗi)
         const validHotels = enhancedHotels.filter(hotel => hotel !== null);
 
-        console.log(`✅ [GET HOTEL LIST] Successfully processed ${validHotels.length} active hotels`);
+        console.log(`✅ [GET HOTEL LIST] Successfully processed ${validHotels.length} hotels with available rooms`);
 
         return res.status(200).json({
             message: { msgBody: "Successfully!", msgError: false },
@@ -170,6 +256,76 @@ router.get("/getHotelList", async (req, res) => {
     }
 });
 
+// ✅ HELPER FUNCTION: Kiểm tra hotel có phòng trống không
+async function checkHotelHasAvailableRooms(hotelId) {
+    try {
+        // Lấy tất cả room types của hotel
+        const roomTypes = await RoomType.find({ maKhachSan: hotelId });
+        
+        if (!roomTypes || roomTypes.length === 0) {
+            return false; // Không có loại phòng nào
+        }
+
+        // Kiểm tra có ít nhất 1 phòng trống
+        const roomTypeIds = roomTypes.map(rt => rt._id);
+        
+        const availableRoomsCount = await Room.countDocuments({
+            maLoaiPhong: { $in: roomTypeIds },
+            trangThaiPhong: "trong" // Chỉ phòng trống
+        });
+
+        return availableRoomsCount > 0;
+        
+    } catch (error) {
+        console.error(`❌ Error checking hotel ${hotelId} availability:`, error);
+        return false; // Có lỗi thì coi như không có phòng
+    }
+}
+
+// ✅ HELPER FUNCTION: Lấy thống kê phòng của hotel
+async function getHotelRoomStats(hotelId) {
+    try {
+        // Lấy tất cả room types của hotel
+        const roomTypes = await RoomType.find({ maKhachSan: hotelId });
+        
+        if (!roomTypes || roomTypes.length === 0) {
+            return {
+                totalRooms: 0,
+                availableRooms: 0,
+                availabilityRate: 0
+            };
+        }
+
+        const roomTypeIds = roomTypes.map(rt => rt._id);
+        
+        // Đếm tổng số phòng và phòng trống
+        const [totalRooms, availableRooms] = await Promise.all([
+            Room.countDocuments({
+                maLoaiPhong: { $in: roomTypeIds }
+            }),
+            Room.countDocuments({
+                maLoaiPhong: { $in: roomTypeIds },
+                trangThaiPhong: "trong"
+            })
+        ]);
+
+        const availabilityRate = totalRooms > 0 ? Math.round((availableRooms / totalRooms) * 100) : 0;
+
+        return {
+            totalRooms,
+            availableRooms,
+            availabilityRate
+        };
+        
+    } catch (error) {
+        console.error(`❌ Error getting hotel ${hotelId} room stats:`, error);
+        return {
+            totalRooms: 0,
+            availableRooms: 0,
+            availabilityRate: 0
+        };
+    }
+}
 
 // API tìm kiếm phòng theo khoảng thời gian - CHÍNH
 router.post('/:hotelId/search-roomtypes', async (req, res) => {

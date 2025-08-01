@@ -19,6 +19,7 @@ const statisticHotelController = require("../Controller/Hotel/statisticHotelCont
 const registrationsRouter = require("../Controller/Admin/registrationsController");
 const hotelManagementRouter = require("../Controller/Admin/hotelManagement");
 const userManagementRouter = require("../Controller/Admin/userManagement");
+const favoriteHotelRouter = require("../Controller/favoriteHotelController");
 
 module.exports = function (app) {
     app.use("/api/users", userRouter);
@@ -32,6 +33,7 @@ module.exports = function (app) {
     app.use("/api/booking-auto", bookingAutoRouter);
     app.use("/api/review", reviewRouter);
     app.use("/api/notification", notificationController);
+    app.use("/api/favorite-hotel", favoriteHotelRouter);
 
 
 

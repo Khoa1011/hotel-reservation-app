@@ -11,6 +11,7 @@ import '../../Blocs/getHotelList_Blocs/getHotelList_state.dart';
 import '../../Helper/FormatCurrency.dart';
 import '../../Helper/ErrorCode.dart';
 import '../components/NotificationDialog.dart';
+import 'favorite_button.dart';
 
 enum ViewType { card, list, grid }
 
@@ -22,23 +23,7 @@ class HotelViewSwitcher extends StatefulWidget {
 class _HotelViewSwitcherState extends State<HotelViewSwitcher> {
   ViewType currentView = ViewType.card; // Default to list view
   late PageController _pageController;
-  Set<String> bookmarkedHotels = {};
 
-  // ✅ Method kiểm tra khách sạn có được bookmark không
-  bool isBookmarked(String hotelId) {
-    return bookmarkedHotels.contains(hotelId);
-  }
-
-  // ✅ Method toggle bookmark cho khách sạn cụ thể
-  void toggleBookmark(String hotelId) {
-    setState(() {
-      if (bookmarkedHotels.contains(hotelId)) {
-        bookmarkedHotels.remove(hotelId);
-      } else {
-        bookmarkedHotels.add(hotelId);
-      }
-    });
-  }
 
   @override
   void initState() {
@@ -1032,31 +1017,11 @@ class _HotelViewSwitcherState extends State<HotelViewSwitcher> {
   }
 
   Widget bookmarkButton(KhachSan hotel) {
-    final isBookmarked = this.isBookmarked(hotel.id);
-
-    return IconButton(
-      onPressed: () {
-        toggleBookmark(hotel.id);
-      },
-      icon: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        transitionBuilder: (Widget child, Animation<double> animation) {
-          return FadeTransition(
-            opacity: animation,
-            child: ScaleTransition(scale: animation, child: child),
-          );
-        },
-        child: Icon(
-          key: ValueKey<bool>(isBookmarked),
-          size: 35,
-          isBookmarked
-              ? Icons.bookmark_added
-              : Icons.bookmark_add_outlined,
-          color: isBookmarked
-              ? Color(0xFF1565C0) // Màu xanh khi đã bookmark
-              : Color(0xFF525150),
-        ),
-      ),
+    return FavoriteButton(
+      hotelId: hotel.id,
+      size: 35,
+      favoriteColor: Color(0xFF1565C0),
+      normalColor: Color(0xFF525150),
     );
   }
 

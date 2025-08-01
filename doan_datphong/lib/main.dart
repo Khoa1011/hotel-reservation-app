@@ -1,5 +1,6 @@
 import 'package:doan_datphong/Blocs/User_Blocs/user_bloc.dart';
 import 'package:doan_datphong/Blocs/bookingCheckUser_Blocs/bookingCheckUser_bloc.dart';
+import 'package:doan_datphong/Blocs/favoriteHotel_Blocs/favoriteHotel_bloc.dart';
 import 'package:doan_datphong/Blocs/fillProfile_Blocs/fillProfile_bloc.dart';
 import 'package:doan_datphong/Blocs/getHotelList_Blocs/getHotelList_bloc.dart';
 import 'package:doan_datphong/Blocs/getListBooking_Blocs/getBookingList_bloc.dart';
@@ -11,6 +12,7 @@ import 'package:doan_datphong/Blocs/register_Blocs/register_bloc.dart';
 import 'package:doan_datphong/Blocs/review_Blocs/review_bloc.dart';
 import 'package:doan_datphong/Blocs/updateProfile/updateProfile_bloc.dart';
 import 'package:doan_datphong/Data/Repository/bookingCheckUser_Repository/bookingCheckUser_repo.dart';
+import 'package:doan_datphong/Data/Repository/favoriteHotel_Repository/favoriteHotel_repo.dart';
 import 'package:doan_datphong/Data/Repository/getBookingList_Repository/getBookingList_repo.dart';
 import 'package:doan_datphong/Data/Repository/getHotelList_Repository/getHotelList_repo.dart';
 import 'package:doan_datphong/Data/Repository/getListOfRoomTypes_Repository/getListOfRoom_repo.dart';
@@ -148,6 +150,7 @@ class _MyAppState extends State<MyApp> {
         BlocProvider(create: (context) => ReviewBloc(reviewRepository: ReviewRepository())),
         BlocProvider(create: (context) => HotelReviewBloc(hotelReviewRepository: HotelReviewRepository())),
         BlocProvider(create: (context) => RecentBookingsBloc(repository: RecentBookingsRepository())),
+        BlocProvider(create: (context) => FavoriteHotelsBloc(favoriteRepository: FavoriteHotelsRepository())),
       ],
       child: Consumer<LanguageProvider>(
         builder: (context, languageProvider, child) {

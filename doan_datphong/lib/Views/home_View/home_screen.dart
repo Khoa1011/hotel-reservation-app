@@ -9,14 +9,19 @@ import 'package:doan_datphong/Views/home_View/searchView.dart';
 import 'package:doan_datphong/Views/listBooking_View/listBooking_screen.dart';
 import 'package:doan_datphong/Views/profile_View/profile_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../Blocs/favoriteHotel_Blocs/favoriteHotel_bloc.dart';
+import '../../Data/Repository/favoriteHotel_Repository/favoriteHotel_repo.dart';
 import '../../Models/NguoiDung.dart';
 import '../login_View/login_screen.dart';
 import '../seach_View/search_screen.dart';
 import 'package:doan_datphong/generated/l10n.dart';
+
+import 'favoriteHotel_screen.dart';
 
 class HomeScreen extends StatefulWidget {
 
@@ -90,10 +95,53 @@ class _HomePageState extends State<HomeScreen> {
                   size: 30,
                 ),
                 const SizedBox(width: 15),
-                Icon(
-                  Icons.bookmark_border_outlined,
-                  color: Color(0xFF525150),
-                  size: 30,
+                GestureDetector(
+                  onTap: () {
+                    // Check if user logged in
+                    final authProvider = Provider.of<UserAuthProvider>(context, listen: false);
+                    if (authProvider.isLoggedIn) {
+                      // Navigate to favorite hotels screen
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => FavoriteHotelsScreen(), // ✅ Không wrap BlocProvider
+                        ),
+                      );
+                    } else {
+                      // Show login required dialog
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text('Đăng nhập cần thiết'),
+                            content: Text('Bạn cần đăng nhập để xem danh sách khách sạn đã lưu.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: Text('Hủy'),
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                  // Navigate to login screen
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => LoginScreen()),
+                                  );
+                                },
+                                child: Text('Đăng nhập'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    }
+                  },
+                  child: Icon(
+                    Icons.bookmark_border_outlined,
+                    color: Color(0xFF525150),
+                    size: 30,
+                  ),
                 ),
               ],
             ),
@@ -278,20 +326,6 @@ class _HomePageState extends State<HomeScreen> {
                     ],
                   ),
                 ),
-
-
-                // ReservationTypeWidget(
-                //   onTypeSelected: (ReservationType type) {
-                //     setState(() {
-                //       selectedReservationType = type;
-                //     });
-                //
-                //     // ✅ Xử lý logic khi chọn loại đặt phòng
-                //     _handleReservationTypeSelected(type);
-                //   },
-                // ),
-
-
                 HotelViewSwitcher(),
                 const SizedBox(height: 15),
                 Consumer<UserAuthProvider>(

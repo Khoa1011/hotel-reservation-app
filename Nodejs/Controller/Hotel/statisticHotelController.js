@@ -34,7 +34,7 @@ statisticHotelRouter.get("/hotelowner/customers", authorizeRoles("chuKhachSan", 
         }
 
         const hotelIds = hotels.map(h => h._id);
-        let query = { 
+        let query = {
             maKhachSan: { $in: hotelIds },
             maNguoiDung: { $exists: true, $ne: null }
         };
@@ -51,9 +51,34 @@ statisticHotelRouter.get("/hotelowner/customers", authorizeRoles("chuKhachSan", 
                 $group: {
                     _id: "$maNguoiDung",
                     totalBookings: { $sum: 1 },
-                    totalAmount: { $sum: "$thongTinGia.tongDonDat" },
-                    totalDiscount: { $sum: "$thongTinGia.giamGia" },
-                    totalSurcharge: { $sum: "$thongTinGia.phuPhiCuoiTuan" },
+                    // ✅ CHỈ TÍNH TIỀN TỪ BOOKING HOÀN THÀNH
+                    totalAmount: {
+                        $sum: {
+                            $cond: [
+                                { $eq: ["$trangThai", "da_tra_phong"] },
+                                "$thongTinGia.tongDonDat",
+                                0
+                            ]
+                        }
+                    },
+                    totalDiscount: {
+                        $sum: {
+                            $cond: [
+                                { $eq: ["$trangThai", "da_tra_phong"] },
+                                "$thongTinGia.giamGia",
+                                0
+                            ]
+                        }
+                    },
+                    totalSurcharge: {
+                        $sum: {
+                            $cond: [
+                                { $eq: ["$trangThai", "da_tra_phong"] },
+                                "$thongTinGia.phuPhiCuoiTuan",
+                                0
+                            ]
+                        }
+                    },
                     bookingTypes: { $addToSet: "$loaiDatPhong" },
                     lastBooking: { $max: "$thoiGianTaoDon" },
                     firstBooking: { $min: "$thoiGianTaoDon" },
@@ -101,21 +126,22 @@ statisticHotelRouter.get("/hotelowner/customers", authorizeRoles("chuKhachSan", 
                         $eq: [{ $size: "$customerInfo" }, 0]
                     },
                     totalBookings: 1,
-                    totalAmount: 1,
-                    totalDiscount: 1,
-                    totalSurcharge: 1,
+                    totalAmount: 1, // ✅ tongDonDat từ booking hoàn thành
+                    totalDiscount: 1, // ✅ giamGia từ booking hoàn thành  
+                    totalSurcharge: 1, // ✅ phuPhiCuoiTuan từ booking hoàn thành
                     bookingTypes: 1,
                     lastBooking: 1,
                     firstBooking: 1,
                     cancelledBookings: 1,
                     completedBookings: 1,
                     customerSince: { $dateToString: { format: "%d-%m-%Y", date: "$firstBooking" } },
+                    // ✅ LOYALTY DỰA TRÊN BOOKING HOÀN THÀNH
                     loyaltyLevel: {
                         $switch: {
                             branches: [
-                                { case: { $gte: ["$totalBookings", 20] }, then: "VIP" },
-                                { case: { $gte: ["$totalBookings", 10] }, then: "Gold" },
-                                { case: { $gte: ["$totalBookings", 5] }, then: "Silver" },
+                                { case: { $gte: ["$completedBookings", 20] }, then: "VIP" },
+                                { case: { $gte: ["$completedBookings", 10] }, then: "Gold" },
+                                { case: { $gte: ["$completedBookings", 5] }, then: "Silver" },
                             ],
                             default: "Bronze"
                         }
@@ -137,7 +163,7 @@ statisticHotelRouter.get("/hotelowner/customers", authorizeRoles("chuKhachSan", 
             });
         }
 
-        // Sort và pagination
+        // Sort và pagination - ✅ Sort theo totalAmount từ booking hoàn thành
         pipeline.push(
             { $sort: { totalAmount: -1 } },
             { $skip: (page - 1) * limit },
@@ -146,7 +172,7 @@ statisticHotelRouter.get("/hotelowner/customers", authorizeRoles("chuKhachSan", 
 
         const customers = await Booking.aggregate(pipeline);
 
-        // Đếm tổng số customers - simplified count
+        // Đếm tổng số customers
         const countPipeline = [
             { $match: query },
             {
@@ -184,7 +210,7 @@ statisticHotelRouter.get("/hotelowner/customers", authorizeRoles("chuKhachSan", 
     }
 });
 
-// ✅ 2. Lấy chi tiết khách hàng - Fixed
+// ✅ 2. Lấy chi tiết khách hàng
 statisticHotelRouter.get("/hotelowner/customers/:customerId", authorizeRoles("chuKhachSan", "nhanVien"), async (req, res) => {
     try {
         const { customerId } = req.params;
@@ -198,29 +224,26 @@ statisticHotelRouter.get("/hotelowner/customers/:customerId", authorizeRoles("ch
             });
         }
 
-        // ✅ Lấy danh sách khách sạn của user TRƯỚC
         const hotels = await Hotel.find({ maChuKhachSan: user._id });
         const hotelIds = hotels.map(h => h._id);
 
-        // Lấy thông tin khách hàng (có thể là khách lẻ)
+        // Lấy thông tin khách hàng
         const customer = await User.findById(customerId);
-        
-        // ✅ Handle walk-in guests who don't have user records
+
         let customerInfo;
         if (!customer) {
-            // This is likely a walk-in guest - get info from first booking
-            const sampleBooking = await Booking.findOne({ 
+            const sampleBooking = await Booking.findOne({
                 maNguoiDung: customerId,
                 maKhachSan: { $in: hotelIds }
             });
-            
+
             if (!sampleBooking) {
                 return res.status(404).json({
                     success: false,
                     message: "Không tìm thấy thông tin khách hàng!"
                 });
             }
-            
+
             customerInfo = {
                 _id: customerId,
                 tenNguoiDung: "Khách lẻ",
@@ -241,15 +264,15 @@ statisticHotelRouter.get("/hotelowner/customers/:customerId", authorizeRoles("ch
         }
 
         let query = {
-            maNguoiDung: new mongoose.Types.ObjectId(customerId), // ✅ Convert to ObjectId
+            maNguoiDung: new mongoose.Types.ObjectId(customerId),
             maKhachSan: { $in: hotelIds }
         };
 
         if (hotelId && hotelIds.map(id => id.toString()).includes(hotelId)) {
-            query.maKhachSan = new mongoose.Types.ObjectId(hotelId); // ✅ Convert to ObjectId
+            query.maKhachSan = new mongoose.Types.ObjectId(hotelId);
         }
 
-        // Lấy tất cả booking của khách hàng
+        // Lấy tất cả booking của khách hàng (bao gồm cả đã hủy để hiển thị lịch sử)
         const bookings = await Booking.find(query)
             .populate("maKhachSan", "tenKhachSan")
             .populate("maLoaiPhong", "tenLoaiPhong")
@@ -295,19 +318,26 @@ statisticHotelRouter.get("/hotelowner/customers/:customerId", authorizeRoles("ch
             }))
         }));
 
-        // Tính thống kê tổng quan
+        // ✅ TÍNH THỐNG KÊ CHỈ TỪ BOOKING HOÀN THÀNH
+        const completedBookings = bookings.filter(b => b.trangThai === "da_tra_phong");
         const totalStats = {
-            totalBookings: bookings.length,
-            totalSpent: bookings.reduce((sum, b) => sum + (b.thongTinGia?.tongDonDat || 0), 0),
-            totalDiscount: bookings.reduce((sum, b) => sum + (b.thongTinGia?.giamGia || 0), 0),
-            totalSurcharge: bookings.reduce((sum, b) => sum + (b.thongTinGia?.phuPhiCuoiTuan || 0), 0),
-            completedBookings: bookings.filter(b => b.trangThai === "da_tra_phong").length,
+            totalBookings: bookings.length, // Tổng tất cả booking
+            totalSpent: completedBookings.reduce((sum, b) => sum + (b.thongTinGia?.tongDonDat || 0), 0), // ✅ tongDonDat
+            totalDiscount: completedBookings.reduce((sum, b) => sum + (b.thongTinGia?.giamGia || 0), 0), // ✅ giamGia
+            totalSurcharge: completedBookings.reduce((sum, b) => sum + (b.thongTinGia?.phuPhiCuoiTuan || 0), 0), // ✅ phuPhiCuoiTuan
+            completedBookings: completedBookings.length,
             cancelledBookings: bookings.filter(b => b.trangThai === "da_huy").length,
-            totalServiceSpent: assignments.reduce((sum, a) =>
-                sum + (a.dichVuSuDung || []).reduce((serviceSum, s) =>
-                    serviceSum + (s.thanhTien || 0), 0
-                ), 0
-            )
+            totalServiceSpent: assignments
+                .filter(a => {
+                    // ✅ Chỉ tính service từ booking hoàn thành
+                    const booking = bookings.find(b => b._id.toString() === a.maDatPhong.toString());
+                    return booking && booking.trangThai === "da_tra_phong";
+                })
+                .reduce((sum, a) =>
+                    sum + (a.dichVuSuDung || []).reduce((serviceSum, s) =>
+                        serviceSum + (s.thanhTien || 0), 0
+                    ), 0
+                )
         };
 
         return res.status(200).json({
@@ -323,7 +353,7 @@ statisticHotelRouter.get("/hotelowner/customers/:customerId", authorizeRoles("ch
                     isWalkInGuest: customerInfo.isWalkInGuest,
                     ...totalStats
                 },
-                bookings: detailedBookings
+                bookings: detailedBookings // ✅ Vẫn hiển thị tất cả booking để xem lịch sử
             }
         });
 
@@ -338,9 +368,9 @@ statisticHotelRouter.get("/hotelowner/customers/:customerId", authorizeRoles("ch
 });
 
 // ✅ 3. Tìm kiếm khách hàng - Fixed
-statisticHotelRouter.get("/hotelowner/customers/search/:query", authorizeRoles("chuKhachSan", "nhanVien"), async (req, res) => {
+statisticHotelRouter.get("/hotelowner/customers/:customerId", authorizeRoles("chuKhachSan", "nhanVien"), async (req, res) => {
     try {
-        const { query } = req.params;
+        const { customerId } = req.params;
         const { hotelId } = req.query;
         const user = await User.findById(req.user.id);
 
@@ -354,83 +384,146 @@ statisticHotelRouter.get("/hotelowner/customers/search/:query", authorizeRoles("
         const hotels = await Hotel.find({ maChuKhachSan: user._id });
         const hotelIds = hotels.map(h => h._id);
 
-        let bookingQuery = { 
-            maKhachSan: { $in: hotelIds },
-            maNguoiDung: { $exists: true, $ne: null } // ✅ Ensure user exists
-        };
-        
-        if (hotelId && hotelIds.map(id => id.toString()).includes(hotelId)) {
-            bookingQuery.maKhachSan = new mongoose.Types.ObjectId(hotelId); // ✅ Convert to ObjectId
+        // Lấy thông tin khách hàng
+        const customer = await User.findById(customerId);
+
+        let customerInfo;
+        if (!customer) {
+            const sampleBooking = await Booking.findOne({
+                maNguoiDung: customerId,
+                maKhachSan: { $in: hotelIds }
+            });
+
+            if (!sampleBooking) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Không tìm thấy thông tin khách hàng!"
+                });
+            }
+
+            customerInfo = {
+                _id: customerId,
+                tenNguoiDung: "Khách lẻ",
+                email: "Không có email",
+                soDienThoai: sampleBooking.soDienThoai || "Không có SĐT",
+                ngayTao: sampleBooking.thoiGianTaoDon,
+                isWalkInGuest: true
+            };
+        } else {
+            customerInfo = {
+                _id: customer._id,
+                tenNguoiDung: customer.tenNguoiDung,
+                email: customer.email,
+                soDienThoai: customer.soDienThoai,
+                ngayTao: customer.ngayTao,
+                isWalkInGuest: false
+            };
         }
 
-        // Search pipeline
-        const pipeline = [
-            { $match: bookingQuery },
-            {
-                $lookup: {
-                    from: User.collection.name, // ✅ Use actual collection name
-                    localField: "maNguoiDung",
-                    foreignField: "_id",
-                    as: "customer"
-                }
-            },
-            {
-                $addFields: {
-                    customer: {
-                        $cond: {
-                            if: { $gt: [{ $size: "$customer" }, 0] },
-                            then: { $arrayElemAt: ["$customer", 0] },
-                            else: {
-                                _id: "$maNguoiDung",
-                                tenNguoiDung: "Khách lẻ",
-                                email: "",
-                                soDienThoai: "$soDienThoai" // Get phone from booking if available
-                            }
-                        }
-                    }
-                }
-            },
-            {
-                $match: {
-                    $or: [
-                        { "customer.tenNguoiDung": { $regex: query, $options: "i" } },
-                        { "customer.email": { $regex: query, $options: "i" } },
-                        { "customer.soDienThoai": { $regex: query, $options: "i" } }
-                    ]
-                }
-            },
-            {
-                $group: {
-                    _id: "$customer._id",
-                    customerName: { $first: "$customer.tenNguoiDung" },
-                    email: { $first: "$customer.email" },
-                    phoneNumber: { $first: "$customer.soDienThoai" },
-                    totalBookings: { $sum: 1 },
-                    totalAmount: { $sum: "$thongTinGia.tongDonDat" }
-                }
-            },
-            { $limit: 10 }
-        ];
+        let query = {
+            maNguoiDung: new mongoose.Types.ObjectId(customerId),
+            maKhachSan: { $in: hotelIds }
+        };
 
-        const results = await Booking.aggregate(pipeline);
+        if (hotelId && hotelIds.map(id => id.toString()).includes(hotelId)) {
+            query.maKhachSan = new mongoose.Types.ObjectId(hotelId);
+        }
+
+        // Lấy tất cả booking của khách hàng (bao gồm cả đã hủy để hiển thị lịch sử)
+        const bookings = await Booking.find(query)
+            .populate("maKhachSan", "tenKhachSan")
+            .populate("maLoaiPhong", "tenLoaiPhong")
+            .sort({ thoiGianTaoDon: -1 });
+
+        // Lấy chi tiết room assignments và services
+        const bookingIds = bookings.map(b => b._id);
+        const assignments = await RoomAssignment.find({
+            maDatPhong: { $in: bookingIds }
+        }).populate("maPhong", "soPhong tang");
+
+        // Group assignments by booking
+        const assignmentsByBooking = new Map();
+        for (const assignment of assignments) {
+            const bookingId = assignment.maDatPhong.toString();
+            if (!assignmentsByBooking.has(bookingId)) {
+                assignmentsByBooking.set(bookingId, []);
+            }
+            assignmentsByBooking.get(bookingId).push(assignment);
+        }
+
+        // Format booking data with room and service details
+        const detailedBookings = bookings.map(booking => ({
+            bookingId: booking._id,
+            hotelName: booking.maKhachSan?.tenKhachSan || "N/A",
+            roomType: booking.maLoaiPhong?.tenLoaiPhong || "N/A",
+            checkInDate: moment(booking.ngayNhanPhong).format("DD-MM-YYYY"),
+            checkOutDate: moment(booking.ngayTraPhong).format("DD-MM-YYYY"),
+            bookingType: booking.loaiDatPhong,
+            status: booking.trangThai,
+            totalAmount: booking.thongTinGia.tongDonDat,
+            discount: booking.thongTinGia.giamGia || 0,
+            surcharge: booking.thongTinGia.phuPhiCuoiTuan || 0,
+            createdAt: booking.thoiGianTaoDon,
+            rooms: (assignmentsByBooking.get(booking._id.toString()) || []).map(assignment => ({
+                roomNumber: assignment.maPhong?.soPhong || "N/A",
+                floor: assignment.maPhong?.tang || 1,
+                services: assignment.dichVuSuDung || [],
+                serviceTotal: (assignment.dichVuSuDung || []).reduce((total, service) =>
+                    total + (service.thanhTien || 0), 0
+                ),
+                guestInfo: assignment.thongTinKhachPhong
+            }))
+        }));
+
+        // ✅ TÍNH THỐNG KÊ CHỈ TỪ BOOKING HOÀN THÀNH
+        const completedBookings = bookings.filter(b => b.trangThai === "da_tra_phong");
+        const totalStats = {
+            totalBookings: bookings.length, // Tổng tất cả booking
+            totalSpent: completedBookings.reduce((sum, b) => sum + (b.thongTinGia?.tongDonDat || 0), 0), // ✅ Chỉ từ hoàn thành
+            totalDiscount: completedBookings.reduce((sum, b) => sum + (b.thongTinGia?.giamGia || 0), 0), // ✅ Chỉ từ hoàn thành
+            totalSurcharge: completedBookings.reduce((sum, b) => sum + (b.thongTinGia?.phuPhiCuoiTuan || 0), 0), // ✅ Chỉ từ hoàn thành
+            completedBookings: completedBookings.length,
+            cancelledBookings: bookings.filter(b => b.trangThai === "da_huy").length,
+            totalServiceSpent: assignments
+                .filter(a => {
+                    // ✅ Chỉ tính service từ booking hoàn thành
+                    const booking = bookings.find(b => b._id.toString() === a.maDatPhong.toString());
+                    return booking && booking.trangThai === "da_tra_phong";
+                })
+                .reduce((sum, a) =>
+                    sum + (a.dichVuSuDung || []).reduce((serviceSum, s) =>
+                        serviceSum + (s.thanhTien || 0), 0
+                    ), 0
+                )
+        };
 
         return res.status(200).json({
             success: true,
-            message: "Tìm kiếm khách hàng thành công",
+            message: "Lấy chi tiết khách hàng thành công",
             data: {
-                results
+                customer: {
+                    customerId: customerInfo._id,
+                    customerName: customerInfo.tenNguoiDung,
+                    email: customerInfo.email,
+                    phoneNumber: customerInfo.soDienThoai,
+                    memberSince: moment(customerInfo.ngayTao).format("DD-MM-YYYY"),
+                    isWalkInGuest: customerInfo.isWalkInGuest,
+                    ...totalStats
+                },
+                bookings: detailedBookings // ✅ Vẫn hiển thị tất cả booking để xem lịch sử
             }
         });
 
     } catch (error) {
-        console.error("Lỗi tìm kiếm khách hàng:", error);
+        console.error("Lỗi lấy chi tiết khách hàng:", error);
         return res.status(500).json({
             success: false,
-            message: "Lỗi server khi tìm kiếm khách hàng.",
+            message: "Lỗi server khi lấy chi tiết khách hàng.",
             error: error.message
         });
     }
 });
+
 
 // ============================================
 // REVIEWS STATISTICS ROUTES
@@ -464,7 +557,7 @@ statisticHotelRouter.get("/hotelowner/reviews", authorizeRoles("chuKhachSan", "n
 
         // Tạo query để lấy các booking thuộc khách sạn của chủ
         let bookingMatch = { maKhachSan: { $in: hotelIds } };
-        
+
         if (hotelId) {
             const hotelObjectId = toObjectId(hotelId);
             if (hotelObjectId && hotelIds.some(id => id.equals(hotelObjectId))) {
@@ -569,16 +662,16 @@ statisticHotelRouter.get("/hotelowner/reviews/stats", authorizeRoles("chuKhachSa
         }
 
         // Lấy danh sách khách sạn của chủ/nhân viên
-        const hotels = await Hotel.find({ 
-            maChuKhachSan: user.vaiTro === "chuKhachSan" ? user._id : user.maChuKhachSan 
+        const hotels = await Hotel.find({
+            maChuKhachSan: user.vaiTro === "chuKhachSan" ? user._id : user.maChuKhachSan
         });
-        
+
         const hotelIds = hotels.map(h => h._id);
         if (hotelIds.length === 0) {
             return res.status(200).json({
                 success: true,
                 data: {
-                    stats: [1,2,3,4,5].map(star => ({ stars: star, count: 0, percentage: 0 })),
+                    stats: [1, 2, 3, 4, 5].map(star => ({ stars: star, count: 0, percentage: 0 })),
                     summary: { totalReviews: 0, averageRating: 0 }
                 }
             });
@@ -595,10 +688,10 @@ statisticHotelRouter.get("/hotelowner/reviews/stats", authorizeRoles("chuKhachSa
 
         // Pipeline thống kê
         const pipeline = [
-            { 
-                $match: { 
-                    maDatPhong: { $in: bookingIds } 
-                } 
+            {
+                $match: {
+                    maDatPhong: { $in: bookingIds }
+                }
             },
             {
                 $group: {
@@ -725,7 +818,13 @@ statisticHotelRouter.get("/hotelowner/revenue/overview", authorizeRoles("chuKhac
                         $sum: {
                             $cond: [
                                 { $eq: ["$trangThai", "da_tra_phong"] },
-                                "$thongTinGia.tongDonDat",
+                                {
+                                    $add: [
+                                        "$thongTinGia.tongTienPhong",
+                                        "$thongTinGia.phuPhiCuoiTuan",
+                                        { $subtract: [0, "$thongTinGia.giamGia"] }
+                                    ]
+                                },
                                 0
                             ]
                         }
@@ -740,8 +839,24 @@ statisticHotelRouter.get("/hotelowner/revenue/overview", authorizeRoles("chuKhac
                             ]
                         }
                     },
-                    totalDiscount: { $sum: "$thongTinGia.giamGia" },
-                    totalSurcharge: { $sum: "$thongTinGia.phuPhiCuoiTuan" },
+                    totalDiscount: {
+                        $sum: {
+                            $cond: [
+                                { $eq: ["$trangThai", "da_tra_phong"] },
+                                "$thongTinGia.giamGia",
+                                0
+                            ]
+                        }
+                    },
+                    totalSurcharge: {
+                        $sum: {
+                            $cond: [
+                                { $eq: ["$trangThai", "da_tra_phong"] },
+                                "$thongTinGia.phuPhiCuoiTuan",
+                                0
+                            ]
+                        }
+                    },
                     roomRevenue: {
                         $sum: {
                             $cond: [
@@ -783,12 +898,12 @@ statisticHotelRouter.get("/hotelowner/revenue/overview", authorizeRoles("chuKhac
             completedBookings: overview?.completedBookings || 0,
             cancelledBookings: overview?.cancelledBookings || 0,
             pendingBookings: (overview?.totalBookings || 0) - (overview?.completedBookings || 0) - (overview?.cancelledBookings || 0),
-            
+
             // ✅ Hiển thị cả actual và potential revenue
             totalRevenue: overview?.totalRevenue || 0,
             totalRevenueAll: overview?.totalRevenueAll || 0, // Tổng từ tất cả booking
             potentialRevenue: overview?.potentialRevenue || 0, // Revenue tiềm năng
-            
+
             roomRevenue: overview?.roomRevenue || 0,
             serviceRevenue: serviceRevenue[0]?.totalServiceRevenue || 0,
             totalDiscount: overview?.totalDiscount || 0,
@@ -818,6 +933,131 @@ statisticHotelRouter.get("/hotelowner/revenue/overview", authorizeRoles("chuKhac
         });
     }
 });
+
+// Thêm debug code vào API để tìm nguyên nhân chênh lệch
+
+// statisticHotelRouter.get("/hotelowner/revenue/debug", authorizeRoles("chuKhachSan", "nhanVien"), async (req, res) => {
+//     try {
+//         const { hotelId } = req.query;
+//         const user = await User.findById(req.user.id);
+
+//         if (!user || user.vaiTro !== "chuKhachSan") {
+//             return res.status(403).json({
+//                 success: false,
+//                 message: "Không có quyền truy cập!"
+//             });
+//         }
+
+//         const hotels = await Hotel.find({ maChuKhachSan: user._id });
+//         const hotelIds = hotels.map(h => h._id);
+
+//         let query = { maKhachSan: { $in: hotelIds } };
+//         if (hotelId && hotelIds.map(id => id.toString()).includes(hotelId)) {
+//             query.maKhachSan = new mongoose.Types.ObjectId(hotelId);
+//         }
+
+//         // 🔍 DEBUG: Lấy chi tiết từng booking đã hoàn thành
+//         const completedBookings = await Booking.find({
+//             ...query,
+//             trangThai: "da_tra_phong"
+//         }).select('thongTinGia maDatPhong');
+
+//         console.log('🔍 DETAILED BREAKDOWN:');
+//         console.log('Number of completed bookings:', completedBookings.length);
+
+//         let debugSummary = {
+//             totalTongDonDat: 0,
+//             totalTongTienPhong: 0,
+//             totalPhuPhi: 0,
+//             totalGiamGia: 0,
+//             bookingDetails: []
+//         };
+
+//         // Phân tích từng booking
+//         completedBookings.forEach((booking, index) => {
+//             const gia = booking.thongTinGia;
+
+//             debugSummary.totalTongDonDat += gia.tongDonDat || 0;
+//             debugSummary.totalTongTienPhong += gia.tongTienPhong || 0;
+//             debugSummary.totalPhuPhi += gia.phuPhiCuoiTuan || 0;
+//             debugSummary.totalGiamGia += gia.giamGia || 0;
+
+//             debugSummary.bookingDetails.push({
+//                 bookingId: booking._id,
+//                 tongDonDat: gia.tongDonDat,
+//                 tongTienPhong: gia.tongTienPhong,
+//                 phuPhiCuoiTuan: gia.phuPhiCuoiTuan,
+//                 giamGia: gia.giamGia,
+//                 // Tính toán thủ công
+//                 calculatedTotal: (gia.tongTienPhong || 0) + (gia.phuPhiCuoiTuan || 0) - (gia.giamGia || 0),
+//                 difference: (gia.tongDonDat || 0) - ((gia.tongTienPhong || 0) + (gia.phuPhiCuoiTuan || 0) - (gia.giamGia || 0))
+//             });
+//         });
+
+//         // 🔍 DEBUG: Service Revenue từ RoomAssignment  
+//         const detailedServiceRevenue = await RoomAssignment.aggregate([
+//             {
+//                 $lookup: {
+//                     from: "dondatphongs",
+//                     localField: "maDatPhong", 
+//                     foreignField: "_id",
+//                     as: "booking"
+//                 }
+//             },
+//             { $unwind: "$booking" },
+//             { 
+//                 $match: { 
+//                     "booking.maKhachSan": { $in: hotelIds },
+//                     "booking.trangThai": "da_tra_phong" 
+//                 } 
+//             },
+//             { $unwind: { path: "$dichVuSuDung", preserveNullAndEmptyArrays: true } },
+//             {
+//                 $group: {
+//                     _id: "$maDatPhong",
+//                     totalServiceForBooking: { $sum: "$dichVuSuDung.thanhTien" },
+//                     services: { $push: "$dichVuSuDung" }
+//                 }
+//             }
+//         ]);
+
+//         console.log('🔍 CALCULATED TOTALS:');
+//         console.log('Sum of tongDonDat:', debugSummary.totalTongDonDat);
+//         console.log('Sum of tongTienPhong:', debugSummary.totalTongTienPhong);
+//         console.log('Sum of phuPhiCuoiTuan:', debugSummary.totalPhuPhi);
+//         console.log('Sum of giamGia:', debugSummary.totalGiamGia);
+//         console.log('Manual calculation:', debugSummary.totalTongTienPhong + debugSummary.totalPhuPhi - debugSummary.totalGiamGia);
+//         console.log('Difference:', debugSummary.totalTongDonDat - (debugSummary.totalTongTienPhong + debugSummary.totalPhuPhi - debugSummary.totalGiamGia));
+
+//         return res.status(200).json({
+//             success: true,
+//             message: "Debug revenue calculation",
+//             data: {
+//                 summary: debugSummary,
+//                 serviceRevenue: detailedServiceRevenue,
+//                 analysis: {
+//                     totalFromTongDonDat: debugSummary.totalTongDonDat,
+//                     manualCalculation: debugSummary.totalTongTienPhong + debugSummary.totalPhuPhi - debugSummary.totalGiamGia,
+//                     difference: debugSummary.totalTongDonDat - (debugSummary.totalTongTienPhong + debugSummary.totalPhuPhi - debugSummary.totalGiamGia),
+//                     potentialCauses: [
+//                         "tongDonDat includes additional fees not tracked separately",
+//                         "Service revenue is included in tongDonDat",
+//                         "Tax/VAT calculations",
+//                         "Data inconsistency between fields"
+//                     ]
+//                 }
+//             }
+//         });
+
+//     } catch (error) {
+//         console.error("Debug revenue error:", error);
+//         return res.status(500).json({
+//             success: false,
+//             message: "Debug failed",
+//             error: error.message
+//         });
+//     }
+// });
 
 // 8. Doanh thu theo ngày
 statisticHotelRouter.get("/hotelowner/revenue/daily", authorizeRoles("chuKhachSan", "nhanVien"), async (req, res) => {

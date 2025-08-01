@@ -35,6 +35,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "apply": MessageLookupByLibrary.simpleMessage("Apply"),
     "available": MessageLookupByLibrary.simpleMessage("Available"),
     "back": MessageLookupByLibrary.simpleMessage("Back"),
+    "backDetailHotel": MessageLookupByLibrary.simpleMessage(
+      "Back to hotel details",
+    ),
     "banedAccount": MessageLookupByLibrary.simpleMessage(
       "Your account has been locked, please contact the administrator for assistance!",
     ),
@@ -111,6 +114,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "chooseFromGallery": MessageLookupByLibrary.simpleMessage(
       "Choose from Gallery",
     ),
+    "clickToViewMap": MessageLookupByLibrary.simpleMessage("Click to view map"),
     "close": MessageLookupByLibrary.simpleMessage("Close"),
     "cn_Sunday": MessageLookupByLibrary.simpleMessage("Su"),
     "completePaymentOn": MessageLookupByLibrary.simpleMessage(
@@ -145,6 +149,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "delete": MessageLookupByLibrary.simpleMessage("Delete"),
     "description": MessageLookupByLibrary.simpleMessage("Description"),
     "discount": MessageLookupByLibrary.simpleMessage("Discount"),
+    "distance": MessageLookupByLibrary.simpleMessage("Distance"),
     "done": MessageLookupByLibrary.simpleMessage("Done"),
     "dontHaveAccount": MessageLookupByLibrary.simpleMessage(
       "Don\'t have an account?",
@@ -208,6 +213,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Fill Your Profile",
     ),
     "filterHotel": MessageLookupByLibrary.simpleMessage("Filter Hotel"),
+    "findingLocationHotel": MessageLookupByLibrary.simpleMessage(
+      "Looking for hotel location...",
+    ),
+    "findingYourLocation": MessageLookupByLibrary.simpleMessage(
+      "Looking for your location...",
+    ),
     "forgotPassword": MessageLookupByLibrary.simpleMessage(
       "Forgot the password?",
     ),
@@ -282,6 +293,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "moreReviews": MessageLookupByLibrary.simpleMessage("More"),
     "morning": MessageLookupByLibrary.simpleMessage("Morning"),
     "myBooking": MessageLookupByLibrary.simpleMessage("My Booking"),
+    "myLocation": MessageLookupByLibrary.simpleMessage("My location"),
     "nameCannotContainSpecialCharacters": MessageLookupByLibrary.simpleMessage(
       "The name cannot contain special characters",
     ),
@@ -450,6 +462,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "searchPlaceholder": MessageLookupByLibrary.simpleMessage("Search..."),
     "security": MessageLookupByLibrary.simpleMessage("Security"),
     "seeAll": MessageLookupByLibrary.simpleMessage("See all"),
+    "seeHotels": MessageLookupByLibrary.simpleMessage("See hotels"),
     "selectDateInPast": MessageLookupByLibrary.simpleMessage(
       "No date selected in the past!",
     ),
@@ -549,6 +562,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "youNoCheckInBooking": MessageLookupByLibrary.simpleMessage(
       "You do not have this room",
     ),
+    "yourDistance": MessageLookupByLibrary.simpleMessage("Distance from you"),
     "zaloPayDescription": MessageLookupByLibrary.simpleMessage(
       "Pay via ZaloPay e-wallet",
     ),

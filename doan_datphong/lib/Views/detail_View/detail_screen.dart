@@ -1,6 +1,7 @@
 import 'package:doan_datphong/Models/KhachSan.dart';
 import 'package:doan_datphong/Models/LichPhongTrong.dart';
 import 'package:doan_datphong/Views/components/NotificationDialog.dart';
+import 'package:doan_datphong/Views/detail_View/widgets/hotelMap_screen.dart';
 import 'package:doan_datphong/Views/detail_View/widgets/reviews_section.dart';
 import 'package:doan_datphong/Views/listRoom_View/listRoom_screen.dart';
 import 'package:doan_datphong/Views/selectDate_View/selectDate_screen.dart';
@@ -519,19 +520,79 @@ class _DetailState extends State<DetailScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Container(
-                        height: 200,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Center(
-                          child: Icon(Icons.map, size: 50, color: Colors.blue),
+                      InkWell(
+                        onTap: () {
+                          // Navigate to map screen
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => HotelMapScreen(hotel: widget.hotel),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          height: 200,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                          ),
+                          child: Stack(
+                            children: [
+                              Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.map,
+                                      size: 50,
+                                      color: Colors.blue,
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      S.of(context).clickToViewMap,
+                                      style: TextStyle(
+                                        color: Colors.blue,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      widget.hotel.diaChi,
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 12,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // Overlay để làm rõ là có thể click
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: Container(
+                                  padding: EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Icon(
+                                    Icons.open_in_new,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-
                       const SizedBox(height: 24),
-
                       // ✅ ĐÁNH GIÁ
                       ReviewsSection(hotelId: widget.hotel.id),
                       const SizedBox(height: 80),

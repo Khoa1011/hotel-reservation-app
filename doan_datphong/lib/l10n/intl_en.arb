@@ -659,5 +659,18 @@
   "selectYourArrivalDate": "Select arrival date",
   "selectTravelDate": "Select travel date",
   "sortResults": "Sort Results",
-  "filterHotel":"Filter Hotel"
+  "filterHotel":"Filter Hotel",
+
+
+
+
+
+  "findingLocationHotel": "Looking for hotel location...",
+  "myLocation": "My location",
+  "findingYourLocation": "Looking for your location...",
+  "yourDistance":"Distance from you",
+  "seeHotels": "See hotels",
+  "distance": "Distance",
+  "backDetailHotel": "Back to hotel details",
+  "clickToViewMap": "Click to view map"
 }

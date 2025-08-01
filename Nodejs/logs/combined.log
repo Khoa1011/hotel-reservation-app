@@ -2683,3 +2683,7 @@
 {"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-31T15:38:16.913Z"}
 {"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-31T15:38:57.077Z"}
 {"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-07-31T15:58:53.895Z"}
+{"level":"info","message":"🔥 Firebase Admin SDK initialized successfully","service":"notification-service","timestamp":"2025-08-01T07:15:54.034Z"}
+{"level":"info","message":"📱 Registering FCM token for user: 685246608e93b7fa408b4014","service":"notification-service","timestamp":"2025-08-01T07:22:17.817Z"}
+{"level":"info","message":"📝 Registering FCM token for user: 685246608e93b7fa408b4014","service":"notification-service","timestamp":"2025-08-01T07:22:17.820Z"}
+{"level":"info","message":"✅ FCM token registered successfully for user 685246608e93b7fa408b4014","service":"notification-service","timestamp":"2025-08-01T07:22:17.911Z"}

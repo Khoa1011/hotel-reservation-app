@@ -58,6 +58,10 @@ dependencies:
   crypto: ^3.0.3
   app_settings: ^5.1.1
   firebase_messaging: ^15.2.9
+  latlong2: ^0.9.1
+  location: ^8.0.1
+  flutter_map: ^8.2.1
+  geocoding: ^3.0.0
 #  flutter_local_notifications: ^13.0.0
 
 

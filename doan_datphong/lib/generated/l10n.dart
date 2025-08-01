@@ -2673,6 +2673,71 @@ class S {
       args: [],
     );
   }
+
+  /// `Looking for hotel location...`
+  String get findingLocationHotel {
+    return Intl.message(
+      'Looking for hotel location...',
+      name: 'findingLocationHotel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `My location`
+  String get myLocation {
+    return Intl.message('My location', name: 'myLocation', desc: '', args: []);
+  }
+
+  /// `Looking for your location...`
+  String get findingYourLocation {
+    return Intl.message(
+      'Looking for your location...',
+      name: 'findingYourLocation',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Distance from you`
+  String get yourDistance {
+    return Intl.message(
+      'Distance from you',
+      name: 'yourDistance',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `See hotels`
+  String get seeHotels {
+    return Intl.message('See hotels', name: 'seeHotels', desc: '', args: []);
+  }
+
+  /// `Distance`
+  String get distance {
+    return Intl.message('Distance', name: 'distance', desc: '', args: []);
+  }
+
+  /// `Back to hotel details`
+  String get backDetailHotel {
+    return Intl.message(
+      'Back to hotel details',
+      name: 'backDetailHotel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Click to view map`
+  String get clickToViewMap {
+    return Intl.message(
+      'Click to view map',
+      name: 'clickToViewMap',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

@@ -663,6 +663,16 @@
   "highestPrice": "Giá cao nhất",
   "lowestPrice": "Giá thấp nhất",
   "sortResults": "Sắp xếp kết quả",
-  "filterHotel":"Lọc tìm kiếm khách sạn"
+  "filterHotel":"Lọc tìm kiếm khách sạn",
+
+
+  "findingLocationHotel": "Đang tìm vị trí khách sạn...",
+  "myLocation": "Vị trí của tôi",
+  "findingYourLocation": "Đang tìm vị trí của bạn...",
+"yourDistance":"Cách bạn",
+  "seeHotels": "Xem khách sạn",
+  "distance": "Khoảng cách",
+"backDetailHotel": "Quay lại chi tiết khách sạn",
+  "clickToViewMap": "Nhấn để xem bản đồ"
 
 }

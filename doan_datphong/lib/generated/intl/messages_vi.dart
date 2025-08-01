@@ -35,6 +35,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "apply": MessageLookupByLibrary.simpleMessage("Áp dụng"),
     "available": MessageLookupByLibrary.simpleMessage("Có sẵn"),
     "back": MessageLookupByLibrary.simpleMessage("Quay lại"),
+    "backDetailHotel": MessageLookupByLibrary.simpleMessage(
+      "Quay lại chi tiết khách sạn",
+    ),
     "banedAccount": MessageLookupByLibrary.simpleMessage(
       "Tài khoản của bạn đã bị cấm đăng nhập, hãy liên lạc với admin để có thể được hỗ trợ!",
     ),
@@ -115,6 +118,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "chooseFromGallery": MessageLookupByLibrary.simpleMessage(
       "Chọn Từ Thư Viện",
     ),
+    "clickToViewMap": MessageLookupByLibrary.simpleMessage(
+      "Nhấn để xem bản đồ",
+    ),
     "close": MessageLookupByLibrary.simpleMessage("Đóng"),
     "cn_Sunday": MessageLookupByLibrary.simpleMessage("CN"),
     "completePaymentOn": MessageLookupByLibrary.simpleMessage(
@@ -149,6 +155,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "delete": MessageLookupByLibrary.simpleMessage("Xóa"),
     "description": MessageLookupByLibrary.simpleMessage("Mô tả"),
     "discount": MessageLookupByLibrary.simpleMessage("Giảm giá"),
+    "distance": MessageLookupByLibrary.simpleMessage("Khoảng cách"),
     "done": MessageLookupByLibrary.simpleMessage("Hoàn thành"),
     "dontHaveAccount": MessageLookupByLibrary.simpleMessage(
       "Chưa có tài khoản?",
@@ -211,6 +218,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "filterHotel": MessageLookupByLibrary.simpleMessage(
       "Lọc tìm kiếm khách sạn",
+    ),
+    "findingLocationHotel": MessageLookupByLibrary.simpleMessage(
+      "Đang tìm vị trí khách sạn...",
+    ),
+    "findingYourLocation": MessageLookupByLibrary.simpleMessage(
+      "Đang tìm vị trí của bạn...",
     ),
     "forgotPassword": MessageLookupByLibrary.simpleMessage("Quên mật khẩu?"),
     "from": MessageLookupByLibrary.simpleMessage("Từ"),
@@ -286,6 +299,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "moreReviews": MessageLookupByLibrary.simpleMessage("Xem thêm"),
     "morning": MessageLookupByLibrary.simpleMessage("Sáng"),
     "myBooking": MessageLookupByLibrary.simpleMessage("Đặt phòng của tôi"),
+    "myLocation": MessageLookupByLibrary.simpleMessage("Vị trí của tôi"),
     "nameCannotContainSpecialCharacters": MessageLookupByLibrary.simpleMessage(
       "Tên không được chứa ký tự đặc biệt",
     ),
@@ -470,6 +484,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "searchPlaceholder": MessageLookupByLibrary.simpleMessage("Tìm kiếm..."),
     "security": MessageLookupByLibrary.simpleMessage("Bảo mật"),
     "seeAll": MessageLookupByLibrary.simpleMessage("Xem tất cả"),
+    "seeHotels": MessageLookupByLibrary.simpleMessage("Xem khách sạn"),
     "selectDateInPast": MessageLookupByLibrary.simpleMessage(
       "Không được chọn ngày trong quá khứ!",
     ),
@@ -567,6 +582,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "youNoCheckInBooking": MessageLookupByLibrary.simpleMessage(
       "Bạn không nhận phòng này",
     ),
+    "yourDistance": MessageLookupByLibrary.simpleMessage("Cách bạn"),
     "zaloPayDescription": MessageLookupByLibrary.simpleMessage(
       "Thanh toán qua ví điện tử ZaloPay",
     ),

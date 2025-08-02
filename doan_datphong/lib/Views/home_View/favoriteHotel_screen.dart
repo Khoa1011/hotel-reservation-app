@@ -32,7 +32,7 @@ class _FavoriteHotelsScreenState extends State<FavoriteHotelsScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         title: Text(
-          "Khách sạn đã lưu",
+          S.of(context).bookmarkedHotel,
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -43,7 +43,7 @@ class _FavoriteHotelsScreenState extends State<FavoriteHotelsScreen> {
           icon: Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        // ✅ THÊM: Refresh button để test
+
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),
@@ -74,7 +74,7 @@ class _FavoriteHotelsScreenState extends State<FavoriteHotelsScreen> {
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: "Tìm kiếm khách sạn...",
+                  hintText: S.of(context).searchPlaceholder,
                   prefixIcon: Icon(Icons.search),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -108,7 +108,7 @@ class _FavoriteHotelsScreenState extends State<FavoriteHotelsScreen> {
                             Icon(Icons.bookmark, size: 64, color: Colors.grey),
                             SizedBox(height: 16),
                             Text(
-                              "Chưa có khách sạn nào được lưu",
+                              S.of(context).noHotelSavedYet,
                               style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                             ),
                           ],
@@ -141,7 +141,7 @@ class _FavoriteHotelsScreenState extends State<FavoriteHotelsScreen> {
                             onPressed: () {
                               context.read<FavoriteHotelsBloc>().add(LoadFavoriteHotels());
                             },
-                            child: Text("Thử lại"),
+                            child: Text(S.of(context).tryAgain),
                           ),
                         ],
                       ),
@@ -313,7 +313,7 @@ class _DeleteFavoriteBottomSheet extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              "Xóa khỏi danh sách yêu thích",
+              S.of(context).removeFromFavorite,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -332,7 +332,7 @@ class _DeleteFavoriteBottomSheet extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              "Bạn có chắc chắn muốn xóa khách sạn này khỏi danh sách yêu thích của mình không?",
+              S.of(context).areYouSureRemove,
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.black87,
@@ -342,7 +342,7 @@ class _DeleteFavoriteBottomSheet extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              "Thao tác này không thể hoàn tác. Bạn có thể thêm lại khách sạn vào danh sách yêu thích bất kỳ lúc nào.",
+              S.of(context).thisActionCannotBeUndone,
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[600],
@@ -364,7 +364,7 @@ class _DeleteFavoriteBottomSheet extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: Text(
-                      "Hủy",
+                      S.of(context).cancel,
                       style: TextStyle(
                         color: Colors.black54,
                         fontWeight: FontWeight.w500,
@@ -385,7 +385,7 @@ class _DeleteFavoriteBottomSheet extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: Text(
-                      "Xóa khỏi yêu thích",
+                      S.of(context).removeFromFavorite,
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w500,

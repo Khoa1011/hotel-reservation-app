@@ -41,7 +41,7 @@
   "@@_REGISTRATION_SECTION": "--- Phần đăng ký ---",
   "dontHaveAccount": "Chưa có tài khoản?",
   "@dontHaveAccount": {
-    "description": "Sign up prompt text"
+    "description": "Sign urompt text"
   },
   "signUp": "Đăng ký",
   "@signUp": {
@@ -202,6 +202,11 @@
 
   "@@_BOTTOM_NAVIGATION": "--- Điều hướng dưới ---",
   "home": "Trang chủ",
+  "showList": "Hiển thị",
+
+  "cardType": "Thẻ",
+  "listType": "Danh sách",
+  "gridType": "Lưới",
   "@home": {
     "description": "Home tab label"
   },
@@ -458,6 +463,7 @@
   "messageSelectDateDateCheckIn": "Vui lòng chọn ngày nhận trả phòng",
   "minimumHour": "Thuê theo giờ tối thiểu 1 giờ!",
   "optionSeletedTime": "Tùy chọn giờ",
+  "selectTimeOverNight": "Chọn giờ qua đêm",
   "guestsRooms": "Số lượng khách & phòng",
   "adults": "Người lớn",
   "children": "Trẻ em",
@@ -662,6 +668,7 @@
   "highestPopularity": "Mức độ phổ biến cao nhất",
   "highestPrice": "Giá cao nhất",
   "lowestPrice": "Giá thấp nhất",
+  "price": "Giá",
   "sortResults": "Sắp xếp kết quả",
   "filterHotel":"Lọc tìm kiếm khách sạn",
 
@@ -673,6 +680,36 @@
   "seeHotels": "Xem khách sạn",
   "distance": "Khoảng cách",
 "backDetailHotel": "Quay lại chi tiết khách sạn",
-  "clickToViewMap": "Nhấn để xem bản đồ"
+  "clickToViewMap": "Nhấn để xem bản đồ",
+
+  "totalSpending": "Tổng chi tiêu",
+  "reBook": "Đặt lại",
+  "noHotelBookedYet": "Chưa có khách sạn nào được đặt",
+  "exploreAndBook": "Khám phá và đặt khách sạn đầu tiên!",
+  "recently": "Gần đây",
+  "today": "Hôm nay",
+  "lastTime": "Lần cuối",
+  "yesterday": "Hôm qua",
+  "totalTimeBooked": "Số lần đặt",
+  "totalGuests": "Tổng khách",
+  "totalRooms": "Tổng phòng",
+  "outOfRoom": "Hết phòng",
+  "only": "Chỉ còn",
+  "roomAvailables": "{count, plural, =1{phòng có sẵn} other{phòng có sẵn}}",
+  "roomsLeft": "{count, plural, =1{phòng} other{phòng}}",
+  "availableRooms": "{count} {count, plural, =1{phòng có sẵn} other{phòng có sẵn}}",
+
+
+
+  "bookmarkedHotel": "Khách sạn đã lưu",
+  "noHotelSavedYet": "Chưa có khách sạn nào được lưu",
+  "removeFromFavorite": "Xóa khỏi danh sách yêu thích",
+  "areYouSureRemove": "Bạn có chắc chắn muốn xóa khách sạn này khỏi danh sách yêu thích của mình không?",
+  "thisActionCannotBeUndone": "Thao tác này không thể hoàn tác. Bạn có thể thêm lại khách sạn vào danh sách yêu thích bất kỳ lúc nào."
+
+
+
+
+
 
 }

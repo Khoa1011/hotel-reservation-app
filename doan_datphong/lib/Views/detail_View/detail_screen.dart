@@ -620,155 +620,150 @@ class _DetailState extends State<DetailScreen> {
                   ),
                 ],
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Nút "Chọn ngày giờ check in"
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _showSelectedDateTime();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 10,
-                          horizontal: 16,
-                        ),
-                        backgroundColor: Colors.grey[200],
-                        foregroundColor: Colors.black,
-                        elevation: 1,
-                        overlayColor: Colors.black.withOpacity(0.05),
-                        splashFactory: InkRipple.splashFactory,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        alignment: Alignment.centerLeft,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 300),
-                            child: Icon(
-                              key: ValueKey<bool>(isNightTime),
-                              isNightTime
-                                  ? FontAwesomeIcons.cloudMoon
-                                  : FontAwesomeIcons.cloudSun,
-                              size: 20,
-                              color:
-                                  isNightTime
-                                      ? Color(
-                                        0xFF010535,
-                                      ) // Màu cho icon ban đêm
-                                      : Color(0xFFF93243),
-                            ),
-                            transitionBuilder: (child, animation) {
-                              return ScaleTransition(
-                                scale: animation,
-                                child: FadeTransition(
-                                  opacity: animation,
-                                  child: child,
-                                ),
-                              );
-                            },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Nút "Chọn ngày giờ check in" - Compact version
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          _showSelectedDateTime();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 16,
                           ),
-                          const SizedBox(width: 12),
+                          backgroundColor: Colors.grey[200],
+                          foregroundColor: Colors.black,
+                          elevation: 1,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            // Icon
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 300),
+                              child: Icon(
+                                key: ValueKey<bool>(isNightTime),
+                                isNightTime ? FontAwesomeIcons.cloudMoon : FontAwesomeIcons.cloudSun,
+                                size: 18,
+                                color: isNightTime ? Color(0xFF010535) : Color(0xFFF93243),
+                              ),
+                            ),
 
-                          SizedBox(width: 10),
-                          Row(
-                            children: [
-                              Text(
-                                _selecteDateCheckInShowText,
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 14,
+                            const SizedBox(width: 10),
+
+                            // ✅ Compact text layout
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  // Check-in date
+                                  Flexible(
+                                    flex: 2,
+                                    child: Text(
+                                      _selecteDateCheckInShowText,
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+
+                                  if (_selecteDateCheckOutShowText.isNotEmpty) ...[
+                                    const SizedBox(width: 4),
+                                    Icon(Icons.arrow_forward_rounded, color: Color(0xFF525150), size: 16),
+                                    const SizedBox(width: 4),
+
+                                    // Check-out date
+                                    Flexible(
+                                      flex: 2,
+                                      child: Text(
+                                        _selecteDateCheckOutShowText,
+                                        style: TextStyle(color: Colors.black, fontSize: 15),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+
+                                    const SizedBox(width: 6),
+
+                                    // Booking type - Shortened
+                                    Container(
+                                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Color(0xFF1565C0).withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        _bookingType,
+                                        style: TextStyle(
+                                          color: Color(0xFF1565C0),
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    // Book now button giữ nguyên
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: const Color(0xFF1565C0),
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () {
+                          if (_selecteDateCheckInShowText == S.of(context).selectDatesAndTimeCheckIn ||
+                              _selecteDateCheckOutShowText.isEmpty) {
+                            NotificationDialog.showInfo(
+                              context,
+                              message: S.of(context).messageSelectDateTimeCheckIn,
+                            );
+                          } else {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (builder) => ListRoomScreen(
+                                  idHotel: widget.hotel.id,
+                                  lichPhongTrong: lichPhongTrong,
                                 ),
                               ),
-                              if (_selecteDateCheckOutShowText.isNotEmpty) ...[
-                                const SizedBox(width: 8),
-                                const Icon(
-                                  Icons.arrow_forward_rounded,
-                                  color: Color(0xFF525150),
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  _selecteDateCheckOutShowText,
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                Container(
-                                  width: 1,
-                                  height: 20,
-                                  color: Color(0xFF525150),
-                                  margin: EdgeInsets.symmetric(horizontal: 6),
-                                ),
-                                Text(
-                                  _bookingType,
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ],
+                            );
+                          }
+                        },
+                        child: Text(
+                          S.of(context).bookNow,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-
-                  // Nút "Book now!"
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        overlayColor: Colors.black.withOpacity(0.05),
-                        splashFactory: InkRipple.splashFactory,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: const Color(0xFF1565C0),
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      onPressed:() {
-                        if(_selecteDateCheckInShowText == S.of(context).selectDatesAndTimeCheckIn ||
-                            _selecteDateCheckOutShowText.isEmpty){
-                          NotificationDialog.showInfo(
-                              context,
-                              message: S.of(context).messageSelectDateTimeCheckIn);
-
-                        }
-                        else {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder:
-                                  (builder) => ListRoomScreen(
-                                    idHotel: widget.hotel.id,
-                                      lichPhongTrong:lichPhongTrong,
-                                  ),
-                            ),
-                          );
-                        }
-                      },
-                      child: Text(
-                        S.of(context).bookNow,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                )
             ),
           ),
         ],

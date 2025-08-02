@@ -136,6 +136,20 @@ mongoose
 
 pathUrl(app);
 
+// ✅ THÊM PHẦN NÀY: Khởi tạo Cron Service
+console.log('🔧 Initializing notification services...');
+
+// Import CronService
+const CronService = require('./services/CronService');
+
+// Khởi tạo cron jobs
+try {
+    CronService.initializeJobs();
+    console.log('✅ Cron jobs initialized successfully');
+} catch (error) {
+    console.error('❌ Error initializing cron jobs:', error);
+}
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

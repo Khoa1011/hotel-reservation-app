@@ -84,7 +84,7 @@ class _RoomCardState extends State<RoomCard> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            currencyFormat.format(widget.loaiPhong.giaLoaiPhong?.giaCoBan),
+                            currencyFormat.format(widget.loaiPhong.giaLoaiPhong?.phanTichGia.tongPhu),
                             style: const TextStyle(
                               fontSize: 18,
                               color: Color(0xFF1565C0),
@@ -92,7 +92,7 @@ class _RoomCardState extends State<RoomCard> {
                             ),
                           ),
                           Text(
-                            '/${widget.loaiPhong.donVi}',
+                            '/ ${_buildUnitBookingTypeText(context)}',
                             style: const TextStyle(
                               fontSize: 15,
                               color: Color(0xFF525150),
@@ -142,6 +142,31 @@ class _RoomCardState extends State<RoomCard> {
         ),
       ),
     );
+  }
+
+  String _buildUnitBookingTypeText(BuildContext context) {
+    final locale = Localizations.localeOf(context);
+    final isVietnamese = locale.languageCode == 'vi';
+    final bookingType = widget.lichPhongTrong.loaiDatPhong;
+    final durationBooking = widget.loaiPhong.khoangThoiGian;
+
+    if (isVietnamese) {
+      if(bookingType == 'theo_gio'){
+        return 'Cho $durationBooking giờ';
+      }else if (bookingType == 'qua_dem'){
+        return 'Cho $durationBooking đêm';
+      }else{
+        return 'Cho $durationBooking ngày';
+      }
+    } else {
+      if(bookingType == 'theo_gio'){
+        return 'For $durationBooking hour${durationBooking > 1 ? 's': ''}';
+      }else if (bookingType == 'qua_dem'){
+        return 'For $durationBooking night${durationBooking > 1 ? 's': ''}';
+      }else{
+        return 'For $durationBooking day${durationBooking > 1 ? 's': ''}';
+      }
+    }
   }
 
   Widget _buildImageSection(BuildContext context) {
@@ -382,7 +407,7 @@ class _RoomCardState extends State<RoomCard> {
           Icon(icon, size: 18, color: textColor),
           const SizedBox(width: 8),
           Text(
-            widget.loaiPhong.availabilityText,
+            widget.loaiPhong.getAvailabilityText(context),
             style: TextStyle(
               fontSize: 14,
               color: textColor,

@@ -489,6 +489,26 @@ class S {
     return Intl.message('Home', name: 'home', desc: 'Home tab label', args: []);
   }
 
+  /// `Show`
+  String get showList {
+    return Intl.message('Show', name: 'showList', desc: '', args: []);
+  }
+
+  /// `Card`
+  String get cardType {
+    return Intl.message('Card', name: 'cardType', desc: '', args: []);
+  }
+
+  /// `List`
+  String get listType {
+    return Intl.message('List', name: 'listType', desc: '', args: []);
+  }
+
+  /// `Grid`
+  String get gridType {
+    return Intl.message('Grid', name: 'gridType', desc: '', args: []);
+  }
+
   /// `Search`
   String get search {
     return Intl.message(
@@ -2734,6 +2754,195 @@ class S {
     return Intl.message(
       'Click to view map',
       name: 'clickToViewMap',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Number of bookings`
+  String get totalTimeBooked {
+    return Intl.message(
+      'Number of bookings',
+      name: 'totalTimeBooked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Yesterday`
+  String get yesterday {
+    return Intl.message('Yesterday', name: 'yesterday', desc: '', args: []);
+  }
+
+  /// `Today`
+  String get today {
+    return Intl.message('Today', name: 'today', desc: '', args: []);
+  }
+
+  /// `Last time`
+  String get lastTime {
+    return Intl.message('Last time', name: 'lastTime', desc: '', args: []);
+  }
+
+  /// `Recently`
+  String get recently {
+    return Intl.message('Recently', name: 'recently', desc: '', args: []);
+  }
+
+  /// `Total spending`
+  String get totalSpending {
+    return Intl.message(
+      'Total spending',
+      name: 'totalSpending',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rebook`
+  String get reBook {
+    return Intl.message('Rebook', name: 'reBook', desc: '', args: []);
+  }
+
+  /// `No hotels booked yet`
+  String get noHotelBookedYet {
+    return Intl.message(
+      'No hotels booked yet',
+      name: 'noHotelBookedYet',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Explore and book your first hotel!`
+  String get exploreAndBook {
+    return Intl.message(
+      'Explore and book your first hotel!',
+      name: 'exploreAndBook',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Price`
+  String get price {
+    return Intl.message('Price', name: 'price', desc: '', args: []);
+  }
+
+  /// `Total guests`
+  String get totalGuests {
+    return Intl.message(
+      'Total guests',
+      name: 'totalGuests',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Total rooms`
+  String get totalRooms {
+    return Intl.message('Total rooms', name: 'totalRooms', desc: '', args: []);
+  }
+
+  /// `Select overnight hours`
+  String get selectTimeOverNight {
+    return Intl.message(
+      'Select overnight hours',
+      name: 'selectTimeOverNight',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Sold out`
+  String get outOfRoom {
+    return Intl.message('Sold out', name: 'outOfRoom', desc: '', args: []);
+  }
+
+  /// `Only`
+  String get only {
+    return Intl.message('Only', name: 'only', desc: '', args: []);
+  }
+
+  /// `{count, plural, =1{room available} other{rooms available}}`
+  String roomAvailables(num count) {
+    return Intl.plural(
+      count,
+      one: 'room available',
+      other: 'rooms available',
+      name: 'roomAvailables',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `{count, plural, =1{room} other{rooms}}`
+  String roomsLeft(num count) {
+    return Intl.plural(
+      count,
+      one: 'room',
+      other: 'rooms',
+      name: 'roomsLeft',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `{count} {count, plural, =1{room available} other{rooms available}}`
+  String availableRooms(num count) {
+    return Intl.message(
+      '$count ${Intl.plural(count, one: 'room available', other: 'rooms available')}',
+      name: 'availableRooms',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `This action cannot be undone. You can add the hotel back to your favorites list at any time.`
+  String get thisActionCannotBeUndone {
+    return Intl.message(
+      'This action cannot be undone. You can add the hotel back to your favorites list at any time.',
+      name: 'thisActionCannotBeUndone',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Are you sure you want to remove this hotel from your favorites list?`
+  String get areYouSureRemove {
+    return Intl.message(
+      'Are you sure you want to remove this hotel from your favorites list?',
+      name: 'areYouSureRemove',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Remove from favorites`
+  String get removeFromFavorite {
+    return Intl.message(
+      'Remove from favorites',
+      name: 'removeFromFavorite',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Hotel saved`
+  String get bookmarkedHotel {
+    return Intl.message(
+      'Hotel saved',
+      name: 'bookmarkedHotel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No hotels saved yet`
+  String get noHotelSavedYet {
+    return Intl.message(
+      'No hotels saved yet',
+      name: 'noHotelSavedYet',
       desc: '',
       args: [],
     );

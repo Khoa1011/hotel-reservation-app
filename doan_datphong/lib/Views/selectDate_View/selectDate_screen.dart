@@ -764,7 +764,7 @@ print("ket qua da chon: ${result}");
                 _selectedCheckInTime = time;
               });
             },
-            title: 'Chọn giờ qua đêm',
+            title: S.of(context).selectTimeOverNight,
           )
         ),
       ],

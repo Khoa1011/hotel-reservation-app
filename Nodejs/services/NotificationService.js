@@ -277,7 +277,7 @@ class NotificationService {
   /**
    * 🚀 Gửi notifications đã lên lịch (được gọi bởi cron job)
    */
-  async sendScheduledNotifications() {
+async sendScheduledNotifications() {
     try {
       const now = moment().toDate();
       
@@ -285,7 +285,7 @@ class NotificationService {
       const pendingNotifications = await NotificationLog.find({
         trangThai: 'da_len_lich',
         henGio: { $lte: now }
-      }).limit(50); // Giới hạn để tránh overload
+      }).limit(50);
 
       if (pendingNotifications.length === 0) {
         logger.info('📭 No scheduled notifications to send');
@@ -299,6 +299,16 @@ class NotificationService {
 
       for (const notif of pendingNotifications) {
         try {
+          // ✅ FIX 1: Kiểm tra soLanThu trước khi xử lý
+          if (notif.soLanThu >= 3) {
+            logger.warn(`⚠️ Notification ${notif._id} exceeded retry limit, marking as failed`);
+            notif.trangThai = 'that_bai';
+            notif.soLanThu = 3; // ✅ Đặt về max để tránh validation error
+            await notif.save();
+            failCount++;
+            continue;
+          }
+
           // Kiểm tra booking còn hợp lệ không
           const booking = await Booking.findById(notif.maDatPhong);
           if (!booking || booking.trangThai === 'da_huy') {
@@ -328,40 +338,51 @@ class NotificationService {
             data
           );
 
-          // Cập nhật log
-          notif.trangThai = result.success ? 'da_gui' : 'that_bai';
-          notif.thoiGianGui = new Date();
-          notif.tongSoToken = result.totalTokens;
-          notif.soThanhCong = result.successCount;
-          notif.soThatBai = result.failureCount;
-          
-          if (!result.success) {
-            notif.soLanThu += 1;
-            // Retry sau 5 phút nếu chưa quá 3 lần
-            if (notif.soLanThu <= 3) {
-              notif.henGio = moment().add(5, 'minutes').toDate();
-              notif.trangThai = 'da_len_lich';
-            }
-          }
-
-          await notif.save();
-
+          // ✅ FIX 2: Cập nhật log cẩn thận hơn
           if (result.success) {
+            notif.trangThai = 'da_gui';
+            notif.thoiGianGui = new Date();
+            notif.tongSoToken = result.totalTokens;
+            notif.soThanhCong = result.successCount;
+            notif.soThatBai = result.failureCount;
             successCount++;
             logger.info(`✅ Sent notification: ${notif.loaiThongBao} for booking ${notif.maDatPhong}`);
           } else {
+            // ✅ FIX 3: Tăng soLanThu một cách an toàn
+            const currentRetries = notif.soLanThu || 0;
+            if (currentRetries < 3) {
+              notif.soLanThu = currentRetries + 1;
+              notif.henGio = moment().add(5, 'minutes').toDate();
+              notif.trangThai = 'da_len_lich';
+              logger.warn(`⚠️ Retry ${notif.soLanThu}/3 for notification ${notif._id}`);
+            } else {
+              notif.trangThai = 'that_bai';
+              notif.soLanThu = 3; // ✅ Đảm bảo không vượt quá max
+              logger.error(`❌ Max retries reached for notification ${notif._id}`);
+            }
             failCount++;
-            logger.warn(`❌ Failed to send notification: ${notif.loaiThongBao} for booking ${notif.maDatPhong}`);
           }
+
+          await notif.save();
 
         } catch (error) {
           failCount++;
           logger.error(`❌ Error processing notification ${notif._id}:`, error);
           
-          // Mark as failed
-          notif.trangThai = 'that_bai';
-          notif.soLanThu += 1;
-          await notif.save();
+          // ✅ FIX 4: Xử lý lỗi an toàn
+          try {
+            const currentRetries = notif.soLanThu || 0;
+            if (currentRetries < 3) {
+              notif.soLanThu = currentRetries + 1;
+              notif.henGio = moment().add(10, 'minutes').toDate();
+            } else {
+              notif.trangThai = 'that_bai';
+              notif.soLanThu = 3;
+            }
+            await notif.save();
+          } catch (saveError) {
+            logger.error(`❌ Error saving failed notification ${notif._id}:`, saveError);
+          }
         }
       }
 

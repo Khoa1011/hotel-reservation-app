@@ -20,6 +20,15 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'en';
 
+  static String m0(count) =>
+      "${count} ${Intl.plural(count, one: 'room available', other: 'rooms available')}";
+
+  static String m1(count) =>
+      "${Intl.plural(count, one: 'room available', other: 'rooms available')}";
+
+  static String m2(count) =>
+      "${Intl.plural(count, one: 'room', other: 'rooms')}";
+
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "adults": MessageLookupByLibrary.simpleMessage("Adults"),
@@ -33,7 +42,11 @@ class MessageLookup extends MessageLookupByLibrary {
       "Amenity group is empty",
     ),
     "apply": MessageLookupByLibrary.simpleMessage("Apply"),
+    "areYouSureRemove": MessageLookupByLibrary.simpleMessage(
+      "Are you sure you want to remove this hotel from your favorites list?",
+    ),
     "available": MessageLookupByLibrary.simpleMessage("Available"),
+    "availableRooms": m0,
     "back": MessageLookupByLibrary.simpleMessage("Back"),
     "backDetailHotel": MessageLookupByLibrary.simpleMessage(
       "Back to hotel details",
@@ -62,6 +75,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "bookingSuccessful": MessageLookupByLibrary.simpleMessage(
       "Booking Successful!",
     ),
+    "bookmarkedHotel": MessageLookupByLibrary.simpleMessage("Hotel saved"),
     "callHotel": MessageLookupByLibrary.simpleMessage("Call Hotel"),
     "cancel": MessageLookupByLibrary.simpleMessage("Cancel"),
     "cancelBooking": MessageLookupByLibrary.simpleMessage("Cancel Booking"),
@@ -78,6 +92,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "cannotOpenPaymentApp": MessageLookupByLibrary.simpleMessage(
       "Cannot open payment app:",
     ),
+    "cardType": MessageLookupByLibrary.simpleMessage("Card"),
     "cash": MessageLookupByLibrary.simpleMessage("Cash"),
     "categories": MessageLookupByLibrary.simpleMessage("Categories"),
     "chat": MessageLookupByLibrary.simpleMessage("Chat"),
@@ -207,6 +222,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "errorWeakPassword": MessageLookupByLibrary.simpleMessage(
       "Password is too weak!",
     ),
+    "exploreAndBook": MessageLookupByLibrary.simpleMessage(
+      "Explore and book your first hotel!",
+    ),
     "failed": MessageLookupByLibrary.simpleMessage("Failed"),
     "female": MessageLookupByLibrary.simpleMessage("Female"),
     "fillYourProfile": MessageLookupByLibrary.simpleMessage(
@@ -224,6 +242,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "from": MessageLookupByLibrary.simpleMessage("From"),
     "fullName": MessageLookupByLibrary.simpleMessage("Full Name"),
+    "gridType": MessageLookupByLibrary.simpleMessage("Grid"),
     "guestsRooms": MessageLookupByLibrary.simpleMessage("Guests & Rooms"),
     "help": MessageLookupByLibrary.simpleMessage("Help"),
     "helpful": MessageLookupByLibrary.simpleMessage("Helpful"),
@@ -249,6 +268,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "kingBed": MessageLookupByLibrary.simpleMessage("King bed"),
     "language": MessageLookupByLibrary.simpleMessage("Language"),
+    "lastTime": MessageLookupByLibrary.simpleMessage("Last time"),
+    "listType": MessageLookupByLibrary.simpleMessage("List"),
     "loading": MessageLookupByLibrary.simpleMessage("Loading..."),
     "loadingAmenities": MessageLookupByLibrary.simpleMessage(
       "Loading amenities...",
@@ -311,6 +332,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "No completed bookings",
     ),
     "noDataHotelYet": MessageLookupByLibrary.simpleMessage("No hotel data yet"),
+    "noHotelBookedYet": MessageLookupByLibrary.simpleMessage(
+      "No hotels booked yet",
+    ),
+    "noHotelSavedYet": MessageLookupByLibrary.simpleMessage(
+      "No hotels saved yet",
+    ),
     "noOngoingBookings": MessageLookupByLibrary.simpleMessage(
       "No ongoing bookings",
     ),
@@ -333,9 +360,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "ongoingBookingsWillAppear": MessageLookupByLibrary.simpleMessage(
       "Your ongoing bookings will appear here",
     ),
+    "only": MessageLookupByLibrary.simpleMessage("Only"),
     "optionSeletedTime": MessageLookupByLibrary.simpleMessage("Option"),
     "orContinueWith": MessageLookupByLibrary.simpleMessage("or continue with"),
     "otherAmenities": MessageLookupByLibrary.simpleMessage("other amenities"),
+    "outOfRoom": MessageLookupByLibrary.simpleMessage("Sold out"),
     "overNightBookingNote": MessageLookupByLibrary.simpleMessage(
       "Overnight reservations can only be made between 9:00 PM and 1:00 AM the following morning.",
     ),
@@ -408,6 +437,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "pleaseWait": MessageLookupByLibrary.simpleMessage("Please wait..."),
     "popular": MessageLookupByLibrary.simpleMessage("Popular"),
+    "price": MessageLookupByLibrary.simpleMessage("Price"),
     "priceDetails": MessageLookupByLibrary.simpleMessage("Price Details"),
     "priceRange": MessageLookupByLibrary.simpleMessage("Price Range"),
     "processing": MessageLookupByLibrary.simpleMessage("Processing..."),
@@ -417,6 +447,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "profile": MessageLookupByLibrary.simpleMessage("Profile"),
     "queenBed": MessageLookupByLibrary.simpleMessage("Queen bed"),
     "rating": MessageLookupByLibrary.simpleMessage("Rating"),
+    "reBook": MessageLookupByLibrary.simpleMessage("Rebook"),
+    "recently": MessageLookupByLibrary.simpleMessage("Recently"),
     "recentlyBooked": MessageLookupByLibrary.simpleMessage("Recently Booked"),
     "recommended": MessageLookupByLibrary.simpleMessage("Recommended"),
     "refresh": MessageLookupByLibrary.simpleMessage("Refresh"),
@@ -428,6 +460,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Registration successful!",
     ),
     "rememberMe": MessageLookupByLibrary.simpleMessage("Remember me"),
+    "removeFromFavorite": MessageLookupByLibrary.simpleMessage(
+      "Remove from favorites",
+    ),
     "rentByTheHour": MessageLookupByLibrary.simpleMessage("Rent by the hour"),
     "rentByTheHourNote": MessageLookupByLibrary.simpleMessage(
       "Minimum 1 hour • Flexible during the day",
@@ -447,6 +482,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "reviews": MessageLookupByLibrary.simpleMessage("Review"),
     "roomAvailable": MessageLookupByLibrary.simpleMessage("rooms available"),
+    "roomAvailables": m1,
     "roomIsCurrentlyUnavailable": MessageLookupByLibrary.simpleMessage(
       "This room is currently unavailable.",
     ),
@@ -454,6 +490,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "roomQuantity": MessageLookupByLibrary.simpleMessage("Room Quantity"),
     "roomType": MessageLookupByLibrary.simpleMessage("Room Type"),
     "rooms": MessageLookupByLibrary.simpleMessage("Rooms"),
+    "roomsLeft": m2,
     "sameDayOnlyHourly": MessageLookupByLibrary.simpleMessage(
       "Hourly booking must be within the same day",
     ),
@@ -474,6 +511,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Select Payment Method",
     ),
     "selectRoomType": MessageLookupByLibrary.simpleMessage("Select room type"),
+    "selectTimeOverNight": MessageLookupByLibrary.simpleMessage(
+      "Select overnight hours",
+    ),
     "selectTravelDate": MessageLookupByLibrary.simpleMessage(
       "Select travel date",
     ),
@@ -488,6 +528,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "settings": MessageLookupByLibrary.simpleMessage("Settings"),
     "share": MessageLookupByLibrary.simpleMessage("Share"),
     "showLess": MessageLookupByLibrary.simpleMessage("Show less"),
+    "showList": MessageLookupByLibrary.simpleMessage("Show"),
     "signIn": MessageLookupByLibrary.simpleMessage("Sign in"),
     "signUp": MessageLookupByLibrary.simpleMessage("Sign up"),
     "singleBed": MessageLookupByLibrary.simpleMessage("Single bed"),
@@ -504,6 +545,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "success": MessageLookupByLibrary.simpleMessage("Success"),
     "successful": MessageLookupByLibrary.simpleMessage("Successful!"),
     "takePhoto": MessageLookupByLibrary.simpleMessage("Take Photo"),
+    "thisActionCannotBeUndone": MessageLookupByLibrary.simpleMessage(
+      "This action cannot be undone. You can add the hotel back to your favorites list at any time.",
+    ),
     "thu2_Monday": MessageLookupByLibrary.simpleMessage("Mon"),
     "thu3_Tuesday": MessageLookupByLibrary.simpleMessage("Tue"),
     "thu4_Wednesday": MessageLookupByLibrary.simpleMessage("Wed"),
@@ -514,10 +558,17 @@ class MessageLookup extends MessageLookupByLibrary {
       "Ticket downloaded successfully!",
     ),
     "to": MessageLookupByLibrary.simpleMessage("to"),
+    "today": MessageLookupByLibrary.simpleMessage("Today"),
     "total": MessageLookupByLibrary.simpleMessage("Total"),
     "totalAmenities": MessageLookupByLibrary.simpleMessage("Total Amenities"),
     "totalAmount": MessageLookupByLibrary.simpleMessage("Total Amount"),
     "totalDuration": MessageLookupByLibrary.simpleMessage("Total Duration"),
+    "totalGuests": MessageLookupByLibrary.simpleMessage("Total guests"),
+    "totalRooms": MessageLookupByLibrary.simpleMessage("Total rooms"),
+    "totalSpending": MessageLookupByLibrary.simpleMessage("Total spending"),
+    "totalTimeBooked": MessageLookupByLibrary.simpleMessage(
+      "Number of bookings",
+    ),
     "trending": MessageLookupByLibrary.simpleMessage("Trending"),
     "tryAgain": MessageLookupByLibrary.simpleMessage("Try Again"),
     "unknownHotel": MessageLookupByLibrary.simpleMessage("Unknown Hotel"),
@@ -556,6 +607,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Yeay, you have completed it!",
     ),
     "yesContinue": MessageLookupByLibrary.simpleMessage("Yes, Continue"),
+    "yesterday": MessageLookupByLibrary.simpleMessage("Yesterday"),
     "youCanceledBooking": MessageLookupByLibrary.simpleMessage(
       "You canceled this hotel booking",
     ),

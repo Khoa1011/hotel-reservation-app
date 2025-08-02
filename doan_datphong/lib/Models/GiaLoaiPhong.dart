@@ -8,6 +8,7 @@ class GiaLoaiPhong {
   final PhanTichGia phanTichGia; // Chi tiết tính giá
   final double giaChoTatCaPhong;
   final double giaThueChoTatCaPhong;
+  final double giaDonVi;
 
 
   GiaLoaiPhong({
@@ -17,7 +18,8 @@ class GiaLoaiPhong {
     required this.donVi,
     required this.phanTichGia,
     required this.giaChoTatCaPhong,
-    required this.giaThueChoTatCaPhong
+    required this.giaThueChoTatCaPhong,
+    required this.giaDonVi
   });
 
   factory GiaLoaiPhong.fromJson(Map<String, dynamic> json) {
@@ -29,6 +31,7 @@ class GiaLoaiPhong {
       phanTichGia: PhanTichGia.fromJson(json['breakdown'] ?? {}),
       giaChoTatCaPhong: (json['baseSubtotal'] ?? 0).toDouble(),
       giaThueChoTatCaPhong: (json['taxAllRoomPrice'] ?? 0).toDouble(),
+      giaDonVi: (json['unitPrice'] ?? 0).toDouble()
     );
   }
 

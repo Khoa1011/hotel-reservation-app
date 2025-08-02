@@ -4,21 +4,23 @@
 import 'package:doan_datphong/Helper/FormatCurrency.dart';
 import 'package:doan_datphong/Views/detail_View/detail_screen.dart';
 import 'package:doan_datphong/Views/listBooking_View/listBooking_screen.dart';
+import 'package:doan_datphong/Views/selectDate_View/selectDate_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+
 import '../../../generated/l10n.dart';
 import '../../Blocs/recentlyBookedHotels_Blocs/recentlyBookedHotels_bloc.dart';
 import '../../Blocs/recentlyBookedHotels_Blocs/recentlyBookedHotels_event.dart';
 import '../../Blocs/recentlyBookedHotels_Blocs/recentlyBookedHotels_state.dart';
 import '../../Models/KhachSan.dart';
 
-
 class RecentBookingsWidget extends StatefulWidget {
   final String userId;
 
-  const RecentBookingsWidget({Key? key, required this.userId}) : super(key: key);
+  const RecentBookingsWidget({Key? key, required this.userId})
+    : super(key: key);
 
   @override
   _RecentBookingsWidgetState createState() => _RecentBookingsWidgetState();
@@ -108,11 +110,8 @@ class _RecentBookingsWidgetState extends State<RecentBookingsWidget> {
             ),
             SizedBox(height: 16),
             Text(
-              'Đang tải khách sạn đã đặt...',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
-              ),
+              S.of(context).loading,
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
             ),
           ],
         ),
@@ -144,9 +143,7 @@ class _RecentBookingsWidgetState extends State<RecentBookingsWidget> {
       margin: EdgeInsets.only(bottom: 16),
       child: Card(
         elevation: 3,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: InkWell(
           onTap: () {
             _showHotelDetails(hotel);
@@ -154,182 +151,198 @@ class _RecentBookingsWidgetState extends State<RecentBookingsWidget> {
           borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
               children: [
-                // Hotel Image
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: _buildHotelImage(hotelModel.hinhAnh ?? ''),
-                ),
+                // Thoong tin khách sạn
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Hotel Image
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: _buildHotelImage(hotelModel.hinhAnh ?? ''),
+                    ),
 
-                SizedBox(width: 12),
+                    SizedBox(width: 12),
 
-                // Hotel Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Hotel Name
-                      Text(
-                        hotelModel.tenKhachSan ?? "Unknown Hotel",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-
-                      SizedBox(height: 4),
-
-                      // Address
-                      Text(
-                        hotelModel.diaChi ?? "Unknown Address",
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey[600],
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-
-                      SizedBox(height: 8),
-
-                      // Rating
-                      Row(
+                    // Hotel Info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
-                            FontAwesomeIcons.solidStar,
-                            color: Colors.amber,
-                            size: 14,
-                          ),
-                          SizedBox(width: 4),
+                          // Hotel Name
                           Text(
-                            (hotelModel.soSao ?? 4.0).toString(),
+                            hotelModel.tenKhachSan ?? "Unknown Hotel",
                             style: TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF1565C0),
-                              fontWeight: FontWeight.w600,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          SizedBox(width: 4),
+
+                          SizedBox(height: 4),
+
+                          // Address
                           Text(
-                            '(${hotel['hotel']['totalReviews'] ?? 0})',
+                            hotelModel.diaChi ?? "Unknown Address",
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 15,
                               color: Colors.grey[600],
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+
+                          SizedBox(height: 8),
+
+                          // Rating
+                          Row(
+                            children: [
+                              Icon(
+                                FontAwesomeIcons.solidStar,
+                                color: Colors.amber,
+                                size: 14,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                (hotelModel.soSao ?? 4.0).toString(),
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Color(0xFF1565C0),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                '(${hotel['hotel']['totalReviews'] ?? 0})',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[900],
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          SizedBox(height: 8),
+
+                          // Booking stats - Sử dụng Wrap để tránh overflow
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: [
+                              _buildStatChip(
+                                icon: Icons.bookmark_outline,
+                                text: _formatBookingCount(context, stats['totalBookings']),
+                                color: Colors.blue,
+                              ),
+                              _buildStatChip(
+                                icon: Icons.access_time,
+                                text: _formatLastBookingDateWithLocale(context,
+                                  stats['lastBookingDate'],
+                                ),
+                                color: Colors.green,
+                              ),
+                            ],
                           ),
                         ],
                       ),
+                    ),
 
-                      SizedBox(height: 8),
-
-                      // Booking stats - Sử dụng Wrap để tránh overflow
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: [
-                          _buildStatChip(
-                            icon: Icons.bookmark_outline,
-                            text: '${stats['totalBookings'] ?? 1} lần',
-                            color: Colors.blue,
-                          ),
-                          _buildStatChip(
-                            icon: Icons.access_time,
-                            text: _formatLastBookingDate(stats['lastBookingDate']),
-                            color: Colors.green,
-                          ),
-                        ],
+                    // ✅ CHỈ CÒN BOOKMARK BUTTON Ở PHẢI
+                    GestureDetector(
+                      onTap: () {
+                        _toggleBookmark(hotel['bookingId']);
+                      },
+                      child: Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.bookmark_outline,
+                          color: Colors.grey[600],
+                          size: 20,
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
 
-                // Price & Actions
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+
+                SizedBox(height: 12),
+                Divider(height: 1, color: Colors.grey[300]),
+                SizedBox(height: 12),
+
+                // Tổng tiền và nút đặt lại
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Price
-                    Text(
-                      pricing['displayPrice'] ?? "0k",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1565C0),
-                      ),
-                    ),
-                    Text(
-                      "/ ${S.of(context).perNight}",
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-
-                    SizedBox(height: 8),
-
                     // Total spent
-                    Text(
-                      'Tổng: ${CurrencyHelper.formatVND((stats['totalSpent'] ?? 0).toDouble())}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-
-                    SizedBox(height: 12),
-
-                    // Action buttons
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Bookmark button
-                        GestureDetector(
-                          onTap: () {
-                            _toggleBookmark(hotel['bookingId']);
-                          },
-                          child: Container(
-                            padding: EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[100],
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              Icons.bookmark_outline,
-                              color: Color(0xFF1565C0),
-                              size: 16,
-                            ),
+                        Text(
+                          S.of(context).totalSpending,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold
                           ),
                         ),
-
-                        SizedBox(width: 8),
-
-                        // Book again button
-                        GestureDetector(
-                          onTap: () {
-                            _bookAgain(hotel);
-                          },
-                          child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Color(0xFF1565C0),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              'Đặt lại',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                        SizedBox(height: 2),
+                        Text(
+                          CurrencyHelper.formatVND(
+                            (stats['totalSpent'] ?? 0).toDouble(),
+                          ),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Color(0xFF1565C0),
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
+                    ),
+
+                    // Book again button
+                    GestureDetector(
+                      onTap: () {
+                        _bookAgain(hotel);
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Color(0xFF1565C0),
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0xFF1565C0).withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.refresh, color: Colors.white, size: 16),
+                            SizedBox(width: 6),
+                            Text(
+                              S.of(context).reBook,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -355,12 +368,12 @@ class _RecentBookingsWidgetState extends State<RecentBookingsWidget> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 10, color: color),
+          Icon(icon, size: 14, color: color),
           SizedBox(width: 3),
           Text(
             text,
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 14,
               color: color,
               fontWeight: FontWeight.w500,
             ),
@@ -374,15 +387,16 @@ class _RecentBookingsWidgetState extends State<RecentBookingsWidget> {
     return Container(
       width: 80,
       height: 80,
-      child: imageUrl.isNotEmpty
-          ? Image.network(
-        imageUrl,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return _buildImagePlaceholder();
-        },
-      )
-          : _buildImagePlaceholder(),
+      child:
+          imageUrl.isNotEmpty
+              ? Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return _buildImagePlaceholder();
+                },
+              )
+              : _buildImagePlaceholder(),
     );
   }
 
@@ -391,11 +405,7 @@ class _RecentBookingsWidgetState extends State<RecentBookingsWidget> {
       width: 80,
       height: 80,
       color: Colors.grey[300],
-      child: Icon(
-        Icons.hotel,
-        color: Colors.grey[600],
-        size: 30,
-      ),
+      child: Icon(Icons.hotel, color: Colors.grey[600], size: 30),
     );
   }
 
@@ -406,14 +416,10 @@ class _RecentBookingsWidgetState extends State<RecentBookingsWidget> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.hotel_outlined,
-              size: 60,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.hotel_outlined, size: 60, color: Colors.grey[400]),
             SizedBox(height: 16),
             Text(
-              'Chưa có khách sạn nào được đặt',
+              S.of(context).noHotelBookedYet,
               style: TextStyle(
                 color: Colors.grey[600],
                 fontSize: 16,
@@ -422,11 +428,8 @@ class _RecentBookingsWidgetState extends State<RecentBookingsWidget> {
             ),
             SizedBox(height: 8),
             Text(
-              'Khám phá và đặt khách sạn đầu tiên!',
-              style: TextStyle(
-                color: Colors.grey[500],
-                fontSize: 14,
-              ),
+              S.of(context).exploreAndBook,
+              style: TextStyle(color: Colors.grey[500], fontSize: 14),
             ),
           ],
         ),
@@ -442,14 +445,10 @@ class _RecentBookingsWidgetState extends State<RecentBookingsWidget> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                size: 60,
-                color: Colors.red[400],
-              ),
+              Icon(Icons.error_outline, size: 60, color: Colors.red[400]),
               SizedBox(height: 16),
               Text(
-                'Lỗi tải dữ liệu',
+                S.of(context).errorUnknown,
                 style: TextStyle(
                   color: Colors.red[600],
                   fontSize: 16,
@@ -459,17 +458,14 @@ class _RecentBookingsWidgetState extends State<RecentBookingsWidget> {
               SizedBox(height: 8),
               Text(
                 error,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
                   context.read<RecentBookingsBloc>().add(
-                      RefreshRecentBookings(widget.userId)
+                    RefreshRecentBookings(widget.userId),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -478,10 +474,7 @@ class _RecentBookingsWidgetState extends State<RecentBookingsWidget> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: Text(
-                  'Thử lại',
-                  style: TextStyle(color: Colors.white),
-                ),
+                child: Text(S.of(context).tryAgain, style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
@@ -505,12 +498,81 @@ class _RecentBookingsWidgetState extends State<RecentBookingsWidget> {
       } else if (difference.inDays < 7) {
         return '${difference.inDays} ngày trước';
       } else if (difference.inDays < 30) {
-        return '${(difference.inDays / 7).floor()} tuần trước';
+        final weeks = (difference.inDays / 7).floor();
+        return '$weeks tuần trước';
       } else {
         return DateFormat('dd/MM/yyyy').format(bookingDate);
       }
     } catch (e) {
       return 'Gần đây';
+    }
+  }
+
+
+  String _buildSummaryText(BuildContext context, DateTime checkInDate, DateTime checkOutDate) {
+    final locale = Localizations.localeOf(context);
+    final isVietnamese = locale.languageCode == 'vi';
+
+    final totalDays = checkOutDate.difference(checkInDate).inDays;
+
+    if (isVietnamese) {
+      return '$totalDays ngày';
+    } else {
+      return '$totalDays day${totalDays > 1 ? 's' : ''}';
+    }
+  }
+
+  String _formatBookingCount(BuildContext context, int count) {
+    final locale = Localizations.localeOf(context);
+    final isVietnamese = locale.languageCode == 'vi';
+
+    if (isVietnamese) {
+      return '$count lần';
+    } else {
+      return '$count time${count > 1 ? 's' : ''}';
+    }
+  }
+
+//  format thời gian đặt phòng với đa ngôn ngữ
+  String _formatLastBookingDateWithLocale(BuildContext context, dynamic date) {
+    if (date == null) {
+      final locale = Localizations.localeOf(context);
+      final isVietnamese = locale.languageCode == 'vi';
+      return isVietnamese ? 'Gần đây' : 'Recently';
+    }
+
+    try {
+      final bookingDate = DateTime.parse(date.toString());
+      final now = DateTime.now();
+      final difference = now.difference(bookingDate);
+
+      final locale = Localizations.localeOf(context);
+      final isVietnamese = locale.languageCode == 'vi';
+
+      if (difference.inDays == 0) {
+        return isVietnamese ? 'Hôm nay' : 'Today';
+      } else if (difference.inDays == 1) {
+        return isVietnamese ? 'Hôm qua' : 'Yesterday';
+      } else if (difference.inDays < 7) {
+        if (isVietnamese) {
+          return '${difference.inDays} ngày trước';
+        } else {
+          return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
+        }
+      } else if (difference.inDays < 30) {
+        final weeks = (difference.inDays / 7).floor();
+        if (isVietnamese) {
+          return '$weeks tuần trước';
+        } else {
+          return '$weeks week${weeks > 1 ? 's' : ''} ago';
+        }
+      } else {
+        return DateFormat('dd/MM/yyyy').format(bookingDate);
+      }
+    } catch (e) {
+      final locale = Localizations.localeOf(context);
+      final isVietnamese = locale.languageCode == 'vi';
+      return isVietnamese ? 'Gần đây' : 'Recently';
     }
   }
 
@@ -526,13 +588,39 @@ class _RecentBookingsWidgetState extends State<RecentBookingsWidget> {
   }
 
   void _bookAgain(dynamic hotel) {
-    // TODO: Navigate to booking screen với thông tin hotel
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Chuyển đến trang đặt phòng...'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    try {
+      final hotelModel = KhachSan.fromJson(hotel['hotel']);
+      final previousBooking = hotel['booking'] as Map<String, dynamic>;
+
+      print('🔄 Book again for hotel: ${hotelModel.tenKhachSan}');
+      print('📋 Previous booking data: $previousBooking');
+
+      // ✅ OPTION 1: Navigate đến Hotel Detail với pre-filled data
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SelectDateScreen(
+            selectedHotel: hotelModel,
+          ),
+        ),
+      );
+    } catch (e) {
+      print('❌ Error in _bookAgain: $e');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white, size: 20),
+              SizedBox(width: 8),
+              Text('Có lỗi xảy ra. Vui lòng thử lại!'),
+            ],
+          ),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   void _showHotelDetails(dynamic hotel) {
@@ -593,10 +681,7 @@ class _RecentBookingsWidgetState extends State<RecentBookingsWidget> {
                       SizedBox(height: 4),
                       Text(
                         hotelModel.diaChi ?? 'Unknown Address',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                       SizedBox(height: 8),
                       Row(
@@ -626,9 +711,20 @@ class _RecentBookingsWidgetState extends State<RecentBookingsWidget> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildStatItem('Số lần đặt', (stats['totalBookings'] ?? 0).toString()),
-                _buildStatItem('Tổng chi tiêu', CurrencyHelper.formatVND((stats['totalSpent'] ?? 0).toDouble())),
-                _buildStatItem('Lần cuối', _formatLastBookingDate(stats['lastBookingDate'])),
+                _buildStatItem(
+                  S.of(context).totalTimeBooked,
+                  (stats['totalBookings'] ?? 0).toString(),
+                ),
+                _buildStatItem(
+                  S.of(context).totalSpending,
+                  CurrencyHelper.formatVND(
+                    (stats['totalSpent'] ?? 0).toDouble(),
+                  ),
+                ),
+                _buildStatItem(
+                  S.of(context).lastTime,
+                  _formatLastBookingDateWithLocale(context,stats['lastBookingDate']),
+                ),
               ],
             ),
           ),
@@ -643,17 +739,19 @@ class _RecentBookingsWidgetState extends State<RecentBookingsWidget> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(
-                          builder: (builder) => DetailScreen(hotel: hotelModel)
-                      ));
-                      
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (builder) => DetailScreen(hotel: hotelModel),
+                        ),
+                      );
                     },
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: Color(0xFF1565C0)),
                       padding: EdgeInsets.symmetric(vertical: 12),
                     ),
                     child: Text(
-                      'Xem khách sạn',
+                      S.of(context).seeHotels,
                       style: TextStyle(color: Color(0xFF1565C0)),
                     ),
                   ),
@@ -670,7 +768,7 @@ class _RecentBookingsWidgetState extends State<RecentBookingsWidget> {
                       padding: EdgeInsets.symmetric(vertical: 12),
                     ),
                     child: Text(
-                      'Đặt lại',
+                      S.of(context).reBook,
                       style: TextStyle(color: Colors.white),
                     ),
                   ),
@@ -686,20 +784,14 @@ class _RecentBookingsWidgetState extends State<RecentBookingsWidget> {
   Widget _buildStatItem(String label, String value) {
     return Column(
       children: [
+        Text(label, style: TextStyle(fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold)),
+        SizedBox(height: 4),
         Text(
           value,
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Color(0xFF1565C0),
-          ),
-        ),
-        SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
           ),
         ),
       ],

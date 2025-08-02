@@ -20,6 +20,15 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'vi';
 
+  static String m0(count) =>
+      "${count} ${Intl.plural(count, one: 'phòng có sẵn', other: 'phòng có sẵn')}";
+
+  static String m1(count) =>
+      "${Intl.plural(count, one: 'phòng có sẵn', other: 'phòng có sẵn')}";
+
+  static String m2(count) =>
+      "${Intl.plural(count, one: 'phòng', other: 'phòng')}";
+
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "adults": MessageLookupByLibrary.simpleMessage("Người lớn"),
@@ -33,7 +42,11 @@ class MessageLookup extends MessageLookupByLibrary {
       "Không có nhóm tiện nghi nào!",
     ),
     "apply": MessageLookupByLibrary.simpleMessage("Áp dụng"),
+    "areYouSureRemove": MessageLookupByLibrary.simpleMessage(
+      "Bạn có chắc chắn muốn xóa khách sạn này khỏi danh sách yêu thích của mình không?",
+    ),
     "available": MessageLookupByLibrary.simpleMessage("Có sẵn"),
+    "availableRooms": m0,
     "back": MessageLookupByLibrary.simpleMessage("Quay lại"),
     "backDetailHotel": MessageLookupByLibrary.simpleMessage(
       "Quay lại chi tiết khách sạn",
@@ -66,6 +79,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "bookingSuccessful": MessageLookupByLibrary.simpleMessage(
       "Đặt phòng thành công!",
     ),
+    "bookmarkedHotel": MessageLookupByLibrary.simpleMessage("Khách sạn đã lưu"),
     "callHotel": MessageLookupByLibrary.simpleMessage("Gọi khách sạn"),
     "cancel": MessageLookupByLibrary.simpleMessage("Hủy"),
     "cancelBooking": MessageLookupByLibrary.simpleMessage("Hủy đặt phòng"),
@@ -80,6 +94,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "cannotOpenPaymentApp": MessageLookupByLibrary.simpleMessage(
       "Không thể mở ứng dụng thanh toán:",
     ),
+    "cardType": MessageLookupByLibrary.simpleMessage("Thẻ"),
     "cash": MessageLookupByLibrary.simpleMessage("Tiền mặt"),
     "categories": MessageLookupByLibrary.simpleMessage("Nhóm tiện nghi"),
     "chat": MessageLookupByLibrary.simpleMessage("Nhắn tin"),
@@ -211,6 +226,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "errorWeakPassword": MessageLookupByLibrary.simpleMessage(
       "Mật khẩu quá yếu!",
     ),
+    "exploreAndBook": MessageLookupByLibrary.simpleMessage(
+      "Khám phá và đặt khách sạn đầu tiên!",
+    ),
     "failed": MessageLookupByLibrary.simpleMessage("Thất bại"),
     "female": MessageLookupByLibrary.simpleMessage("Nữ"),
     "fillYourProfile": MessageLookupByLibrary.simpleMessage(
@@ -228,6 +246,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "forgotPassword": MessageLookupByLibrary.simpleMessage("Quên mật khẩu?"),
     "from": MessageLookupByLibrary.simpleMessage("Từ"),
     "fullName": MessageLookupByLibrary.simpleMessage("Họ và Tên"),
+    "gridType": MessageLookupByLibrary.simpleMessage("Lưới"),
     "guestsRooms": MessageLookupByLibrary.simpleMessage(
       "Số lượng khách & phòng",
     ),
@@ -255,6 +274,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "kingBed": MessageLookupByLibrary.simpleMessage("Giường King"),
     "language": MessageLookupByLibrary.simpleMessage("Ngôn ngữ"),
+    "lastTime": MessageLookupByLibrary.simpleMessage("Lần cuối"),
+    "listType": MessageLookupByLibrary.simpleMessage("Danh sách"),
     "loading": MessageLookupByLibrary.simpleMessage("Đang tải..."),
     "loadingAmenities": MessageLookupByLibrary.simpleMessage(
       "Đang tải tiện nghi...",
@@ -319,6 +340,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "noDataHotelYet": MessageLookupByLibrary.simpleMessage(
       "Chưa có dữ liệu khách sạn",
     ),
+    "noHotelBookedYet": MessageLookupByLibrary.simpleMessage(
+      "Chưa có khách sạn nào được đặt",
+    ),
+    "noHotelSavedYet": MessageLookupByLibrary.simpleMessage(
+      "Chưa có khách sạn nào được lưu",
+    ),
     "noOngoingBookings": MessageLookupByLibrary.simpleMessage(
       "Không có đặt phòng đang diễn ra",
     ),
@@ -341,11 +368,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "ongoingBookingsWillAppear": MessageLookupByLibrary.simpleMessage(
       "Các đặt phòng đang diễn ra của bạn sẽ xuất hiện ở đây",
     ),
+    "only": MessageLookupByLibrary.simpleMessage("Chỉ còn"),
     "optionSeletedTime": MessageLookupByLibrary.simpleMessage("Tùy chọn giờ"),
     "orContinueWith": MessageLookupByLibrary.simpleMessage("hoặc tiếp tục với"),
     "otherAmenities": MessageLookupByLibrary.simpleMessage(
       "các tiện nghi khác",
     ),
+    "outOfRoom": MessageLookupByLibrary.simpleMessage("Hết phòng"),
     "overNightBookingNote": MessageLookupByLibrary.simpleMessage(
       "Đặt phòng qua đêm chỉ được đặt từ 21:00 tối đến 01:00 sáng hôm sau.",
     ),
@@ -430,6 +459,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "pleaseWait": MessageLookupByLibrary.simpleMessage("Vui lòng chờ..."),
     "popular": MessageLookupByLibrary.simpleMessage("Phổ biến"),
+    "price": MessageLookupByLibrary.simpleMessage("Giá"),
     "priceDetails": MessageLookupByLibrary.simpleMessage("Chi tiết giá"),
     "priceRange": MessageLookupByLibrary.simpleMessage("Khoảng giá"),
     "processing": MessageLookupByLibrary.simpleMessage("Đang xử lý..."),
@@ -439,6 +469,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "profile": MessageLookupByLibrary.simpleMessage("Hồ sơ"),
     "queenBed": MessageLookupByLibrary.simpleMessage("Giường Queen"),
     "rating": MessageLookupByLibrary.simpleMessage("Xếp hạng"),
+    "reBook": MessageLookupByLibrary.simpleMessage("Đặt lại"),
+    "recently": MessageLookupByLibrary.simpleMessage("Gần đây"),
     "recentlyBooked": MessageLookupByLibrary.simpleMessage("Đã đặt gần đây"),
     "recommended": MessageLookupByLibrary.simpleMessage("Đề xuất"),
     "refresh": MessageLookupByLibrary.simpleMessage("Làm mới"),
@@ -450,6 +482,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Đăng ký thành công!",
     ),
     "rememberMe": MessageLookupByLibrary.simpleMessage("Ghi nhớ đăng nhập"),
+    "removeFromFavorite": MessageLookupByLibrary.simpleMessage(
+      "Xóa khỏi danh sách yêu thích",
+    ),
     "rentByTheHour": MessageLookupByLibrary.simpleMessage("Thuê theo giờ"),
     "rentByTheHourNote": MessageLookupByLibrary.simpleMessage(
       "Tối thiểu 1 giờ • Linh hoạt trong ngày",
@@ -469,6 +504,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "reviews": MessageLookupByLibrary.simpleMessage("Đánh giá"),
     "roomAvailable": MessageLookupByLibrary.simpleMessage("phòng có sẵn"),
+    "roomAvailables": m1,
     "roomIsCurrentlyUnavailable": MessageLookupByLibrary.simpleMessage(
       "Phòng này hiện không thể đặt",
     ),
@@ -476,6 +512,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "roomQuantity": MessageLookupByLibrary.simpleMessage("Số lượng phòng"),
     "roomType": MessageLookupByLibrary.simpleMessage("Loại phòng"),
     "rooms": MessageLookupByLibrary.simpleMessage("Phòng"),
+    "roomsLeft": m2,
     "sameDayOnlyHourly": MessageLookupByLibrary.simpleMessage(
       "Thuê theo giờ chỉ trong cùng ngày",
     ),
@@ -496,6 +533,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Chọn phương thức thanh toán",
     ),
     "selectRoomType": MessageLookupByLibrary.simpleMessage("Chọn loại phòng"),
+    "selectTimeOverNight": MessageLookupByLibrary.simpleMessage(
+      "Chọn giờ qua đêm",
+    ),
     "selectTravelDate": MessageLookupByLibrary.simpleMessage("Chọn ngày đi"),
     "selectYourArrivalDate": MessageLookupByLibrary.simpleMessage(
       "Chọn ngày đến",
@@ -508,6 +548,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "settings": MessageLookupByLibrary.simpleMessage("Cài đặt"),
     "share": MessageLookupByLibrary.simpleMessage("Chia sẻ"),
     "showLess": MessageLookupByLibrary.simpleMessage("Thu gọn"),
+    "showList": MessageLookupByLibrary.simpleMessage("Hiển thị"),
     "signIn": MessageLookupByLibrary.simpleMessage("Đăng nhập"),
     "signUp": MessageLookupByLibrary.simpleMessage("Đăng ký"),
     "singleBed": MessageLookupByLibrary.simpleMessage("Giường đơn"),
@@ -524,6 +565,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "success": MessageLookupByLibrary.simpleMessage("Thành công"),
     "successful": MessageLookupByLibrary.simpleMessage("Thành Công!"),
     "takePhoto": MessageLookupByLibrary.simpleMessage("Chụp Ảnh"),
+    "thisActionCannotBeUndone": MessageLookupByLibrary.simpleMessage(
+      "Thao tác này không thể hoàn tác. Bạn có thể thêm lại khách sạn vào danh sách yêu thích bất kỳ lúc nào.",
+    ),
     "thu2_Monday": MessageLookupByLibrary.simpleMessage("Thứ 2"),
     "thu3_Tuesday": MessageLookupByLibrary.simpleMessage("Thứ 3"),
     "thu4_Wednesday": MessageLookupByLibrary.simpleMessage("Thứ 4"),
@@ -534,10 +578,15 @@ class MessageLookup extends MessageLookupByLibrary {
       "Tải vé thành công!",
     ),
     "to": MessageLookupByLibrary.simpleMessage("đến"),
+    "today": MessageLookupByLibrary.simpleMessage("Hôm nay"),
     "total": MessageLookupByLibrary.simpleMessage("Tổng cộng"),
     "totalAmenities": MessageLookupByLibrary.simpleMessage("Tổng tiện nghi"),
     "totalAmount": MessageLookupByLibrary.simpleMessage("Tổng cộng"),
     "totalDuration": MessageLookupByLibrary.simpleMessage("Tổng thời gian"),
+    "totalGuests": MessageLookupByLibrary.simpleMessage("Tổng khách"),
+    "totalRooms": MessageLookupByLibrary.simpleMessage("Tổng phòng"),
+    "totalSpending": MessageLookupByLibrary.simpleMessage("Tổng chi tiêu"),
+    "totalTimeBooked": MessageLookupByLibrary.simpleMessage("Số lần đặt"),
     "trending": MessageLookupByLibrary.simpleMessage("Xu hướng"),
     "tryAgain": MessageLookupByLibrary.simpleMessage("Thử lại"),
     "unknownHotel": MessageLookupByLibrary.simpleMessage(
@@ -576,6 +625,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Tuyệt vời, bạn đã hoàn thành!",
     ),
     "yesContinue": MessageLookupByLibrary.simpleMessage("Có, tiếp tục"),
+    "yesterday": MessageLookupByLibrary.simpleMessage("Hôm qua"),
     "youCanceledBooking": MessageLookupByLibrary.simpleMessage(
       "Bạn đã hủy đặt phòng khách sạn này",
     ),

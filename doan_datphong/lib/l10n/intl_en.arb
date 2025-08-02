@@ -204,6 +204,11 @@
 
   "@@_BOTTOM_NAVIGATION": "--- Bottom Navigation ---",
   "home": "Home",
+  "showList": "Show",
+  "cardType": "Card",
+  "listType": "List",
+  "gridType": "Grid",
+
   "@home": {
     "description": "Home tab label"
   },
@@ -672,5 +677,32 @@
   "seeHotels": "See hotels",
   "distance": "Distance",
   "backDetailHotel": "Back to hotel details",
-  "clickToViewMap": "Click to view map"
+  "clickToViewMap": "Click to view map",
+
+  "totalTimeBooked": "Number of bookings",
+  "yesterday": "Yesterday",
+  "today": "Today",
+  "lastTime": "Last time",
+  "recently": "Recently",
+  "totalSpending": "Total spending",
+  "reBook": "Rebook",
+  "noHotelBookedYet": "No hotels booked yet",
+  "exploreAndBook": "Explore and book your first hotel!",
+  "price": "Price",
+  "totalGuests": "Total guests",
+  "totalRooms": "Total rooms",
+  "selectTimeOverNight": "Select overnight hours",
+
+  "outOfRoom": "Sold out",
+  "only": "Only",
+  "roomAvailables": "{count, plural, =1{room available} other{rooms available}}",
+  "roomsLeft": "{count, plural, =1{room} other{rooms}}",
+  "availableRooms": "{count} {count, plural, =1{room available} other{rooms available}}",
+
+
+  "thisActionCannotBeUndone": "This action cannot be undone. You can add the hotel back to your favorites list at any time.",
+  "areYouSureRemove": "Are you sure you want to remove this hotel from your favorites list?",
+  "removeFromFavorite": "Remove from favorites",
+  "bookmarkedHotel": "Hotel saved",
+  "noHotelSavedYet": "No hotels saved yet"
 }

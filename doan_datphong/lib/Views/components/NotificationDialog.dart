@@ -562,15 +562,15 @@ class _BookingConfirmationDialogState extends State<_BookingConfirmationDialog>
       child: Row(
         children: [
           Container(
-            width: 28,
-            height: 28,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: Color(0xFF2196F3).withOpacity(0.1),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Icon(
               icon,
-              size: 14,
+              size: 20,
               color: Color(0xFF2196F3),
             ),
           ),
@@ -582,8 +582,8 @@ class _BookingConfirmationDialogState extends State<_BookingConfirmationDialog>
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[600],
+                    fontSize: 16,
+                    color: Colors.grey[700],
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -591,7 +591,7 @@ class _BookingConfirmationDialogState extends State<_BookingConfirmationDialog>
                 Text(
                   value,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 15,
                     color: Colors.grey[800],
                     fontWeight: FontWeight.w600,
                   ),
@@ -669,7 +669,7 @@ class _BookingConfirmationDialogState extends State<_BookingConfirmationDialog>
                   Text(
                     S.of(context).bookingConfirm,
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF2196F3),
                     ),
@@ -682,7 +682,7 @@ class _BookingConfirmationDialogState extends State<_BookingConfirmationDialog>
                   Text(
                    S.of(context).pleaseCheckYourBookingInfo,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 14,
                       color: Colors.grey[600],
                     ),
                     textAlign: TextAlign.center,
@@ -700,11 +700,11 @@ class _BookingConfirmationDialogState extends State<_BookingConfirmationDialog>
                     ),
                     child: Column(
                       children: [
-                        _buildInfoRow('Loại phòng', widget.roomTypeName, Icons.bed),
-                        _buildInfoRow('Giá tiền', widget.price, Icons.attach_money),
-                        _buildInfoRow('Thời gian', widget.dates, Icons.calendar_today),
-                        _buildInfoRow('Số khách', widget.guests, Icons.people),
-                        _buildInfoRow('Số phòng', widget.rooms, Icons.door_front_door),
+                        _buildInfoRow(S.of(context).roomType, widget.roomTypeName, Icons.bed),
+                        _buildInfoRow(S.of(context).price, widget.price, Icons.attach_money),
+                        _buildInfoRow(S.of(context).duration, widget.dates, Icons.calendar_today),
+                        _buildInfoRow(S.of(context).totalGuests, widget.guests, Icons.people),
+                        _buildInfoRow(S.of(context).totalRooms, widget.rooms, Icons.door_front_door),
                       ],
                     ),
                   ),
@@ -735,7 +735,7 @@ class _BookingConfirmationDialogState extends State<_BookingConfirmationDialog>
                             child: Text(
                               S.of(context).cancel,
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -743,11 +743,11 @@ class _BookingConfirmationDialogState extends State<_BookingConfirmationDialog>
                         ),
                       ),
 
-                      SizedBox(width: 10),
+                      SizedBox(width: 7),
 
                       // Confirm button
                       Expanded(
-                        flex: 2,
+                        flex: 1,
                         child: SizedBox(
                           height: 44,
                           child: ElevatedButton(
@@ -766,13 +766,13 @@ class _BookingConfirmationDialogState extends State<_BookingConfirmationDialog>
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.check, size: 16),
+                                Icon(Icons.check, size: 20),
                                 SizedBox(width: 6),
                                 Flexible(
                                   child: Text(
                                     S.of(context).confirm,
                                     style: TextStyle(
-                                      fontSize: 14,
+                                      fontSize: 16,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),

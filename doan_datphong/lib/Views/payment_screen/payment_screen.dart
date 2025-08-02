@@ -973,7 +973,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       border: Border.all(color: Colors.blue.shade200),
                     ),
                     child: Text(
-                      CurrencyHelper.formatVND(widget.loaiPhong.giaCa),
+                      CurrencyHelper.formatVND(widget.loaiPhong.giaLoaiPhong!.phanTichGia.tongPhu),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.blue.shade700,
@@ -1051,6 +1051,32 @@ class _PaymentScreenState extends State<PaymentScreen> {
     return guestText;
   }
 
+  String _buildUnitBookingTypeText(BuildContext context) {
+    final locale = Localizations.localeOf(context);
+    final isVietnamese = locale.languageCode == 'vi';
+    final bookingType = widget.lichPhongTrong.loaiDatPhong;
+    final durationBooking = widget.loaiPhong.khoangThoiGian;
+
+    if (isVietnamese) {
+      if(bookingType == 'theo_gio'){
+        return '$durationBooking giờ';
+      }else if (bookingType == 'qua_dem'){
+        return '$durationBooking đêm';
+      }else{
+        return '$durationBooking ngày';
+      }
+    } else {
+      if(bookingType == 'theo_gio'){
+        return '$durationBooking hour${durationBooking > 1 ? 's': ''}';
+      }else if (bookingType == 'qua_dem'){
+        return '$durationBooking night${durationBooking > 1 ? 's': ''}';
+      }else{
+        return '$durationBooking day${durationBooking > 1 ? 's': ''}';
+      }
+    }
+  }
+
+
   String _buildSummaryTextTotalRooms(BuildContext context) {
     final locale = Localizations.localeOf(context);
     final isVietnamese = locale.languageCode == 'vi';
@@ -1089,8 +1115,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             _buildDetailRow(
               _getBookingTypeIcon(),
               _getBookingTypeText(),
-              '${widget.loaiPhong.giaLoaiPhong?.khoangThoiGian} ${widget
-                  .loaiPhong.giaLoaiPhong?.donVi}',
+              _buildUnitBookingTypeText(context),
               isHighlight: true,
             ),
           ],
@@ -1124,16 +1149,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
             _buildPriceRow("${S
                 .of(context)
                 .roomPrice} (${_buildSummaryTextTotalRooms(context)})", CurrencyHelper.formatVND(
-                widget.loaiPhong.giaLoaiPhong?.giaChoTatCaPhong  ?? 0.0)),
+                widget.loaiPhong.giaLoaiPhong?.phanTichGia.tongPhu  ?? 0.0)),
             _buildPriceRow(S
                 .of(context)
                 .totalDuration,
-                '${widget.loaiPhong.giaLoaiPhong?.khoangThoiGian} ${widget
-                    .loaiPhong.giaLoaiPhong?.donVi}'),
+                _buildUnitBookingTypeText(context)),
             _buildPriceRow(S
                 .of(context)
                 .subtotalBeforeDiscount, CurrencyHelper.formatVND(
-                widget.loaiPhong.giaLoaiPhong!.giaChoTatCaPhong)),
+                widget.loaiPhong.giaLoaiPhong!.phanTichGia.tongPhu)),
             _buildPriceRow(S
                 .of(context)
                 .weekendSurcharge, CurrencyHelper.formatVND(

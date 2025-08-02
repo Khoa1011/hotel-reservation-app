@@ -8,7 +8,7 @@ class NguoiDung {
   String tenNguoiDung;
   bool gioiTinh;
   String email;
-  String matKhau;
+  String? matKhau;
   String soDienThoai;
   String vaiTro;
   String hinhDaiDien;
@@ -58,14 +58,14 @@ class NguoiDung {
     required this.soDienThoai,
     required this.ngaySinh,
     required this.hinhDaiDien,
-    required this.matKhau,
+    this.matKhau,
+    this.viTri,
+    required this.gioiTinh
 }): email = '',
         vaiTro = 'nguoiDung',
         ngayTao = DateTime.now(),
-        gioiTinh = true,
         cccd = null,
-        trangThaiTaiKhoan = 'hoatDong',
-        viTri = null;
+        trangThaiTaiKhoan = 'hoatDong';
 
   // Chuyển từ JSON sang Object
   // factory NguoiDung.fromJson(Map<String, dynamic> json) {

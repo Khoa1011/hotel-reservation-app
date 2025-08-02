@@ -375,7 +375,7 @@ class _ListRoomState extends State<ListRoomScreen> {
     NotificationDialog.showBookingConfirmation(
       context,
       roomTypeName: roomType.tenLoaiPhong,
-      price: CurrencyHelper.formatVND(roomType.giaLoaiPhong!.giaChoTatCaPhong),
+      price: CurrencyHelper.formatVND(roomType.giaLoaiPhong!.phanTichGia.tongPhu),
       dates: '${DateTimeHelper.formatDate(widget.lichPhongTrong.ngayNhanPhong)} • ${DateTimeHelper.formatDate(widget.lichPhongTrong.ngayTraPhong ?? S.of(context).notYet)}',
       guests: _buildSummaryTextTotalGuese(context),
       rooms: _buildSummaryTextToTalRooms(context),

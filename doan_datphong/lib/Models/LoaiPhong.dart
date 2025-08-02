@@ -1,7 +1,10 @@
 import 'package:doan_datphong/Models/CauHinhGiuong.dart';
 import 'package:doan_datphong/Models/GiaLoaiPhong.dart';
 import 'package:doan_datphong/Models/HinhAnhPhong.dart';
-import 'package:doan_datphong/Models/TienNghi.dart';
+import 'package:flutter/cupertino.dart';
+
+import '../generated/l10n.dart';
+import 'TienNghi.dart';
 
 class LoaiPhong {
   final String id;
@@ -126,11 +129,20 @@ class LoaiPhong {
   }
 
   // ✅ Helper methods để hiển thị
-  String get availabilityText {
-    if (!coSan) return "Hết phòng";
-    if (phongCoSan <= 5) return "Chỉ còn $phongCoSan phòng";
-    return "$phongCoSan phòng có sẵn";
+  String getAvailabilityText(BuildContext context) {
+    if (!coSan) {
+      return S.of(context).outOfRoom; // "Hết phòng" / "Sold out"
+    }
+
+    if (phongCoSan <= 5) {
+      // "Chỉ còn 3 phòng" / "Only 3 rooms"
+      return "${S.of(context).only} $phongCoSan ${S.of(context).roomsLeft(phongCoSan)}";
+    }
+
+    // "15 phòng có sẵn" / "15 rooms available"
+    return S.of(context).availableRooms(phongCoSan);
   }
+
 
 
   String? layAnhDauTien() {

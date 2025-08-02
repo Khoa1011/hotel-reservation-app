@@ -466,7 +466,7 @@ class _ListBookingScreenState extends State<ListBookingScreen> {
           onCancel: () => Navigator.pop(context),
           onConfirm: () {
             context.read<GetBookingListBloc>().add(
-              CancelBooking(booking.id, 'Customer requested cancellation'),
+              CancelBooking(booking.id, 'Khách hàng đã hủy đơn này'),
             );
           },
         ),

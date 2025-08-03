@@ -23,7 +23,7 @@ import moment from "moment";
 import TimePicker from 'react-time-picker';
 import 'react-time-picker/dist/TimePicker.css';
 
-const AddBooking = ({ selectHotelId ,onClose }) => {
+const AddBooking = ({ selectHotelId, onClose }) => {
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
   const hotelId = selectHotelId;
   const now = moment().tz('Asia/Ho_Chi_Minh');
@@ -188,7 +188,8 @@ const AddBooking = ({ selectHotelId ,onClose }) => {
           price: room.roomTypePrice,
           maxGuests: room.roomcapacity,
           description: room.roomTypeDescription,
-          availableRooms: room.availableRooms || 0 // ✅ THÊM: số phòng trống
+          availableRooms: room.availableRooms || 0, // ✅ THÊM: số phòng trống
+          pricing: room.pricing || {}
         }));
 
         const uniqueRoomTypes = Array.from(
@@ -288,15 +289,28 @@ const AddBooking = ({ selectHotelId ,onClose }) => {
   useEffect(() => {
     const roomType = roomTypes.find(rt => rt.id === formData.maLoaiPhong);
     if (roomType && duration > 0) {
-      let unitPrice = roomType.price;
+      // ✅ Lấy giá từ backend pricing data
+      const pricingInfo = roomType.pricing?.displayPrices?.[formData.bookingType];
 
-      if (formData.bookingType === 'theo_gio') {
-        // Giá theo giờ = giá phòng / 14 giờ
-        unitPrice = Math.round(roomType.price / 14);
+      if (pricingInfo) {
+        let totalPrice = 0;
+
+        if (formData.bookingType === 'theo_gio') {
+          // ✅ Sử dụng rates từ backend cho theo giờ
+          const hourlyRates = roomType.pricing?.detailedPricing?.hourly?.rates || {};
+          const hourPrice = hourlyRates[duration] || pricingInfo.price;
+          totalPrice = hourPrice * formData.roomQuantity;
+        } else {
+          // ✅ Qua đêm hoặc dài ngày
+          totalPrice = pricingInfo.price * duration * formData.roomQuantity;
+        }
+
+        setTotalAmount(totalPrice);
+        console.log(`💰 Total calculated: ${totalPrice.toLocaleString('vi-VN')}đ (${formData.bookingType}, ${duration} ${pricingInfo.unit})`);
+      } else {
+        console.warn('No pricing info found for booking type:', formData.bookingType);
+        setTotalAmount(0);
       }
-
-      const roomTotal = unitPrice * duration * formData.roomQuantity;
-      setTotalAmount(roomTotal);
     } else {
       setTotalAmount(0);
     }
@@ -485,8 +499,13 @@ const AddBooking = ({ selectHotelId ,onClose }) => {
             >
               <option value="">Chọn loại phòng</option>
               {roomTypes.map(room => {
-                const displayPrice = calculateDisplayPrice(room.price, formData.bookingType);
-                const unit = getPriceUnit(formData.bookingType);
+                // const displayPrice = calculateDisplayPrice(room.price, formData.bookingType);
+                // const unit = getPriceUnit(formData.bookingType);
+                // const availableRooms = room.availableRooms || 0;
+
+                const pricingInfo = room.pricing?.displayPrices?.[formData.bookingType];
+                const displayPrice = pricingInfo?.price || 0;
+                const priceLabel = pricingInfo?.label || `${displayPrice.toLocaleString('vi-VN')}đ`;
                 const availableRooms = room.availableRooms || 0;
                 return (
                   <option
@@ -494,7 +513,7 @@ const AddBooking = ({ selectHotelId ,onClose }) => {
                     value={room.id}
                     disabled={availableRooms === 0}
                   >
-                    {room.name} - {formatCurrency(displayPrice)}/{unit}
+                    {room.name} - {priceLabel}
                     {availableRooms > 0 ? ` (Còn ${availableRooms} phòng)` : ' (Hết phòng)'}
                   </option>
                 );
@@ -511,20 +530,20 @@ const AddBooking = ({ selectHotelId ,onClose }) => {
                   const selectedRoom = roomTypes.find(r => r.id === formData.maLoaiPhong);
                   if (!selectedRoom) return null;
 
-                  const displayPrice = calculateDisplayPrice(selectedRoom.price, formData.bookingType);
-                  const unit = getPriceUnit(formData.bookingType);
+                  const pricingInfo = selectedRoom.pricing?.displayPrices?.[formData.bookingType];
+                  const detailedPricing = selectedRoom.pricing?.detailedPricing;
 
                   return (
                     <div className="space-y-1">
                       <div className="flex justify-between items-center">
                         <span className="text-blue-700 font-medium">
-                          💰 {formatCurrency(displayPrice)}/{unit}
+                          💰 {pricingInfo?.label || 'N/A'}
                         </span>
                         <span className={`text-xs px-2 py-1 rounded ${selectedRoom.availableRooms > 5
-                            ? 'bg-green-100 text-green-700'
-                            : selectedRoom.availableRooms > 0
-                              ? 'bg-yellow-100 text-yellow-700'
-                              : 'bg-red-100 text-red-700'
+                          ? 'bg-green-100 text-green-700'
+                          : selectedRoom.availableRooms > 0
+                            ? 'bg-yellow-100 text-yellow-700'
+                            : 'bg-red-100 text-red-700'
                           }`}>
                           {selectedRoom.availableRooms > 0
                             ? `${selectedRoom.availableRooms} phòng trống`
@@ -533,10 +552,28 @@ const AddBooking = ({ selectHotelId ,onClose }) => {
                         </span>
                       </div>
 
-                      {/*Hiển thị giá gốc nếu booking type là theo giờ */}
-                      {formData.bookingType === 'theo_gio' && (
+                      {/* ✅ Hiển thị chi tiết pricing từ backend */}
+                      {formData.bookingType === 'theo_gio' && detailedPricing?.hourly && (
+                        <div className="text-gray-600 text-xs space-y-1">
+                          <div>Giá gốc: {selectedRoom.price.toLocaleString('vi-VN')}đ/đêm</div>
+                          <div>Giờ đầu: {pricingInfo?.price?.toLocaleString('vi-VN')}đ (25% giá đêm)</div>
+                          <div className="text-blue-600">{detailedPricing.hourly.description}</div>
+                          <div className="text-purple-600">
+                            Range: {selectedRoom.pricing?.priceRanges?.hourly}
+                          </div>
+                        </div>
+                      )}
+
+                      {formData.bookingType === 'dai_ngay' && detailedPricing?.longstay && (
+                        <div className="text-gray-600 text-xs space-y-1">
+                          <div>Giá đêm: {selectedRoom.price.toLocaleString('vi-VN')}đ</div>
+                          <div className="text-green-600">{detailedPricing.longstay.description}</div>
+                        </div>
+                      )}
+
+                      {formData.bookingType === 'qua_dem' && detailedPricing?.overnight && (
                         <div className="text-gray-600 text-xs">
-                          Giá gốc: {formatCurrency(selectedRoom.price)}/đêm
+                          <div className="text-blue-600">{detailedPricing.overnight.description}</div>
                         </div>
                       )}
 
@@ -544,7 +581,12 @@ const AddBooking = ({ selectHotelId ,onClose }) => {
                         {selectedRoom.description}
                       </div>
 
-                      
+                      {/* ✅ Hiển thị note từ backend */}
+                      {pricingInfo?.note && (
+                        <div className="text-purple-600 text-xs italic">
+                          💡 {pricingInfo.note}
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
@@ -842,12 +884,17 @@ const AddBooking = ({ selectHotelId ,onClose }) => {
                   const roomType = roomTypes.find(r => r.id === formData.maLoaiPhong);
                   if (!roomType) return formatCurrency(0);
 
-                  let unitPrice = roomType.price;
-                  if (formData.bookingType === 'theo_gio') {
-                    unitPrice = Math.round(roomType.price / 14);
-                  }
+                  // ✅ Sử dụng pricing từ backend
+                  const pricingInfo = roomType.pricing?.displayPrices?.[formData.bookingType];
 
-                  return formatCurrency(unitPrice * duration * formData.roomQuantity);
+                  if (formData.bookingType === 'theo_gio') {
+                    const hourlyRates = roomType.pricing?.detailedPricing?.hourly?.rates || {};
+                    const hourPrice = hourlyRates[duration] || pricingInfo?.price || 0;
+                    return formatCurrency(hourPrice * formData.roomQuantity);
+                  } else {
+                    const unitPrice = pricingInfo?.price || 0;
+                    return formatCurrency(unitPrice * duration * formData.roomQuantity);
+                  }
                 })()}
               </span>
             </div>

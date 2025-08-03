@@ -310,6 +310,496 @@ hotelBookingRouter.get("/hotelowner/bookings", authorizeRoles("chuKhachSan", "nh
 });
 
 // Cập nhật trạng thái đặt phòng
+// hotelBookingRouter.put("/hotelowner/update/:id", authorizeRoles("chuKhachSan", "nhanVien"), async (req, res) => {
+//     try {
+//         const { id } = req.params;
+//         const {
+//             status,
+//             paymentMethod,
+//             reason,
+//             service,
+//             newBookingType,
+//             newCheckInDate,
+//             newCheckOutDate,
+//             newCheckInTime,
+//             newCheckOutTime,
+//         } = req.body;
+
+//         const booking = await Booking.findById(id).populate('maLoaiPhong');
+//         if (!booking) {
+//             return res.status(404).json({ message: "Booking not found" });
+//         }
+
+//         const updateData = {};
+//         let recalculatePrice = false;
+
+//         // ✅ THÊM: Xử lý nhận phòng thực tế (da_nhan_phong)
+//         if (status === 'da_nhan_phong') {
+//             console.log(`🏨 Processing real check-in for booking ${id}`);
+
+//             // ✅ Kiểm tra booking có thể nhận phòng không
+//             if (!['da_xac_nhan', 'dang_cho'].includes(booking.trangThai)) {
+//                 return res.status(400).json({
+//                     message: {
+//                         msgBody: `Không thể nhận phòng từ trạng thái "${booking.trangThai}"!`,
+//                         msgError: true
+//                     }
+//                 });
+//             }
+
+//             const now = moment().tz('Asia/Ho_Chi_Minh');
+//             const currentTime = now.format('HH:mm');
+//             const currentDate = now.format('YYYY-MM-DD');
+
+//             console.log(`⏰ Actual check-in time: ${currentTime} on ${currentDate}`);
+
+//             // ✅ Cập nhật thời gian nhận phòng thực tế
+//             updateData.trangThai = 'da_nhan_phong';
+//             updateData.thoiGianNhanPhongThucTe = now.toDate();
+//             updateData.gioNhanPhongThucTe = currentTime;
+
+//             // ✅ Tính toán late check-in fee (nếu có policy)
+//             const plannedCheckInTime = moment(`${moment(booking.ngayNhanPhong).format('YYYY-MM-DD')} ${booking.gioNhanPhong}`, 'YYYY-MM-DD HH:mm');
+//             const actualCheckInTime = now;
+
+//             let earlyLateFee = 0;
+//             let checkInNote = '';
+
+//             if (actualCheckInTime.isAfter(plannedCheckInTime)) {
+//                 const lateMinutes = actualCheckInTime.diff(plannedCheckInTime, 'minutes');
+//                 checkInNote = `Nhận trễ ${lateMinutes} phút`;
+
+//                 // ✅ Tính phí nhận trễ (nếu có policy - tùy chỉnh)
+//                 if (lateMinutes > 60 && booking.loaiDatPhong === 'theo_gio') {
+//                     earlyLateFee = Math.ceil(lateMinutes / 60) * 10000; // 10k/giờ trễ
+//                     updateData['thongTinGia.phuPhiGio'] = earlyLateFee;
+//                     updateData['thongTinGia.tongDonDat'] = booking.thongTinGia.tongTienPhong + (booking.thongTinGia.phiDichVu || 0) + earlyLateFee;
+//                 }
+//             } else if (actualCheckInTime.isBefore(plannedCheckInTime)) {
+//                 const earlyMinutes = plannedCheckInTime.diff(actualCheckInTime, 'minutes');
+//                 checkInNote = `Nhận sớm ${earlyMinutes} phút`;
+//             } else {
+//                 checkInNote = 'Nhận đúng giờ';
+//             }
+
+//             // ✅ Cập nhật note
+//             const existingNote = booking.ghiChu || '';
+//             updateData.ghiChu = existingNote + `\n[${currentTime} ${moment().format('DD/MM/YYYY')}] ${checkInNote}`;
+
+//             console.log(`✅ Check-in processed: ${checkInNote}${earlyLateFee > 0 ? ` - Phí: ${earlyLateFee}đ` : ''}`);
+
+//             // ✅ Thêm thông tin check-in vào response
+//             updateData._checkInInfo = {
+//                 actualCheckInTime: currentTime,
+//                 actualCheckInDate: currentDate,
+//                 plannedTime: booking.gioNhanPhong,
+//                 isLate: actualCheckInTime.isAfter(plannedCheckInTime),
+//                 isEarly: actualCheckInTime.isBefore(plannedCheckInTime),
+//                 timeDifferenceMinutes: Math.abs(actualCheckInTime.diff(plannedCheckInTime, 'minutes')),
+//                 earlyLateFee,
+//                 checkInNote
+//             };
+//         }
+//         // ✅ Xử lý checkout với late fee và payment update
+//         else if (status === 'da_tra_phong') {
+//             console.log(`🚪 Processing checkout for booking ${id}`);
+
+//             // ✅ Kiểm tra booking có thể checkout không
+//             if (!['da_xac_nhan', 'da_nhan_phong', 'dang_su_dung'].includes(booking.trangThai)) {
+//                 return res.status(400).json({
+//                     message: {
+//                         msgBody: `Không thể checkout từ trạng thái "${booking.trangThai}"!`,
+//                         msgError: true
+//                     }
+//                 });
+//             }
+
+//             // Lấy tất cả assignments của booking
+//             const assignments = await RoomBookingAssignment.find({
+//                 maDatPhong: id,
+//                 trangThaiHoatDong: true,
+//                 trangThaiGanPhong: 'da_gan'
+//             }).populate('maPhong', 'soPhong');
+
+//             if (assignments.length === 0) {
+//                 return res.status(400).json({
+//                     message: { msgBody: "Không có phòng nào để checkout!", msgError: true }
+//                 });
+//             }
+
+//             let totalLateFee = 0;
+//             const checkoutResults = [];
+
+//             // ✅ Checkout từng phòng và tính late fee
+//             for (const assignment of assignments) {
+//                 const currentTime = moment().format('HH:mm');
+
+//                 // Tính late fee cho phòng này
+//                 const lateFeeCalculation = calculateLateFee(booking, assignment, currentTime);
+
+//                 // ✅ SỬA: Không dùng enum "da_tra_phong", dùng fields khác
+//                 assignment.gioTraPhongThucTe = currentTime;
+//                 assignment.thoiGianCheckOutThucTe = new Date();
+//                 assignment.daCheckout = true;  // ✅ THÊM field boolean
+//                 assignment.ghiChu += `${lateFeeCalculation.status}`;
+
+//                 // ✅ Thêm phí trả trễ nếu có
+//                 if (lateFeeCalculation.lateFee > 0) {
+//                     const lateFeeService = {
+//                         tenDichVu: `Phí trả trễ phòng ${assignment.maPhong.soPhong} (${lateFeeCalculation.lateMinutes} phút)`,
+//                         soLuong: 1,
+//                         donGia: lateFeeCalculation.lateFee,
+//                         thanhTien: lateFeeCalculation.lateFee,
+//                         thoiGianSuDung: new Date(),
+//                         loaiDichVu: 'phi_tra_tre'
+//                     };
+
+//                     assignment.dichVuSuDung.push(lateFeeService);
+//                     assignment.phuPhiNangCap += lateFeeCalculation.lateFee;
+//                     totalLateFee += lateFeeCalculation.lateFee;
+
+//                     console.log(`💰 Added late fee ${lateFeeCalculation.lateFee}đ for room ${assignment.maPhong.soPhong}`);
+//                 }
+
+//                 // ✅ Cập nhật trạng thái phòng về "trong"
+//                 await Room.findByIdAndUpdate(assignment.maPhong._id, {
+//                     trangThaiPhong: "trong"
+//                 });
+
+//                 await assignment.save();
+
+//                 checkoutResults.push({
+//                     roomNumber: assignment.maPhong.soPhong,
+//                     checkoutTime: currentTime,
+//                     lateFee: lateFeeCalculation.lateFee,
+//                     isLate: lateFeeCalculation.isLate
+//                 });
+//             }
+
+//             // ✅ Cập nhật tổng tiền booking nếu có late fee
+//             if (totalLateFee > 0) {
+//                 booking.thongTinGia.phiDichVu = (booking.thongTinGia.phiDichVu || 0) + totalLateFee;
+//                 booking.thongTinGia.tongDonDat = booking.thongTinGia.tongTienPhong + booking.thongTinGia.phiDichVu;
+//                 console.log(`💰 Updated booking total: +${totalLateFee}đ late fee`);
+//             }
+
+//             // ✅ Cập nhật booking status và payment
+//             updateData.trangThai = 'da_tra_phong';
+//             updateData.trangThaiThanhToan = 'da_thanh_toan';
+//             updateData.thoiGianTraPhongThucTe = new Date();
+
+//             console.log(`✅ Checkout completed for ${assignments.length} rooms with total late fee: ${totalLateFee}đ`);
+
+//             // Thêm thông tin checkout vào response
+//             updateData._checkoutInfo = {
+//                 totalRooms: assignments.length,
+//                 totalLateFee,
+//                 checkoutResults,
+//                 paymentStatusUpdated: true,
+//                 bookingStatusUpdated: true
+//             };
+//         } else {
+//             // ✅ Cập nhật trạng thái booking bình thường
+//             if (status) {
+//                 const validStatuses = ["dang_cho", "da_xac_nhan", "da_huy", "da_nhan_phong", "dang_su_dung", "da_tra_phong", "khong_nhan_phong"];
+//                 if (!validStatuses.includes(status)) {
+//                     return res.status(400).json({
+//                         message: { msgBody: "Trạng thái không hợp lệ!", msgError: true }
+//                     });
+//                 }
+//                 updateData.trangThai = status;
+//                 console.log(`📝 Updating booking status to: ${status}`);
+//             }
+//         }
+
+//         // ✅ Thay đổi loại đặt phòng
+//         if (newBookingType && newBookingType !== booking.loaiDatPhong) {
+//             if (!['theo_gio', 'qua_dem', 'dai_ngay'].includes(newBookingType)) {
+//                 return res.status(400).json({
+//                     message: { msgBody: "Loại đặt phòng không hợp lệ!", msgError: true }
+//                 });
+//             }
+//             updateData.loaiDatPhong = newBookingType;
+//             recalculatePrice = true;
+//         }
+
+//         // ✅ Thay đổi thời gian
+//         if (newCheckInDate) {
+//             updateData.ngayNhanPhong = new Date(newCheckInDate);
+//             recalculatePrice = true;
+//         }
+
+//         if (newCheckOutDate) {
+//             updateData.ngayTraPhong = new Date(newCheckOutDate);
+//             recalculatePrice = true;
+//         }
+
+//         if (newCheckInTime) {
+//             updateData.gioNhanPhong = newCheckInTime;
+//         }
+
+//         if (newCheckOutTime) {
+//             updateData.gioTraPhong = newCheckOutTime;
+//         }
+
+//         // ✅ LOGIC MỚI: Tính lại giá
+//         if (recalculatePrice) {
+//             const roomType = booking.maLoaiPhong;
+//             const finalBookingType = newBookingType || booking.loaiDatPhong;
+
+//             // ✅ KIỂM TRA: Khách đang ở và muốn thay đổi
+//             const isGuestCurrentlyStaying = booking.thoiGianNhanPhongThucTe &&
+//                 booking.trangThai === 'da_nhan_phong';
+//             const isBookingTypeChange = newBookingType && newBookingType !== booking.loaiDatPhong;
+//             if (isGuestCurrentlyStaying && isBookingTypeChange) {
+//                 // ✅ GUEST CHANGE: Logic cộng thêm ĐÚNG
+//                 console.log(`🔄 Guest booking change detected: ${booking.loaiDatPhong} → ${finalBookingType}`);
+
+//                 const now = moment().tz('Asia/Ho_Chi_Minh');
+//                 const currentHourlyPrice = booking.thongTinGia.tongTienPhong; // Giá giờ đã trả
+//                 const roomBasePrice = booking.maLoaiPhong.giaCa; // Giá đêm gốc
+
+//                 let additionalPrice = 0;
+//                 let changeDescription = '';
+
+//                 if (booking.loaiDatPhong === 'theo_gio' && finalBookingType === 'qua_dem') {
+//                     // ✅ THEO GIỜ → QUA ĐÊM: Cộng thêm giá qua đêm
+//                     // Logic: Khách đã trả giá giờ + muốn thêm qua đêm = cộng thêm giá đêm đủ
+//                     additionalPrice = roomBasePrice; // Cộng thêm giá đêm đầy đủ
+//                     changeDescription = `Đổi từ theo giờ sang qua đêm - Cộng thêm`;
+
+//                     // Cập nhật checkout time thành 12:00 ngày mai
+//                     const newCheckOut = moment(booking.ngayNhanPhong).add(1, 'day').hour(12).minute(0);
+//                     updateData.ngayTraPhong = newCheckOut.toDate();
+//                     updateData.gioTraPhong = '12:00';
+
+//                     console.log(`💰 Hourly→Overnight: Keep existing ${currentHourlyPrice}đ + Add full night ${additionalPrice}đ = Total ${currentHourlyPrice + additionalPrice}đ`);
+
+//                 } else if (booking.loaiDatPhong === 'qua_dem' && finalBookingType === 'dai_ngay') {
+//                     // ✅ QUA ĐÊM → DÀI NGÀY: Cộng thêm ngày thêm
+//                     const finalCheckOut = moment(newCheckOutDate || booking.ngayTraPhong);
+//                     const extraDays = finalCheckOut.diff(moment(booking.ngayTraPhong), 'days');
+
+//                     if (extraDays > 0) {
+//                         const dayPrice = smartRound(roomBasePrice * 1.10); // +10% cho dài ngày
+//                         additionalPrice = dayPrice * extraDays;
+//                         changeDescription = `Gia hạn thêm ${extraDays} ngày`;
+
+//                         updateData.ngayTraPhong = finalCheckOut.toDate();
+//                     }
+
+//                     console.log(`📅 Overnight→LongStay: Keep existing ${currentHourlyPrice}đ + Add ${extraDays} days x ${dayPrice}đ = +${additionalPrice}đ`);
+
+//                 } else if (booking.loaiDatPhong === 'theo_gio' && finalBookingType === 'dai_ngay') {
+//                     // ✅ THEO GIỜ → DÀI NGÀY: Cộng thêm giá dài ngày
+//                     const finalCheckOut = moment(newCheckOutDate);
+//                     const totalDays = finalCheckOut.diff(moment(booking.ngayNhanPhong), 'days');
+
+//                     const dayPrice = smartRound(roomBasePrice * 1.10);
+//                     additionalPrice = dayPrice * totalDays; // Cộng thêm giá dài ngày đầy đủ
+
+//                     changeDescription = `Đổi từ theo giờ sang dài ngày (${totalDays} ngày) - Cộng thêm`;
+//                     updateData.ngayTraPhong = finalCheckOut.toDate();
+
+//                     console.log(`🏨 Hourly→LongStay: Keep existing ${currentHourlyPrice}đ + Add ${totalDays} days x ${dayPrice}đ = +${additionalPrice}đ`);
+//                 }
+
+//                 // ✅ Cập nhật với phụ thu CỘNG THÊM
+//                 if (additionalPrice > 0) {
+//                     const newTotalRoom = booking.thongTinGia.tongTienPhong + additionalPrice; // ✅ CỘNG THÊM
+
+//                     updateData.loaiDatPhong = finalBookingType;
+//                     updateData['thongTinGia.tongTienPhong'] = newTotalRoom;
+//                     updateData['thongTinGia.tongDonDat'] = smartRound(newTotalRoom + (booking.thongTinGia.phiDichVu || 0));
+
+//                     // ✅ Thông tin guest change cho response
+//                     updateData._guestChangeInfo = {
+//                         oldBookingType: booking.loaiDatPhong,
+//                         newBookingType: finalBookingType,
+//                         oldTotal: booking.thongTinGia.tongTienPhong,
+//                         newTotal: newTotalRoom,
+//                         additionalPrice: additionalPrice, // ✅ Phụ thu thực tế
+//                         changeDescription: changeDescription,
+//                         needsPayment: additionalPrice > 0,
+//                         refundAmount: 0, // Guest change không hoàn tiền
+//                         calculation: {
+//                             existingAmount: booking.thongTinGia.tongTienPhong,
+//                             additionalAmount: additionalPrice,
+//                             finalAmount: newTotalRoom,
+//                             formula: `${booking.thongTinGia.tongTienPhong.toLocaleString('vi-VN')}đ + ${additionalPrice.toLocaleString('vi-VN')}đ = ${newTotalRoom.toLocaleString('vi-VN')}đ`
+//                         }
+//                     };
+
+//                     console.log(`💰 Guest change: ${changeDescription} - Cộng thêm: ${additionalPrice.toLocaleString('vi-VN')}đ`);
+//                     console.log(`💰 Calculation: ${booking.thongTinGia.tongTienPhong.toLocaleString('vi-VN')}đ + ${additionalPrice.toLocaleString('vi-VN')}đ = ${newTotalRoom.toLocaleString('vi-VN')}đ`);
+//                 }
+
+//             } else {
+//                 // ✅ ADMIN UPDATE: Dùng calculateEnhancedPricing với smart rounding
+//                 console.log(`🛠️ Admin update: Using enhanced pricing calculation`);
+
+//                 const finalCheckIn = moment(newCheckInDate || booking.ngayNhanPhong);
+//                 const finalCheckOut = moment(newCheckOutDate || booking.ngayTraPhong);
+//                 const checkInTime = newCheckInTime || booking.gioNhanPhong;
+//                 const checkOutTime = newCheckOutTime || booking.gioTraPhong;
+
+//                 // ✅ SỬA: Dùng calculateEnhancedPricing thay vì logic cũ
+//                 const enhancedPricing = calculateEnhancedPricing({
+//                     roomType: roomType,
+//                     bookingType: finalBookingType,
+//                     checkInDate: finalCheckIn.format('YYYY-MM-DD'),
+//                     checkOutDate: finalBookingType !== 'theo_gio' ? finalCheckOut.format('YYYY-MM-DD') : null,
+//                     checkInTime: checkInTime,
+//                     checkOutTime: checkOutTime
+//                 });
+
+//                 console.log(`💰 Enhanced pricing result:`, enhancedPricing);
+
+//                 // ✅ SỬA: Sử dụng kết quả đã được làm tròn từ calculateEnhancedPricing
+//                 const newRoomTotal = smartRound(enhancedPricing.finalPrice * booking.soLuongPhong);
+//                 const existingServiceFee = booking.thongTinGia?.phiDichVu || 0;
+
+//                 // ✅ Cập nhật với giá trị đã làm tròn
+//                 updateData['thongTinGia.donGia'] = enhancedPricing.unitPrice;
+//                 updateData['thongTinGia.soLuongDonVi'] = enhancedPricing.duration;
+//                 updateData['thongTinGia.donVi'] = enhancedPricing.unit;
+//                 updateData['thongTinGia.tongTienPhong'] = newRoomTotal;
+//                 updateData['thongTinGia.tongDonDat'] = smartRound(newRoomTotal + existingServiceFee);
+
+//                 // ✅ THÊM: Chi tiết giá cho response
+//                 updateData['thongTinGia.chiTietGia'] = {
+//                     basePrice: enhancedPricing.basePrice,
+//                     subtotalBeforeDiscount: smartRound(enhancedPricing.breakdown.subtotal * booking.soLuongPhong),
+//                     duration: enhancedPricing.duration,
+//                     unit: enhancedPricing.unit,
+//                     multiplier: enhancedPricing.multiplier,
+//                     discounts: {
+//                         weekend: enhancedPricing.discounts.weekend,
+//                         longStay: enhancedPricing.discounts.longStay,
+//                         discountPercent: enhancedPricing.discounts.discountPercent,
+//                         discountAmount: smartRound(enhancedPricing.discounts.discountAmount * booking.soLuongPhong)
+//                     },
+//                     breakdown: {
+//                         baseRate: enhancedPricing.basePrice,
+//                         duration: enhancedPricing.duration,
+//                         subtotal: smartRound(enhancedPricing.breakdown.subtotal * booking.soLuongPhong),
+//                         taxPrice: smartRound(enhancedPricing.breakdown.taxPrice * booking.soLuongPhong),
+//                         discountAmount: smartRound(enhancedPricing.breakdown.discountAmount * booking.soLuongPhong),
+//                         multiplier: enhancedPricing.multiplier,
+//                         total: newRoomTotal,
+//                     }
+//                 };
+
+//                 console.log(`💰 Admin update: New total = ${newRoomTotal.toLocaleString('vi-VN')}đ (enhanced + rounded)`);
+//             }
+//         }
+
+//         // ✅ Các cập nhật khác (giữ nguyên logic cũ)
+//         if (paymentMethod) updateData.phuongThucThanhToan = paymentMethod;
+//         if (reason) updateData.ghiChu = reason || "Khách sạn đã hủy đơn này!";
+
+//         // ✅ Xử lý dịch vụ bổ sung
+//         if (service && Array.isArray(service)) {
+//             const dichVuMoi = service.map(service => ({
+//                 tenDichVu: service.name,
+//                 donGia: service.price,
+//                 soLuong: service.quantity || 1,
+//                 thanhTien: service.price * (service.quantity || 1)
+//             }));
+
+//             updateData.dichVuBoSung = dichVuMoi;
+//             const tongPhiDichVu = dichVuMoi.reduce((total, service) => total + service.thanhTien, 0);
+//             updateData['thongTinGia.phiDichVu'] = tongPhiDichVu;
+
+//             const currentRoomTotal = updateData['thongTinGia.tongTienPhong'] || booking.thongTinGia.tongTienPhong;
+//             updateData['thongTinGia.tongDonDat'] = currentRoomTotal + tongPhiDichVu;
+//         }
+
+//         // ✅ Cập nhật booking trong database
+//         const updatedBooking = await Booking.findByIdAndUpdate(id, updateData, { new: true })
+//             .populate("maNguoiDung", "tenNguoiDung email soDienThoai")
+//             .populate("maLoaiPhong", "tenLoaiPhong giaCa")
+//             .populate("maKhachSan", "tenKhachSan");
+
+//         if (!updatedBooking) {
+//             return res.status(404).json({
+//                 message: { msgBody: "Không tìm thấy đơn đặt phòng!", msgError: true }
+//             });
+//         }
+
+//         // ✅ Success messages
+//         let successMessage = "✅ Cập nhật đơn đặt thành công!";
+
+//         if (status === 'da_nhan_phong' && updateData._checkInInfo) {
+//             const checkInInfo = updateData._checkInInfo;
+//             successMessage = `🏨 Nhận phòng thành công lúc ${checkInInfo.actualCheckInTime}!`;
+
+//             if (checkInInfo.earlyLateFee > 0) {
+//                 successMessage += ` Phí nhận trễ: ${checkInInfo.earlyLateFee.toLocaleString('vi-VN')}đ.`;
+//             } else {
+//                 successMessage += ` ${checkInInfo.checkInNote}.`;
+//             }
+//         } else if (status === 'da_tra_phong' && updateData._checkoutInfo) {
+//             const checkoutInfo = updateData._checkoutInfo;
+//             successMessage = `🚪 Checkout thành công ${checkoutInfo.totalRooms} phòng!`;
+
+//             if (checkoutInfo.totalLateFee > 0) {
+//                 successMessage += ` Phí trả trễ: ${checkoutInfo.totalLateFee.toLocaleString('vi-VN')}đ.`;
+//             }
+
+//             successMessage += " Đã cập nhật trạng thái thanh toán.";
+//         } else if (updateData._guestChangeInfo) {
+//             const changeInfo = updateData._guestChangeInfo;
+//             successMessage = `🔄 ${changeInfo.changeDescription} thành công! Phụ thu: ${changeInfo.additionalPrice.toLocaleString('vi-VN')}đ`;
+//         } else if (recalculatePrice) {
+//             successMessage += ` Giá mới: ${updatedBooking.thongTinGia.tongDonDat.toLocaleString('vi-VN')}đ`;
+//         } else if (status === "da_huy") {
+//             successMessage = "🚫 Đã hủy đơn đặt phòng thành công!";
+//         }
+
+//         console.log(`✅ Final booking status: ${updatedBooking.trangThai}, payment: ${updatedBooking.trangThaiThanhToan}`);
+
+//         res.status(200).json({
+//             message: { msgBody: successMessage, msgError: false },
+//             updatedBooking: {
+//                 bookingId: updatedBooking._id,
+//                 status: updatedBooking.trangThai,
+//                 paymentStatus: updatedBooking.trangThaiThanhToan,
+//                 bookingType: updatedBooking.loaiDatPhong,
+//                 services: updatedBooking.dichVuBoSung || [],
+//                 servicesFee: updatedBooking.thongTinGia.phiDichVu || 0,
+//                 totalAmount: updatedBooking.thongTinGia.tongDonDat || 0,
+//                 priceDetails: updatedBooking.thongTinGia,
+//                 reason: updatedBooking.ghiChu,
+//                 // ✅ Thêm thông tin check-in nếu có
+//                 ...(updateData._checkInInfo && {
+//                     checkInInfo: updateData._checkInInfo
+//                 }),
+//                 // ✅ Thêm thông tin checkout nếu có
+//                 ...(updateData._checkoutInfo && {
+//                     checkoutInfo: updateData._checkoutInfo
+//                 }),
+//                 // ✅ THÊM: Thông tin guest change nếu có
+//                 ...(updateData._guestChangeInfo && {
+//                     guestChangeInfo: updateData._guestChangeInfo
+//                 })
+//             }
+//         });
+
+//     } catch (error) {
+//         console.error("Lỗi cập nhật booking:", error);
+//         res.status(400).json({
+//             message: { msgBody: "❌ Cập nhật đơn đặt thất bại!", msgError: true },
+//             error: error.message
+//         });
+//     }
+// });
+
+
+// ✅ SỬA: Vị trí đúng của logic trong hotelBookingRouter.put("/hotelowner/update/:id")
+
+// ✅ CODE GỐC + FIX GUEST CHANGE ĐỌN GIẢN
+
 hotelBookingRouter.put("/hotelowner/update/:id", authorizeRoles("chuKhachSan", "nhanVien"), async (req, res) => {
     try {
         const { id } = req.params;
@@ -542,56 +1032,106 @@ hotelBookingRouter.put("/hotelowner/update/:id", authorizeRoles("chuKhachSan", "
             updateData.gioTraPhong = newCheckOutTime;
         }
 
-        // ✅ Tính lại giá nếu cần
+        // ✅ LOGIC TÍNH LẠI GIÁ - FIX GUEST CHANGE
         if (recalculatePrice) {
             const roomType = booking.maLoaiPhong;
             const finalBookingType = newBookingType || booking.loaiDatPhong;
-            const finalCheckIn = moment(newCheckInDate || booking.ngayNhanPhong);
-            const finalCheckOut = moment(newCheckOutDate || booking.ngayTraPhong);
+            
+            // ✅ KIỂM TRA GUEST CHANGE (ĐƠN GIẢN)
+            const isGuestChange = ['da_nhan_phong', 'dang_su_dung'].includes(booking.trangThai) && 
+                                  newBookingType && newBookingType !== booking.loaiDatPhong;
 
-            let duration = 1;
-            let unit = "dem";
-            let unitPrice = roomType.giaCa;
+            if (isGuestChange) {
+                // ✅ GUEST CHANGE: Cộng thêm giá thay vì thay thế
+                console.log(`🔄 Guest Change: ${booking.loaiDatPhong} → ${finalBookingType}`);
+                
+                const currentTotal = booking.thongTinGia.tongTienPhong;
+                let additionalPrice = 0;
 
-            switch (finalBookingType) {
-                case 'theo_gio':
-                    const checkInTime = newCheckInTime || booking.gioNhanPhong;
-                    const checkOutTime = newCheckOutTime || booking.gioTraPhong;
-
-                    const startTime = moment(`${finalCheckIn.format('YYYY-MM-DD')} ${checkInTime}`, 'YYYY-MM-DD HH:mm');
-                    let endTime = moment(`${finalCheckIn.format('YYYY-MM-DD')} ${checkOutTime}`, 'YYYY-MM-DD HH:mm');
-
-                    if (endTime.isSameOrBefore(startTime)) {
-                        endTime.add(1, 'day');
+                if (booking.loaiDatPhong === 'theo_gio' && finalBookingType === 'qua_dem') {
+                    // Theo giờ → Qua đêm: Cộng thêm giá đêm đầy đủ
+                    additionalPrice = roomType.giaCa;
+                    
+                    // Cập nhật checkout time
+                    const newCheckOut = moment(booking.ngayNhanPhong).add(1, 'day').hour(12).minute(0);
+                    updateData.ngayTraPhong = newCheckOut.toDate();
+                    updateData.gioTraPhong = '12:00';
+                    
+                } else if (booking.loaiDatPhong === 'qua_dem' && finalBookingType === 'dai_ngay') {
+                    // Qua đêm → Dài ngày: Tính thêm ngày
+                    const finalCheckOut = moment(newCheckOutDate || booking.ngayTraPhong);
+                    const extraDays = finalCheckOut.diff(moment(booking.ngayTraPhong), 'days');
+                    if (extraDays > 0) {
+                        additionalPrice = roomType.giaCa * 1.1 * extraDays; // +10% cho dài ngày
+                        updateData.ngayTraPhong = finalCheckOut.toDate();
                     }
+                    
+                } else if (booking.loaiDatPhong === 'theo_gio' && finalBookingType === 'dai_ngay') {
+                    // Theo giờ → Dài ngày: Cộng thêm giá dài ngày
+                    const finalCheckOut = moment(newCheckOutDate);
+                    const totalDays = finalCheckOut.diff(moment(booking.ngayNhanPhong), 'days');
+                    additionalPrice = roomType.giaCa * 1.1 * totalDays;
+                    updateData.ngayTraPhong = finalCheckOut.toDate();
+                }
 
-                    duration = Math.ceil(endTime.diff(startTime, 'hours', true));
-                    unit = "gio";
-                    unitPrice = Math.round(roomType.giaCa / 14);
-                    break;
+                // ✅ Cập nhật với phụ thu CỘNG THÊM
+                const newTotal = currentTotal + additionalPrice;
+                updateData['thongTinGia.tongTienPhong'] = newTotal;
+                updateData['thongTinGia.tongDonDat'] = newTotal + (booking.thongTinGia.phiDichVu || 0);
+                
+                console.log(`💰 Guest Change: ${currentTotal}đ + ${additionalPrice}đ = ${newTotal}đ`);
 
-                case 'qua_dem':
-                    duration = 1;
-                    unit = "dem";
-                    break;
+            } else {
+                // ✅ ADMIN UPDATE: Dùng logic gốc
+                const finalCheckIn = moment(newCheckInDate || booking.ngayNhanPhong);
+                const finalCheckOut = moment(newCheckOutDate || booking.ngayTraPhong);
 
-                case 'dai_ngay':
-                    duration = finalCheckOut.diff(finalCheckIn, 'days');
-                    unit = "ngay";
-                    break;
+                let duration = 1;
+                let unit = "dem";
+                let unitPrice = roomType.giaCa;
+
+                switch (finalBookingType) {
+                    case 'theo_gio':
+                        const checkInTime = newCheckInTime || booking.gioNhanPhong;
+                        const checkOutTime = newCheckOutTime || booking.gioTraPhong;
+
+                        const startTime = moment(`${finalCheckIn.format('YYYY-MM-DD')} ${checkInTime}`, 'YYYY-MM-DD HH:mm');
+                        let endTime = moment(`${finalCheckIn.format('YYYY-MM-DD')} ${checkOutTime}`, 'YYYY-MM-DD HH:mm');
+
+                        if (endTime.isSameOrBefore(startTime)) {
+                            endTime.add(1, 'day');
+                        }
+
+                        duration = Math.ceil(endTime.diff(startTime, 'hours', true));
+                        unit = "gio";
+                        unitPrice = Math.round(roomType.giaCa / 14);
+                        break;
+
+                    case 'qua_dem':
+                        duration = 1;
+                        unit = "dem";
+                        break;
+
+                    case 'dai_ngay':
+                        duration = finalCheckOut.diff(finalCheckIn, 'days');
+                        unit = "ngay";
+                        break;
+                }
+
+                const newRoomTotal = unitPrice * duration * booking.soLuongPhong;
+                const existingServiceFee = booking.thongTinGia?.phiDichVu || 0;
+
+                updateData['thongTinGia.donGia'] = unitPrice;
+                updateData['thongTinGia.soLuongDonVi'] = duration;
+                updateData['thongTinGia.donVi'] = unit;
+                updateData['thongTinGia.tongTienPhong'] = newRoomTotal;
+                updateData['thongTinGia.tongDonDat'] = newRoomTotal + existingServiceFee;
+                
+                console.log(`💰 Admin Update: New total = ${newRoomTotal}đ`);
             }
-
-            const newRoomTotal = unitPrice * duration * booking.soLuongPhong;
-            const existingServiceFee = booking.thongTinGia?.phiDichVu || 0;
-
-            updateData['thongTinGia.donGia'] = unitPrice;
-            updateData['thongTinGia.soLuongDonVi'] = duration;
-            updateData['thongTinGia.donVi'] = unit;
-            updateData['thongTinGia.tongTienPhong'] = newRoomTotal;
-            updateData['thongTinGia.tongDonDat'] = newRoomTotal + existingServiceFee;
         }
 
-        // ✅ Các cập nhật khác
+        // ✅ Các cập nhật khác (GIỮ NGUYÊN CODE GỐC)
         if (paymentMethod) updateData.phuongThucThanhToan = paymentMethod;
         if (reason) updateData.ghiChu = reason || "Khách sạn đã hủy đơn này!";
 
@@ -624,7 +1164,7 @@ hotelBookingRouter.put("/hotelowner/update/:id", authorizeRoles("chuKhachSan", "
             });
         }
 
-        // ✅ Success messages
+        // ✅ Success messages (GIỮ NGUYÊN CODE GỐC)
         let successMessage = "✅ Cập nhật đơn đặt thành công!";
 
         if (status === 'da_nhan_phong' && updateData._checkInInfo) {
@@ -1205,11 +1745,11 @@ function getBookingTypeText(type) {
 //Danh sách loại phòng cho khách sạn 
 hotelBookingRouter.get("/hotelowner/getRoomInHotel/:hotelId", authorizeRoles("chuKhachSan", "nhanVien"), async (req, res) => {
     const { hotelId } = req.params;
-    const { checkInDate, checkOutDate } = req.query; // ✅ THÊM: date params để check available
+    const { checkInDate, checkOutDate } = req.query;
 
     try {
         const rooms = await RoomType.find({ maKhachSan: hotelId });
-        console.log("Các loại phòng trong khách sạn", rooms);
+        console.log(`🏨 Found ${rooms.length} room types in hotel ${hotelId}`);
 
         if (!rooms || rooms.length === 0) {
             return res.status(400).json({
@@ -1220,62 +1760,144 @@ hotelBookingRouter.get("/hotelowner/getRoomInHotel/:hotelId", authorizeRoles("ch
 
         // ✅ Tính số phòng trống cho mỗi loại phòng
         const result = await Promise.all(rooms.map(async (room) => {
-            let availableRooms = 0;
-            let totalRooms = 0;
-
             try {
-    
-                const allRoomsOfType = await Room.find({ maLoaiPhong: room._id });
-                totalRooms = allRoomsOfType.length;
+                // ✅ Đếm tổng số phòng của loại này
+                const totalRooms = await Room.countDocuments({
+                    maLoaiPhong: room._id
+                });
 
-                
-                const emptyRooms = allRoomsOfType.filter(r => r.trangThaiPhong === 'trong');
-                availableRooms = emptyRooms.length;
+                // ✅ Đếm số phòng trống (đơn giản)
+                const availableRooms = await Room.countDocuments({
+                    maLoaiPhong: room._id,
+                    trangThaiPhong: "trong"
+                });
 
                 console.log(`📊 ${room.tenLoaiPhong}: ${availableRooms}/${totalRooms} phòng trống`);
 
+                // ✅ THÊM: Tính pricing cho tất cả booking types
+                const basePrice = room.giaCa;
+
+                // Time-bands pricing cho theo giờ
+                const hourlyPrices = {};
+                for (let hour = 1; hour <= 12; hour++) {
+                    const hourlyRates = {
+                        1: 0.25, 2: 0.35, 3: 0.45, 4: 0.55,
+                        5: 0.65, 6: 0.70, 7: 0.75, 8: 0.80,
+                    };
+                    const rate = hourlyRates[hour] || Math.min(0.95, 0.80 + (hour - 8) * 0.03);
+                    hourlyPrices[hour] = smartRound(basePrice * rate);
+                }
+
+                // Pricing cho các loại booking
+                const nightPrice = smartRound(basePrice);
+                const dayPrice = smartRound(basePrice * 1.10);
+                const hourlyStartPrice = hourlyPrices[1];
+
+                return {
+                    roomId: room._id,
+                    roomTypeName: room.tenLoaiPhong,
+                    roomTypePrice: room.giaCa, // Giá gốc
+                    roomTypeDescription: room.moTa,
+                    roomcapacity: room.soLuongKhach,
+                    availableRooms: availableRooms,
+                    totalRooms: totalRooms,
+
+                    // ✅ THÊM: Pricing info đã tính sẵn
+                    pricing: {
+                        basePrice: basePrice, // Giá gốc
+
+                        // Giá hiển thị cho từng booking type
+                        displayPrices: {
+                            'theo_gio': {
+                                price: hourlyStartPrice,
+                                unit: 'giờ',
+                                label: `${hourlyStartPrice.toLocaleString('vi-VN')}đ/giờ`,
+                                note: 'Giá tăng dần theo thời gian'
+                            },
+                            'qua_dem': {
+                                price: nightPrice,
+                                unit: 'đêm',
+                                label: `${nightPrice.toLocaleString('vi-VN')}đ/đêm`,
+                                note: 'Giá chuẩn'
+                            },
+                            'dai_ngay': {
+                                price: dayPrice,
+                                unit: 'ngày',
+                                label: `${dayPrice.toLocaleString('vi-VN')}đ/ngày`,
+                                note: '+10% so với giá đêm'
+                            }
+                        },
+
+                        // Chi tiết pricing cho từng booking type
+                        detailedPricing: {
+                            hourly: {
+                                baseRate: hourlyStartPrice,
+                                rates: hourlyPrices,
+                                maxRate: smartRound(basePrice * 0.95),
+                                description: 'Time-bands pricing: 25%-95% giá đêm'
+                            },
+                            overnight: {
+                                rate: nightPrice,
+                                percentage: 100,
+                                description: '100% giá gốc'
+                            },
+                            longstay: {
+                                rate: dayPrice,
+                                percentage: 110,
+                                description: '110% giá đêm'
+                            }
+                        },
+
+                        // ✅ Thông tin bổ sung
+                        occupancyRate: totalRooms > 0 ? Math.round(((totalRooms - availableRooms) / totalRooms) * 100) : 0,
+                        isAvailable: availableRooms > 0,
+
+                        // ✅ Range info cho frontend display
+                        priceRanges: {
+                            hourly: `${hourlyStartPrice.toLocaleString('vi-VN')}đ - ${smartRound(basePrice * 0.95).toLocaleString('vi-VN')}đ/giờ`,
+                            overnight: `${nightPrice.toLocaleString('vi-VN')}đ/đêm`,
+                            longstay: `${dayPrice.toLocaleString('vi-VN')}đ/ngày`
+                        }
+                    }
+                };
+
             } catch (error) {
-                console.error(`Lỗi tính available rooms cho ${room.tenLoaiPhong}:`, error);
-                availableRooms = 0;
-                totalRooms = 0;
+                console.error(`❌ Lỗi tính available rooms cho ${room.tenLoaiPhong}:`, error);
+                return {
+                    roomId: room._id,
+                    roomTypeName: room.tenLoaiPhong,
+                    roomTypePrice: room.giaCa,
+                    roomTypeDescription: room.moTa,
+                    roomcapacity: room.soLuongKhach,
+                    availableRooms: 0,
+                    totalRooms: 0,
+                    pricing: {
+                        basePrice: room.giaCa,
+                        displayPrices: {
+                            'theo_gio': { price: 0, unit: 'giờ', label: 'N/A', note: 'Lỗi tính giá' },
+                            'qua_dem': { price: 0, unit: 'đêm', label: 'N/A', note: 'Lỗi tính giá' },
+                            'dai_ngay': { price: 0, unit: 'ngày', label: 'N/A', note: 'Lỗi tính giá' }
+                        },
+                        occupancyRate: 100,
+                        isAvailable: false
+                    },
+                    error: 'Lỗi khi tính toán'
+                };
             }
-
-            // Thêm vào backend để check
-            console.log('🏨 Room schema fields:');
-            const sampleRoom = await Room.findOne({ maLoaiPhong: room._id });
-            console.log('📄 Sample room:', sampleRoom);
-
-            console.log('🔍 All rooms for this type:');
-            const allRooms = await Room.find({ maLoaiPhong: room._id });
-            console.log('📊 Count:', allRooms.length);
-            console.log('📋 Status values:', allRooms.map(r => r.trangThai || r.trangThaiPhong));
-            return {
-                roomId: room._id,
-                roomTypeName: room.tenLoaiPhong,
-                roomTypePrice: room.giaCa,
-                roomTypeDescription: room.moTa,
-                roomcapacity: room.soLuongKhach,
-                availableRooms: availableRooms,
-                totalRooms: await Room.countDocuments({
-                    maLoaiPhong: room._id,
-                    trangThaiPhong: "trong"
-                })
-            };
         }));
 
-        console.log("✅ Room types with availability:", result);
+        console.log(`✅ Returning ${result.length} room types with pricing data`);
         return res.status(200).json(result);
 
     } catch (error) {
-        console.error("Lỗi truy xuất phòng trong khách sạn:", error);
+        console.error("❌ Lỗi truy xuất phòng trong khách sạn:", error);
         return res.status(400).json({
             msgBody: "Lỗi truy xuất phòng trong khách sạn!",
             msgError: true,
-            messageError: error
+            messageError: error.message
         });
     }
 });
-
 // API lấy thông báo mới
 hotelBookingRouter.get('/hotelowner/notifications/:hotelId', async (req, res) => {
     try {
@@ -2165,102 +2787,477 @@ hotelBookingRouter.delete("/hotelowner/unassign-room/:assignmentId", authorizeRo
     }
 });
 
+hotelBookingRouter.post("/hotelowner/pricing-preview/:bookingId", authorizeRoles("chuKhachSan", "nhanVien"), async (req, res) => {
+    try {
+        const { bookingId } = req.params;
+        const { newBookingType, newCheckInDate, newCheckOutDate, newCheckInTime, newCheckOutTime } = req.body;
+
+        const booking = await Booking.findById(bookingId).populate('maLoaiPhong');
+        if (!booking) {
+            return res.status(404).json({
+                success: false,
+                message: "Booking not found"
+            });
+        }
+
+        const currentTotal = booking.thongTinGia?.tongTienPhong || 0;
+        const basePrice = booking.maLoaiPhong.giaCa;
+        const roomQuantity = booking.soLuongPhong || 1;
+
+        // ✅ Kiểm tra guest change vs admin update
+        const isGuestCurrentlyStaying = ['da_nhan_phong', 'dang_su_dung'].includes(booking.trangThai);
+
+        let pricingPreview = {};
+
+        if (isGuestCurrentlyStaying) {
+            // ✅ GUEST CHANGE: Logic cộng thêm ĐÚNG
+            let additionalPrice = 0;
+            let changeDescription = '';
+            let calculationDetails = {};
+
+            if (booking.loaiDatPhong === 'theo_gio' && newBookingType === 'qua_dem') {
+                // ✅ THEO GIỜ → QUA ĐÊM: Cộng thêm giá đêm đầy đủ
+                additionalPrice = smartRound(basePrice * roomQuantity);
+                changeDescription = `Đổi từ theo giờ sang qua đêm - Cộng thêm`;
+
+                calculationDetails = {
+                    currentHourlyPrice: currentTotal,
+                    additionalNightPrice: additionalPrice,
+                    formula: `${currentTotal.toLocaleString('vi-VN')}đ (giờ) + ${additionalPrice.toLocaleString('vi-VN')}đ (đêm) = ${(currentTotal + additionalPrice).toLocaleString('vi-VN')}đ`,
+                    explanation: "Khách đã trả giá theo giờ, giờ cộng thêm giá qua đêm đầy đủ"
+                };
+
+            } else if (booking.loaiDatPhong === 'qua_dem' && newBookingType === 'dai_ngay') {
+                // ✅ QUA ĐÊM → DÀI NGÀY: Cộng thêm ngày thêm
+                const checkIn = moment(newCheckInDate || booking.ngayNhanPhong);
+                const checkOut = moment(newCheckOutDate || booking.ngayTraPhong);
+                const totalDays = Math.max(1, checkOut.diff(checkIn, 'days'));
+                const extraDays = totalDays - 1; // Đã trả 1 đêm
+
+                if (extraDays > 0) {
+                    const dayPrice = smartRound(basePrice * 1.10);
+                    additionalPrice = smartRound(dayPrice * extraDays * roomQuantity);
+                    changeDescription = `Gia hạn thêm ${extraDays} ngày`;
+
+                    calculationDetails = {
+                        currentNightPrice: currentTotal,
+                        extraDays: extraDays,
+                        dayPrice: dayPrice,
+                        additionalPrice: additionalPrice,
+                        formula: `${currentTotal.toLocaleString('vi-VN')}đ (đêm) + ${extraDays} ngày x ${dayPrice.toLocaleString('vi-VN')}đ = ${(currentTotal + additionalPrice).toLocaleString('vi-VN')}đ`,
+                        explanation: `Khách đã trả 1 đêm, giờ gia hạn thêm ${extraDays} ngày`
+                    };
+                }
+
+            } else if (booking.loaiDatPhong === 'theo_gio' && newBookingType === 'dai_ngay') {
+                // ✅ THEO GIỜ → DÀI NGÀY: Cộng thêm giá dài ngày đầy đủ
+                const checkIn = moment(newCheckInDate || booking.ngayNhanPhong);
+                const checkOut = moment(newCheckOutDate);
+                const totalDays = Math.max(2, checkOut.diff(checkIn, 'days'));
+
+                const dayPrice = smartRound(basePrice * 1.10);
+                additionalPrice = smartRound(dayPrice * totalDays * roomQuantity);
+                changeDescription = `Đổi từ theo giờ sang dài ngày (${totalDays} ngày) - Cộng thêm`;
+
+                calculationDetails = {
+                    currentHourlyPrice: currentTotal,
+                    totalDays: totalDays,
+                    dayPrice: dayPrice,
+                    additionalPrice: additionalPrice,
+                    formula: `${currentTotal.toLocaleString('vi-VN')}đ (giờ) + ${totalDays} ngày x ${dayPrice.toLocaleString('vi-VN')}đ = ${(currentTotal + additionalPrice).toLocaleString('vi-VN')}đ`,
+                    explanation: `Khách đã trả giá theo giờ, giờ cộng thêm ${totalDays} ngày dài ngày`
+                };
+            }
+
+            pricingPreview = {
+                changeType: 'guest_change',
+                isGuestChange: true,
+                oldTotal: currentTotal,
+                additionalPrice: additionalPrice,
+                newTotal: currentTotal + additionalPrice, // ✅ CỘNG THÊM
+                difference: additionalPrice,
+                changeDescription: changeDescription,
+                needsPayment: additionalPrice > 0,
+                refundAmount: 0, // Guest change không hoàn tiền
+                calculationDetails: calculationDetails,
+
+                // ✅ THÊM: Display info cho frontend
+                displayInfo: {
+                    oldBookingType: booking.loaiDatPhong,
+                    newBookingType: newBookingType,
+                    oldBookingTypeText: getBookingTypeText(booking.loaiDatPhong),
+                    newBookingTypeText: getBookingTypeText(newBookingType),
+                    isAdditive: true, // ✅ Đánh dấu là cộng thêm
+                    paymentRequired: additionalPrice > 0
+                }
+            };
+
+        } else {
+            // ✅ ADMIN UPDATE: Tính lại toàn bộ bằng enhanced pricing
+            const enhancedPricing = calculateEnhancedPricing({
+                roomType: booking.maLoaiPhong,
+                bookingType: newBookingType,
+                checkInDate: newCheckInDate || moment(booking.ngayNhanPhong).format('YYYY-MM-DD'),
+                checkOutDate: newBookingType !== 'theo_gio' ? (newCheckOutDate || moment(booking.ngayTraPhong).format('YYYY-MM-DD')) : null,
+                checkInTime: newCheckInTime || booking.gioNhanPhong,
+                checkOutTime: newCheckOutTime || booking.gioTraPhong
+            });
+
+            const newTotal = smartRound(enhancedPricing.finalPrice * roomQuantity);
+
+            pricingPreview = {
+                changeType: 'admin_update',
+                isGuestChange: false,
+                oldTotal: currentTotal,
+                newTotal: newTotal,
+                difference: newTotal - currentTotal,
+                duration: enhancedPricing.duration,
+                unit: enhancedPricing.unit,
+                unitPrice: enhancedPricing.unitPrice,
+                enhancedPricing: enhancedPricing,
+
+                displayInfo: {
+                    oldBookingType: booking.loaiDatPhong,
+                    newBookingType: newBookingType,
+                    oldBookingTypeText: getBookingTypeText(booking.loaiDatPhong),
+                    newBookingTypeText: getBookingTypeText(newBookingType),
+                    isAdditive: false, // ✅ Admin update là thay thế
+                    paymentRequired: newTotal > currentTotal
+                }
+            };
+        }
+
+        console.log(`💰 Pricing preview calculated:`, pricingPreview);
+
+        res.status(200).json({
+            success: true,
+            pricingPreview: pricingPreview
+        });
+
+    } catch (error) {
+        console.error("Error calculating pricing preview:", error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi khi tính preview giá",
+            error: error.message
+        });
+    }
+});
+
+
 // ==========================Hepper xử lý===================================== 
 
+
+// function calculateEnhancedPricing({
+//     roomType, bookingType, checkInDate, checkOutDate, checkInTime, checkOutTime
+// }) {
+//     let basePrice = roomType.giaCa;
+//     let duration = 1;
+//     let unit = "dem";
+//     let multiplier = 1;
+//     let priceDiscountPercent = 0;
+//     let taxPrice = 0;
+
+//     // ⏰ TÍNH KHOẢNG THỜI GIAN VÀ GIÁ CƠ BẢN
+//     if (bookingType === "theo_gio") {
+//         const startTime = moment(`${checkInDate} ${checkInTime}`, "YYYY-MM-DD HH:mm");
+//         let endTime = moment(`${checkInDate} ${checkOutTime}`, "YYYY-MM-DD HH:mm");
+
+//         if (endTime.isSameOrBefore(startTime)) {
+//             endTime.add(1, "day");
+//         }
+
+//         duration = Math.ceil(endTime.diff(startTime, "hours", true));
+//         unit = "gio";
+
+//         // ✅ SỬA: Time-bands pricing thay vì chia 14
+//         const hourlyRates = {
+//             1: 0.25, 2: 0.35, 3: 0.45, 4: 0.55,
+//             5: 0.65, 6: 0.70, 7: 0.75, 8: 0.80,
+//         };
+//         const rate = hourlyRates[duration] || Math.min(0.95, 0.80 + (duration - 8) * 0.03);
+//         basePrice = roomType.giaCa * rate;
+
+//     } else if (checkOutDate) {
+//         duration = moment(checkOutDate).diff(moment(checkInDate), "days");
+
+//         if (bookingType === "qua_dem") {
+//             unit = "dem";
+//             basePrice = roomType.giaCa * duration; // 100%
+//         } else { // dai_ngay
+//             unit = "ngay";
+//             // ✅ SỬA: Giá ngày = 110% giá đêm
+//             basePrice = roomType.giaCa * 1.10 * duration;
+//         }
+//     }
+
+//     // 🔼 PHỤ THU CUỐI TUẦN
+//     const weekendMultiplier = isWeekend(checkInDate) ? 1.2 : 1;
+//     if (weekendMultiplier > 1) {
+//         taxPrice = basePrice * (weekendMultiplier - 1);
+//     }
+
+//     // 🔽 GIẢM GIÁ DÀI NGÀY
+//     let longStayMultiplier = 1;
+//     if (bookingType === 'dai_ngay') {
+//         if (duration >= 7) {
+//             longStayMultiplier = 0.85;
+//             priceDiscountPercent = 15;
+//         } else if (duration >= 5) {
+//             longStayMultiplier = 0.90;
+//             priceDiscountPercent = 10;
+//         } else if (duration >= 3) {
+//             longStayMultiplier = 0.95;
+//             priceDiscountPercent = 5;
+//         }
+//     }
+
+//     multiplier = weekendMultiplier * longStayMultiplier;
+
+//     // 💰 TÍNH GIÁ CUỐI CÙNG với SMART ROUNDING
+//     const finalPriceRaw = basePrice * multiplier;
+//     const discountAmount = basePrice * (1 - longStayMultiplier);
+
+//     const finalPrice = smartRound(finalPriceRaw);
+//     const smartTaxPrice = smartRound(taxPrice);
+//     const smartDiscountAmount = smartRound(discountAmount);
+
+//     return {
+//         basePrice: roomType.giaCa,
+//         unitPrice: smartRound(basePrice / duration),
+//         finalPrice,
+//         duration,
+//         unit,
+//         multiplier,
+//         discounts: {
+//             weekend: isWeekend(checkInDate),
+//             longStay: bookingType === 'dai_ngay' && duration >= 3,
+//             discountPercent: priceDiscountPercent,
+//             discountAmount: smartDiscountAmount
+//         },
+//         breakdown: {
+//             baseRate: roomType.giaCa,
+//             duration: duration,
+//             subtotal: smartRound(basePrice),
+//             discountPercent: priceDiscountPercent,
+//             taxPrice: smartTaxPrice,
+//             discountAmount: smartDiscountAmount,
+//             multiplier: multiplier,
+//             total: finalPrice,
+//         },
+//     };
+// }
+
+
+
+
+// ✅ SỬA: Hàm calculateEnhancedPricing để xử lý edge cases
 
 function calculateEnhancedPricing({
     roomType, bookingType, checkInDate, checkOutDate, checkInTime, checkOutTime
 }) {
-    let basePrice = roomType.giaCa;         // ✅ Giá gốc 1 đơn vị
+    console.log('🔧 Enhanced pricing input:', {
+        roomType: roomType?.tenLoaiPhong,
+        basePrice: roomType?.giaCa,
+        bookingType,
+        checkInDate,
+        checkOutDate,
+        checkInTime,
+        checkOutTime
+    });
+
+    let basePrice = roomType?.giaCa || 0;
+    if (!basePrice || basePrice <= 0) {
+        console.error('❌ Invalid base price:', basePrice);
+        return createDefaultPricing(roomType?.giaCa || 1000000);
+    }
+
     let duration = 1;
     let unit = "dem";
     let multiplier = 1;
     let priceDiscountPercent = 0;
     let taxPrice = 0;
 
-    // ⏰ TÍNH KHOẢNG THỜI GIAN
-    if (bookingType === "theo_gio") {
-        const startTime = moment(`${checkInDate} ${checkInTime}`, "YYYY-MM-DD HH:mm");
-        let endTime = moment(`${checkInDate} ${checkOutTime}`, "YYYY-MM-DD HH:mm");
+    try {
+        // ⏰ TÍNH KHOẢNG THỜI GIAN VÀ GIÁ CƠ BẢN
+        if (bookingType === "theo_gio") {
+            // ✅ Validation cho theo giờ
+            if (!checkInTime || !checkOutTime) {
+                console.warn('⚠️ Missing time for hourly booking, using default 1 hour');
+                duration = 1;
+                unit = "gio";
+            } else {
+                const useDate = checkInDate || moment().format('YYYY-MM-DD');
+                const startTime = moment(`${useDate} ${checkInTime}`, "YYYY-MM-DD HH:mm");
+                let endTime = moment(`${useDate} ${checkOutTime}`, "YYYY-MM-DD HH:mm");
 
-        if (endTime.isSameOrBefore(startTime)) {
-            endTime.add(1, "day");
+                if (!startTime.isValid() || !endTime.isValid()) {
+                    console.warn('⚠️ Invalid time format, using default 1 hour');
+                    duration = 1;
+                } else {
+                    if (endTime.isSameOrBefore(startTime)) {
+                        endTime.add(1, "day");
+                    }
+                    duration = Math.max(1, Math.ceil(endTime.diff(startTime, "hours", true)));
+                }
+                unit = "gio";
+            }
+
+            // ✅ Time-bands pricing với validation
+            const hourlyRates = {
+                1: 0.25, 2: 0.35, 3: 0.45, 4: 0.55,
+                5: 0.65, 6: 0.70, 7: 0.75, 8: 0.80,
+            };
+            const rate = hourlyRates[duration] || Math.min(0.95, 0.80 + (duration - 8) * 0.03);
+            basePrice = smartRound(roomType.giaCa * rate);
+
+        } else if (bookingType === "qua_dem") {
+            // ✅ Qua đêm luôn là 1 đêm
+            duration = 1;
+            unit = "dem";
+            basePrice = roomType.giaCa; // 100%
+
+        } else if (bookingType === "dai_ngay") {
+            // ✅ Validation cho dài ngày
+            if (!checkInDate || !checkOutDate) {
+                console.warn('⚠️ Missing dates for long stay, using default 2 days');
+                duration = 2;
+            } else {
+                const checkIn = moment(checkInDate);
+                const checkOut = moment(checkOutDate);
+
+                if (!checkIn.isValid() || !checkOut.isValid()) {
+                    console.warn('⚠️ Invalid date format, using default 2 days');
+                    duration = 2;
+                } else {
+                    duration = Math.max(2, checkOut.diff(checkIn, "days"));
+                }
+            }
+            unit = "ngay";
+            basePrice = smartRound(roomType.giaCa * 1.10); // 110%
+
+        } else {
+            console.warn('⚠️ Unknown booking type, using default overnight');
+            duration = 1;
+            unit = "dem";
+            basePrice = roomType.giaCa;
         }
 
-        duration = Math.ceil(endTime.diff(startTime, "hours", true));
-        unit = "gio";
-
-        basePrice = Math.round(roomType.giaCa / 14); // ✅ Giá gốc/giờ
-    } else if (checkOutDate) {
-        duration = moment(checkOutDate).diff(moment(checkInDate), "days");
-        unit = bookingType === "qua_dem" ? "dem" : "ngay";
-        // ✅ basePrice giữ nguyên = giá gốc/ngày
-    }
-
-    // ✅ SỬA: Tính subtotal = basePrice * duration
-    const subtotalBeforeDiscount = basePrice * duration;
-
-    // 🔼 PHỤ THU CUỐI TUẦN  
-    const weekendMultiplier = isWeekend(checkInDate) ? 1.2 : 1;
-    if (weekendMultiplier > 1) {
-        taxPrice = Math.round(subtotalBeforeDiscount * (weekendMultiplier - 1));
-    }
-
-    // 🔽 GIẢM GIÁ DÀI NGÀY
-    let longStayMultiplier = 1;
-    let discountAmount = 0;
-
-    if (bookingType === 'dai_ngay') {
-        if (duration >= 7) {
-            longStayMultiplier = 0.85;
-            priceDiscountPercent = 15;
-        } else if (duration >= 5) {
-            longStayMultiplier = 0.90;
-            priceDiscountPercent = 10;
-        } else if (duration >= 3) {
-            longStayMultiplier = 0.95;
-            priceDiscountPercent = 5;
+        // ✅ Validation cho duration
+        if (!duration || duration <= 0 || isNaN(duration)) {
+            console.warn('⚠️ Invalid duration, setting to 1');
+            duration = 1;
         }
+
+        // 🔼 PHỤ THU CUỐI TUẦN
+        const weekendMultiplier = isWeekend(checkInDate) ? 1.2 : 1;
+        if (weekendMultiplier > 1) {
+            taxPrice = smartRound(basePrice * (weekendMultiplier - 1));
+        }
+
+        // 🔽 GIẢM GIÁ DÀI NGÀY
+        let longStayMultiplier = 1;
+        if (bookingType === 'dai_ngay' && duration >= 3) {
+            if (duration >= 7) {
+                longStayMultiplier = 0.85;
+                priceDiscountPercent = 15;
+            } else if (duration >= 5) {
+                longStayMultiplier = 0.90;
+                priceDiscountPercent = 10;
+            } else {
+                longStayMultiplier = 0.95;
+                priceDiscountPercent = 5;
+            }
+        }
+
+        multiplier = weekendMultiplier * longStayMultiplier;
+
+        // 💰 TÍNH GIÁ CUỐI CÙNG với SMART ROUNDING
+        const finalPriceRaw = basePrice * multiplier;
+        const discountAmount = basePrice * (1 - longStayMultiplier);
+
+        const finalPrice = smartRound(finalPriceRaw);
+        const smartTaxPrice = smartRound(taxPrice);
+        const smartDiscountAmount = smartRound(discountAmount);
+        const unitPrice = smartRound(finalPrice / duration);
+
+        // ✅ Final validation
+        if (isNaN(finalPrice) || isNaN(unitPrice) || finalPrice <= 0) {
+            console.error('❌ NaN detected in final pricing calculation');
+            return createDefaultPricing(roomType.giaCa);
+        }
+
+        const result = {
+            basePrice: roomType.giaCa,
+            unitPrice: unitPrice,
+            finalPrice: finalPrice,
+            duration: duration,
+            unit: unit,
+            multiplier: multiplier,
+            discounts: {
+                weekend: isWeekend(checkInDate),
+                longStay: bookingType === 'dai_ngay' && duration >= 3,
+                discountPercent: priceDiscountPercent,
+                discountAmount: smartDiscountAmount
+            },
+            breakdown: {
+                baseRate: roomType.giaCa,
+                duration: duration,
+                subtotal: smartRound(basePrice),
+                discountPercent: priceDiscountPercent,
+                taxPrice: smartTaxPrice,
+                discountAmount: smartDiscountAmount,
+                multiplier: multiplier,
+                total: finalPrice,
+            },
+        };
+
+        console.log('✅ Enhanced pricing result:', result);
+        return result;
+
+    } catch (error) {
+        console.error('❌ Error in calculateEnhancedPricing:', error);
+        return createDefaultPricing(roomType?.giaCa || 1000000);
     }
+}
 
-    const totalBeforeDiscount = subtotalBeforeDiscount + taxPrice;
-    discountAmount = Math.round(totalBeforeDiscount * (1 - longStayMultiplier));
-    const finalPrice = totalBeforeDiscount - discountAmount;
-
-    console.log("💰 Pricing calculation:", {
-        basePrice,            // ✅ 1M (giá gốc/ngày)
-        duration,            // ✅ 15
-        subtotalBeforeDiscount, // ✅ 15M (1M x 15)
-        taxPrice,            // ✅ 3M (20% của 15M)
-        totalBeforeDiscount, // ✅ 18M (15M + 3M)
-        priceDiscountPercent, // ✅ 15
-        discountAmount,      // ✅ 2.7M (15% của 18M)
-        finalPrice          // ✅ 15.3M (18M - 2.7M)
-    });
+// ✅ Helper function tạo pricing mặc định khi có lỗi
+function createDefaultPricing(basePrice = 1000000) {
+    const safeBasePrice = basePrice && basePrice > 0 ? basePrice : 1000000;
 
     return {
-        basePrice: roomType.giaCa,           // ✅ Giá gốc 1 đơn vị
-        unitPrice: basePrice,                // ✅ = basePrice
-        finalPrice,
-        duration,
-        unit,
-        multiplier,
+        basePrice: safeBasePrice,
+        unitPrice: safeBasePrice,
+        finalPrice: safeBasePrice,
+        duration: 1,
+        unit: "dem",
+        multiplier: 1,
         discounts: {
-            weekend: isWeekend(checkInDate),
-            longStay: bookingType === 'dai_ngay' && duration >= 3,
-            discountPercent: priceDiscountPercent,
-            discountAmount: discountAmount
+            weekend: false,
+            longStay: false,
+            discountPercent: 0,
+            discountAmount: 0
         },
         breakdown: {
-            baseRate: roomType.giaCa,        // ✅ Giá gốc
-            duration: duration,
-            subtotal: subtotalBeforeDiscount, // ✅ SỬA: = basePrice * duration
-            taxPrice: taxPrice,
-            discountAmount: discountAmount,
-            multiplier: multiplier,
-            total: finalPrice,
+            baseRate: safeBasePrice,
+            duration: 1,
+            subtotal: safeBasePrice,
+            discountPercent: 0,
+            taxPrice: 0,
+            discountAmount: 0,
+            multiplier: 1,
+            total: safeBasePrice,
         },
+        error: 'Fallback pricing used due to calculation error'
     };
+}
+
+
+
+// ✅ THÊM: Smart rounding function
+function smartRound(amount) {
+    if (amount <= 0) return 0;
+    return Math.round(amount / 1000) * 1000;
 }
 
 // ============================================

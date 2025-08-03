@@ -69,66 +69,58 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
   // ✅ ENHANCED: useEffect cho pricing preview
   useEffect(() => {
     if (newBookingType && newBookingType !== booking?.bookingType) {
-      calculatePricingPreview();
+      calculatePricingPreview(); // ✅ Gọi API thay vì tính local
     } else {
       setPricingPreview(null);
     }
   }, [newBookingType, newCheckInDate, newCheckOutDate, newCheckInTime, newCheckOutTime]);
 
   // ✅ ENHANCED: Calculate pricing preview
-  const calculatePricingPreview = () => {
-    try {
-      let duration = 1;
-      let unit = 'đêm';
-      
-      const basePrice = booking?.priceDetails?.donGia || booking?.roomPrice || 0;
-      let unitPrice = basePrice;
+  const calculatePricingPreview = async () => {
+    if (!newBookingType || newBookingType === booking?.bookingType) {
+      setPricingPreview(null);
+      return;
+    }
 
-      if (newBookingType === 'theo_gio') {
-        if (newCheckInTime && newCheckOutTime) {
-          const startTime = moment(`${newCheckInDate} ${newCheckInTime}`, 'YYYY-MM-DD HH:mm');
-          let endTime = moment(`${newCheckInDate} ${newCheckOutTime}`, 'YYYY-MM-DD HH:mm');
-          
-          if (endTime.isSameOrBefore(startTime)) {
-            endTime.add(1, 'day');
-          }
-          
-          duration = Math.ceil(endTime.diff(startTime, 'hours', true));
-          unit = 'giờ';
-          unitPrice = Math.round(basePrice / 14); // Giá theo giờ
-        }
-      } else if (newCheckInDate && newCheckOutDate) {
-        const checkIn = moment(newCheckInDate);
-        const checkOut = moment(newCheckOutDate);
-        duration = Math.max(1, checkOut.diff(checkIn, 'days'));
-        unit = newBookingType === 'qua_dem' ? 'đêm' : 'ngày';
-        
-        if (newBookingType === 'qua_dem' && duration !== 1) {
-          toast.warning('Qua đêm phải chính xác 1 ngày!');
-          duration = 1;
-        }
-        
-        if (newBookingType === 'dai_ngay' && duration < 2) {
-          toast.warning('Dài ngày tối thiểu 2 ngày!');
-          duration = 2;
-        }
+    try {
+      // ✅ Gọi API để lấy pricing preview từ backend
+      const previewData = {
+        newBookingType,
+        newCheckInDate,
+        newCheckOutDate,
+        newCheckInTime,
+        newCheckOutTime
+      };
+
+      console.log('🔄 Requesting pricing preview from backend:', previewData);
+
+      // ✅ Call backend API để tính pricing preview
+      const response = await axios.post(
+        `${baseUrl}/api/booking-hotel/hotelowner/pricing-preview/${booking.bookingId}`,
+        previewData,
+        { withCredentials: true }
+      );
+
+      if (response.data?.success) {
+        setPricingPreview(response.data.pricingPreview);
+        console.log('💰 Backend pricing preview:', response.data.pricingPreview);
+      } else {
+        console.warn('Backend pricing preview failed:', response.data);
+        setPricingPreview(null);
       }
 
-      const roomQuantity = booking?.roomQuantity || 1;
-      const newTotal = unitPrice * duration * roomQuantity;
-      const oldTotal = booking?.priceDetails?.tongTienPhong || booking?.totalAmount || 0;
-
-      setPricingPreview({
-        duration,
-        unit,
-        unitPrice,
-        newTotal,
-        oldTotal,
-        difference: newTotal - oldTotal
-      });
     } catch (error) {
-      console.error('Error calculating pricing preview:', error);
-      setPricingPreview(null);
+      console.error('Error getting pricing preview from backend:', error);
+
+      // ✅ Fallback: Tính local nếu API fail
+      const currentTotal = booking?.priceDetails?.tongTienPhong || booking?.totalAmount || 0;
+      setPricingPreview({
+        changeType: 'fallback',
+        newTotal: currentTotal,
+        oldTotal: currentTotal,
+        difference: 0,
+        error: 'Không thể tính preview từ server'
+      });
     }
   };
 
@@ -214,7 +206,7 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
   const updateBookingServices = async (updateData) => {
     try {
       setIsUpdating(true);
-      
+
       console.log('🔄 Updating booking with data:', updateData);
 
       const response = await axios.put(
@@ -237,14 +229,14 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
             totalAmount: response.data.updatedBooking.totalAmount
           })
         };
-        
+
         setLocalBookings(prev =>
           prev.map(b => b.bookingId === booking.bookingId ? updatedBooking : b)
         );
         setBookings(prev =>
           prev.map(b => b.bookingId === booking.bookingId ? updatedBooking : b)
         );
-        
+
         toast.success(response.data.message.msgBody || 'Cập nhật đơn đặt thành công!');
         return { success: true };
       } else {
@@ -253,9 +245,9 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
       }
     } catch (error) {
       console.error('❌ Error updating booking:', error);
-      const errorMessage = error.response?.data?.message?.msgBody || 
-                          error.response?.data?.message || 
-                          'Lỗi khi cập nhật đơn đặt!';
+      const errorMessage = error.response?.data?.message?.msgBody ||
+        error.response?.data?.message ||
+        'Lỗi khi cập nhật đơn đặt!';
       toast.error(errorMessage);
       return { success: false };
     } finally {
@@ -403,8 +395,8 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
               <div>
                 <span className="text-gray-600">Loại đặt hiện tại:</span>
                 <span className="ml-2 font-medium">
-                  {booking.bookingType === 'theo_gio' ? 'Theo giờ' : 
-                   booking.bookingType === 'qua_dem' ? 'Qua đêm' : 'Dài ngày'}
+                  {booking.bookingType === 'theo_gio' ? 'Theo giờ' :
+                    booking.bookingType === 'qua_dem' ? 'Qua đêm' : 'Dài ngày'}
                 </span>
               </div>
               <div>
@@ -420,7 +412,7 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
               <Clock className="h-5 w-5 mr-2" />
               Thay đổi loại đặt phòng
             </h3>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -432,8 +424,8 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">
-                    Giữ nguyên ({booking.bookingType === 'theo_gio' ? 'Theo giờ' : 
-                    booking.bookingType === 'qua_dem' ? 'Qua đêm' : 'Dài ngày'})
+                    Giữ nguyên ({booking.bookingType === 'theo_gio' ? 'Theo giờ' :
+                      booking.bookingType === 'qua_dem' ? 'Qua đêm' : 'Dài ngày'})
                   </option>
                   {bookingTypes.map(type => (
                     <option key={type.value} value={type.value}>
@@ -446,7 +438,7 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
               {newBookingType && (
                 <div className="bg-white p-4 rounded border">
                   <h4 className="font-medium text-gray-700 mb-3">Cập nhật thời gian</h4>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -501,29 +493,119 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
                   </div>
 
                   {/* ✅ Pricing Preview */}
-                  {pricingPreview && (
+                  {pricingPreview && !pricingPreview.error && (
                     <div className="mt-4 p-3 bg-blue-50 rounded border">
-                      <h5 className="font-medium text-blue-800 mb-2">Preview giá mới:</h5>
+                      <h5 className="font-medium text-blue-800 mb-2">
+                        {pricingPreview.isGuestChange ?
+                          '💰 Guest Change - Cộng thêm:' :
+                          '🔄 Admin Update - Tính lại:'
+                        }
+                      </h5>
+
                       <div className="text-sm space-y-1">
-                        <div className="flex justify-between">
-                          <span>Thời gian:</span>
-                          <span>{pricingPreview.duration} {pricingPreview.unit}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Giá cũ:</span>
-                          <span>{formatCurrency(pricingPreview.oldTotal)}</span>
-                        </div>
-                        <div className="flex justify-between font-medium">
-                          <span>Giá mới:</span>
-                          <span>{formatCurrency(pricingPreview.newTotal)}</span>
-                        </div>
-                        <div className="flex justify-between font-medium">
-                          <span>Chênh lệch:</span>
-                          <span className={pricingPreview.difference >= 0 ? 'text-red-600' : 'text-green-600'}>
-                            {pricingPreview.difference >= 0 ? '+' : ''}{formatCurrency(pricingPreview.difference)}
-                          </span>
-                        </div>
+                        {/* ✅ Hiển thị booking type change */}
+                        {pricingPreview.displayInfo && (
+                          <div className="flex justify-between text-purple-600 font-medium">
+                            <span>Thay đổi:</span>
+                            <span>
+                              {pricingPreview.displayInfo.oldBookingTypeText} → {pricingPreview.displayInfo.newBookingTypeText}
+                            </span>
+                          </div>
+                        )}
+
+                        {pricingPreview.duration && (
+                          <div className="flex justify-between">
+                            <span>Thời gian:</span>
+                            <span>{pricingPreview.duration} {pricingPreview.unit}</span>
+                          </div>
+                        )}
+
+                        {pricingPreview.isGuestChange ? (
+                          // ✅ GUEST CHANGE: Hiển thị logic cộng thêm
+                          <>
+                            <div className="bg-white p-2 rounded border-l-4 border-blue-400">
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Đã thanh toán:</span>
+                                <span className="font-medium">{formatCurrency(pricingPreview.oldTotal)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-blue-600 font-medium">Cộng thêm:</span>
+                                <span className="text-blue-600 font-bold">
+                                  +{formatCurrency(pricingPreview.additionalPrice)}
+                                </span>
+                              </div>
+                              <div className="flex justify-between border-t pt-1 mt-1">
+                                <span className="font-bold">Tổng mới:</span>
+                                <span className="font-bold text-green-600">
+                                  {formatCurrency(pricingPreview.newTotal)}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* ✅ Hiển thị calculation details nếu có */}
+                            {pricingPreview.calculationDetails && (
+                              <div className="bg-gray-50 p-2 rounded text-xs">
+                                <div className="font-medium text-gray-700 mb-1">Chi tiết tính toán:</div>
+                                <div className="text-gray-600">{pricingPreview.calculationDetails.explanation}</div>
+                                <div className="font-mono text-blue-600 mt-1">
+                                  {pricingPreview.calculationDetails.formula}
+                                </div>
+                              </div>
+                            )}
+
+                            {pricingPreview.changeDescription && (
+                              <div className="text-xs text-gray-600 mt-1">
+                                📝 {pricingPreview.changeDescription}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          // ✅ ADMIN UPDATE: Hiển thị logic thay thế
+                          <>
+                            <div className="flex justify-between">
+                              <span>Giá cũ:</span>
+                              <span>{formatCurrency(pricingPreview.oldTotal)}</span>
+                            </div>
+                            <div className="flex justify-between font-medium">
+                              <span>Giá mới:</span>
+                              <span>{formatCurrency(pricingPreview.newTotal)}</span>
+                            </div>
+                            <div className="flex justify-between font-medium">
+                              <span>Chênh lệch:</span>
+                              <span className={pricingPreview.difference >= 0 ? 'text-red-600' : 'text-green-600'}>
+                                {pricingPreview.difference >= 0 ? '+' : ''}{formatCurrency(pricingPreview.difference)}
+                              </span>
+                            </div>
+                          </>
+                        )}
                       </div>
+
+                      {/* ✅ Warning message cho guest change */}
+                      {pricingPreview.isGuestChange && pricingPreview.additionalPrice > 0 && (
+                        <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                          <p className="text-yellow-800 font-medium">
+                            ⚠️ Guest Change: Khách sẽ cần thanh toán thêm {formatCurrency(pricingPreview.additionalPrice)}
+                          </p>
+                          <p className="text-yellow-700 text-xs mt-1">
+                            💡 Đây là phụ thu cộng thêm, không thay thế giá cũ
+                          </p>
+                        </div>
+                      )}
+
+                      {/* ✅ Info message cho admin update */}
+                      {!pricingPreview.isGuestChange && (
+                        <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+                          <p className="text-blue-800">
+                            ℹ️ Admin Update: Giá được tính lại hoàn toàn theo booking type mới
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {pricingPreview?.error && (
+                    <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded">
+                      <p className="text-red-600 text-sm">⚠️ {pricingPreview.error}</p>
                     </div>
                   )}
                 </div>
@@ -538,7 +620,7 @@ const EditBooking = ({ onClose, booking, setBookings, setLocalBookings }) => {
                 <User className="h-5 w-5 mr-2" />
                 Cập nhật thời gian thực tế
               </h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">

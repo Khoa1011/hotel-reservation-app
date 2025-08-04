@@ -367,10 +367,36 @@ roomHotelRouter.put("/hotelowner/update-room/:roomId",
 
             // Xóa hình ảnh cũ nếu có
             if (deleteImages) {
-                const imageIdsToDelete = Array.isArray(deleteImages) ? deleteImages : [deleteImages];
-                await RoomImage.deleteMany({ _id: { $in: imageIdsToDelete } });
-            }
+                let imageIdsToDelete = [];
 
+                try {
+                    // Xử lý trường hợp deleteImages là string JSON
+                    if (typeof deleteImages === 'string') {
+                        imageIdsToDelete = JSON.parse(deleteImages);
+                    } else if (Array.isArray(deleteImages)) {
+                        imageIdsToDelete = deleteImages;
+                    } else {
+                        imageIdsToDelete = [deleteImages];
+                    }
+
+                    // Validate ObjectIds
+                    const validImageIds = imageIdsToDelete.filter(id =>
+                        mongoose.Types.ObjectId.isValid(id)
+                    );
+
+                    if (validImageIds.length > 0) {
+                        await RoomImage.deleteMany({ _id: { $in: validImageIds } });
+                        console.log(`✅ Deleted ${validImageIds.length} images`);
+                    }
+
+                } catch (parseError) {
+                    console.error("Lỗi parse deleteImages:", parseError);
+                    return res.status(400).json({
+                        success: false,
+                        message: "Định dạng danh sách hình ảnh cần xóa không hợp lệ"
+                    });
+                }
+            }
             // Thêm hình ảnh mới nếu có
             if (req.files && req.files.length > 0) {
                 const lastImage = await RoomImage.findOne({ maPhong: roomId }).sort({ thuTuAnh: -1 });

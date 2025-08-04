@@ -251,7 +251,7 @@ registrationsRouter.post("/admin/registrations-create", logUploadProcess,
           tenDuong: req.body.address?.tenDuong || '',
           phuong: req.body.address?.phuong || '',
           quan: req.body.address?.quan || '',
-          tinhThanh: req.body.address?.tinhThanh || ''
+          thanhPho: req.body.address?.tinhThanh || ''
         },
         hinhAnh: {
           cccdMatTruoc: documentPaths.cccdMatTruoc || null,
@@ -355,7 +355,7 @@ registrationsRouter.put("/admin/registrations/:id/approve", authorizeRoles("admi
     }
 
     // Tạo mật khẩu mới cho chủ khách sạn
-    const newPassword = generateRandomPassword();
+    const newPassword = '123456';
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     // Cập nhật user thành chủ khách sạn
@@ -378,6 +378,7 @@ registrationsRouter.put("/admin/registrations/:id/approve", authorizeRoles("admi
       email: registration.maNguoiDung.email,
       soDienThoai: registration.maNguoiDung.soDienThoai,
       soSao: 5,
+      hinhAnh: registration.hinhAnh?.anhMatTienKhachSan || "",
       
     });
 

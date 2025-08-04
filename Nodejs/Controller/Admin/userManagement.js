@@ -533,6 +533,7 @@ userManagementRouter.put("/admin/users/:id/toggle-booking", authorizeRoles("admi
     if (user.ngayCamDatPhong) {
       // Bỏ cấm đặt phòng
       updateData.ngayCamDatPhong = null;
+      updateData.camTienMat = false;
       console.log('✅ [TOGGLE BOOKING] Removing booking ban');
     } else {
       // Cấm đặt phòng
@@ -543,6 +544,7 @@ userManagementRouter.put("/admin/users/:id/toggle-booking", authorizeRoles("admi
         banUntil.setFullYear(banUntil.getFullYear() + 1); // Cấm 1 năm mặc định
       }
       updateData.ngayCamDatPhong = banUntil;
+      updateData.camTienMat = true;
       console.log('🚫 [TOGGLE BOOKING] Setting booking ban until:', banUntil);
     }
 

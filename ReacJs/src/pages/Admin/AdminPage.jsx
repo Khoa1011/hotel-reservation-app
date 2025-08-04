@@ -165,12 +165,12 @@ const AdminDashboard = () => {
     }
     useEffect(() => {
         console.log('👑 Admin Dashboard mounted');
-        
+
         // ✅ Optional: Clear hotel-specific localStorage để tránh conflict
         localStorage.removeItem('hotel_activeMenu');
         localStorage.removeItem('hotel_selectedHotelId');
         localStorage.removeItem('hotel_selectedHotelName');
-        
+
         return () => {
             console.log('👑 Admin Dashboard cleanup');
         };
@@ -419,9 +419,9 @@ const AdminDashboard = () => {
                         </div>
                     </button>
 
-                    <button 
-                    onClick={() => setActiveMenu()}
-                    className="flex items-center p-4 bg-white hover:bg-gray-50 rounded-lg border border-gray-200 transition-colors">
+                    <button
+                        onClick={() => setActiveMenu()}
+                        className="flex items-center p-4 bg-white hover:bg-gray-50 rounded-lg border border-gray-200 transition-colors">
                         <Users className="w-5 h-5 text-blue-600 mr-3" />
                         <div className="text-left">
                             <p className="font-medium text-gray-800">Quản Lý User</p>
@@ -540,31 +540,23 @@ const AdminDashboard = () => {
                             </div>
 
                             {/* Hotel Images Preview */}
-                            {registration.hinhAnh?.anhMatTienKhachSan && registration.hinhAnh.anhMatTienKhachSan.length > 0 && (
+                            {registration.hinhAnh?.anhMatTienKhachSan && (
                                 <div className="mb-3">
                                     <p className="text-xs font-medium text-gray-700 mb-2">Hình ảnh khách sạn:</p>
                                     <div className="flex space-x-2 overflow-x-auto">
-                                        {registration.hinhAnh.anhMatTienKhachSan.slice(0, 3).map((image, index) => (
-                                            <ImagePreview
-                                                key={index}
-                                                src={image}
-                                                alt={`Ảnh khách sạn ${index + 1}`}
-                                                className="w-14 h-14 flex-shrink-0"
-                                                aspectRatio="square"
-                                                onClick={() => {
-                                                    setSelectedImage({
-                                                        src: image,
-                                                        alt: `Ảnh khách sạn ${registration.tenKhachSan} - ${index + 1}`
-                                                    });
-                                                    setShowImageModal(true);
-                                                }}
-                                            />
-                                        ))}
-                                        {registration.hinhAnh.anhMatTienKhachSan.length > 3 && (
-                                            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-500">
-                                                +{registration.hinhAnh.anhMatTienKhachSan.length - 3}
-                                            </div>
-                                        )}
+                                        <ImagePreview
+                                            src={registration.hinhAnh.anhMatTienKhachSan}
+                                            alt="Ảnh khách sạn"
+                                            className="w-14 h-14 flex-shrink-0"
+                                            aspectRatio="square"
+                                            onClick={() => {
+                                                setSelectedImage({
+                                                    src: registration.hinhAnh.anhMatTienKhachSan,
+                                                    alt: `Ảnh khách sạn ${registration.tenKhachSan}`
+                                                });
+                                                setShowImageModal(true);
+                                            }}
+                                        />
                                     </div>
                                 </div>
                             )}
@@ -585,8 +577,9 @@ const AdminDashboard = () => {
                                         {registration.hinhAnh?.giayPhepKinhDoanh ? <CheckCircle className="w-3 h-3 mr-1" /> : <XCircle className="w-3 h-3 mr-1" />}
                                         GPKD
                                     </span>
-                                    <span className="text-blue-600">
-                                        {registration.hinhAnh?.anhMatTienKhachSan?.length || 0} ảnh KS
+                                    <span className={`flex items-center ${registration.hinhAnh?.anhMatTienKhachSan ? 'text-green-600' : 'text-red-600'}`}>
+                                        {registration.hinhAnh?.anhMatTienKhachSan ? <CheckCircle className="w-3 h-3 mr-1" /> : <XCircle className="w-3 h-3 mr-1" />}
+                                        Ảnh KS
                                     </span>
                                 </div>
                             </div>
@@ -720,26 +713,23 @@ const AdminDashboard = () => {
                         </div>
 
                         {/* Hotel Images */}
-                        {selectedRegistration.hinhAnh?.anhMatTienKhachSan && selectedRegistration.hinhAnh.anhMatTienKhachSan.length > 0 && (
+                        {selectedRegistration.hinhAnh?.anhMatTienKhachSan && (
                             <div>
-                                <h3 className="font-medium text-gray-800 mb-3">Hình ảnh khách sạn ({selectedRegistration.hinhAnh.anhMatTienKhachSan.length} ảnh)</h3>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 max-h-96 overflow-y-auto">
-                                    {selectedRegistration.hinhAnh.anhMatTienKhachSan.map((image, index) => (
-                                        <ImagePreview
-                                            key={index}
-                                            src={image}
-                                            alt={`Ảnh khách sạn ${index + 1}`}
-                                            className="w-full aspect-square"
-                                            aspectRatio="square"
-                                            onClick={() => {
-                                                setSelectedImage({
-                                                    src: image,
-                                                    alt: `Ảnh khách sạn ${selectedRegistration.tenKhachSan} - ${index + 1}`
-                                                });
-                                                setShowImageModal(true);
-                                            }}
-                                        />
-                                    ))}
+                                <h3 className="font-medium text-gray-800 mb-3">Hình ảnh khách sạn</h3>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                                    <ImagePreview
+                                        src={selectedRegistration.hinhAnh.anhMatTienKhachSan}
+                                        alt="Ảnh khách sạn"
+                                        className="w-full aspect-square"
+                                        aspectRatio="square"
+                                        onClick={() => {
+                                            setSelectedImage({
+                                                src: selectedRegistration.hinhAnh.anhMatTienKhachSan,
+                                                alt: `Ảnh khách sạn ${selectedRegistration.tenKhachSan}`
+                                            });
+                                            setShowImageModal(true);
+                                        }}
+                                    />
                                 </div>
                             </div>
                         )}
@@ -782,11 +772,12 @@ const AdminDashboard = () => {
                                         <ImagePreview
                                             src={selectedRegistration.hinhAnh.cccdMatSau}
                                             alt="CCCD Mặt sau"
-                                            className="w-full h-32"
+                                            className="w-full aspect-[3/2]"
+                                            aspectRatio="document"
                                             onClick={() => {
                                                 setSelectedImage({
                                                     src: selectedRegistration.hinhAnh.cccdMatSau,
-                                                    alt: `CCCD Mặt sau`
+                                                    alt: `CCCD Mặt sau - ${selectedRegistration.maNguoiDung?.tenNguoiDung}`
                                                 });
                                                 setShowImageModal(true);
                                             }}
@@ -808,7 +799,8 @@ const AdminDashboard = () => {
                                         <ImagePreview
                                             src={selectedRegistration.hinhAnh.giayPhepKinhDoanh}
                                             alt="Giấy phép kinh doanh"
-                                            className="w-full h-32"
+                                            className="w-full aspect-[3/2]"
+                                            aspectRatio="document"
                                             onClick={() => {
                                                 setSelectedImage({
                                                     src: selectedRegistration.hinhAnh.giayPhepKinhDoanh,

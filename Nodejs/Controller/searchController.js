@@ -50,7 +50,7 @@ searchRouter.get('/search', async (req, res) => {
 
         if (rooms && parseInt(rooms) < 1) {
             return res.status(400).json({
-                message: 'Số phòng phải ít nhất 1', 
+                message: 'Số phòng phải ít nhất 1',
                 error: true
             });
         }
@@ -235,7 +235,7 @@ searchRouter.get('/search', async (req, res) => {
         if (guests && rooms && !isShowAllRequest) {
             const requiredGuests = parseInt(guests);
             const requiredRooms = parseInt(rooms);
-            
+
             console.log(`🔍 DEBUG: Checking capacity for ${requiredGuests} guests, ${requiredRooms} rooms`);
 
             // Đơn giản hóa: chỉ check có phòng có capacity đủ không
@@ -257,7 +257,7 @@ searchRouter.get('/search', async (req, res) => {
 
             // Debug capacity check
             const hotelsAfterCapacity = await Hotel.aggregate([
-                ...pipeline, 
+                ...pipeline,
                 { $project: { _id: 1, tenKhachSan: 1, hasValidCapacity: 1, totalAvailableRooms: 1 } }
             ]);
             console.log(`🔍 DEBUG: Hotels after capacity check: ${hotelsAfterCapacity.length}`);
@@ -274,7 +274,7 @@ searchRouter.get('/search', async (req, res) => {
         // ✅ BƯỚC 5: KIỂM TRA AVAILABILITY CHO NGÀY CỤ THỂ (FLEXIBLE)
         if (!isShowAllRequest && checkIn && checkOut) {
             console.log('🔍 Checking availability for date range...');
-            
+
             // Lấy hotels hiện tại từ pipeline
             const currentHotels = await Hotel.aggregate([...pipeline, { $project: { _id: 1 } }]);
             console.log(`🔍 Hotels before availability check: ${currentHotels.length}`);
@@ -345,18 +345,29 @@ searchRouter.get('/search', async (req, res) => {
             const priceMatch = {};
             // Logic mới: Hotel có ít nhất 1 phòng trong range
             if (minPrice && maxPrice) {
-                priceMatch.$or = [
-                    { minRoomPrice: { $lte: parseFloat(maxPrice) } },
-                    { maxRoomPrice: { $gte: parseFloat(minPrice) } }
-                ];
+                priceMatch.minRoomPrice = {
+                    $gte: parseFloat(minPrice),
+                    $lte: parseFloat(maxPrice)
+                };
             } else if (minPrice) {
                 priceMatch.maxRoomPrice = { $gte: parseFloat(minPrice) };
             } else if (maxPrice) {
                 priceMatch.minRoomPrice = { $lte: parseFloat(maxPrice) };
             }
-            
+
             if (Object.keys(priceMatch).length > 0) {
                 pipeline.push({ $match: priceMatch });
+
+                
+                // ✅ DEBUG: Log hotels sau khi filter giá
+                const hotelsAfterPrice = await Hotel.aggregate([
+                    ...pipeline,
+                    { $project: { _id: 1, tenKhachSan: 1, minRoomPrice: 1 } }
+                ]);
+                console.log(`🔍 DEBUG: Hotels after price filter: ${hotelsAfterPrice.length}`);
+                if (hotelsAfterPrice.length > 0) {
+                    console.log('🔍 DEBUG: Sample hotels with prices:', hotelsAfterPrice.slice(0, 3));
+                }
             }
         }
 
@@ -393,7 +404,7 @@ searchRouter.get('/search', async (req, res) => {
                 minRoomPrice: 1,
                 maxRoomPrice: 1,
                 totalRoomTypes: 1,
-                
+
                 // ✅ THÊM: Số phòng trống (KEY REQUIREMENT)
                 availableRoomsCount: 1,
 
@@ -421,11 +432,11 @@ searchRouter.get('/search', async (req, res) => {
         console.log(`🔍 Final result: ${hotels.length} hotels`);
 
         // ✅ TẠO MESSAGE THÔNG MINH
-        const message = createSearchMessage({ 
-            hotels: hotels.length, 
-            keyword, 
-            thanhPho, 
-            quan, 
+        const message = createSearchMessage({
+            hotels: hotels.length,
+            keyword,
+            thanhPho,
+            quan,
             phuong,
             hasDateFilter: !!(checkIn && checkOut)
         });
@@ -451,8 +462,8 @@ searchRouter.get('/search', async (req, res) => {
             hotels,
             total: hotels.length,
             // Thêm suggestions nếu ít kết quả
-            ...(hotels.length === 0 && { 
-                suggestions: await generateSuggestions({ thanhPho, quan, keyword }) 
+            ...(hotels.length === 0 && {
+                suggestions: await generateSuggestions({ thanhPho, quan, keyword })
             })
         });
 
@@ -795,9 +806,9 @@ async function findAvailableHotelsForDateRange({
                 if (actualRooms.length < requiredRooms) continue;
 
                 // Check capacity
-                const avgCapacity = actualRooms.reduce((sum, room) => 
+                const avgCapacity = actualRooms.reduce((sum, room) =>
                     sum + (room.soLuongNguoiToiDa || 2), 0) / actualRooms.length;
-                
+
                 if (Math.floor(avgCapacity * requiredRooms) < requiredGuests) continue;
 
                 // Check availability trong khoảng thời gian (KHÔNG CẦN BOOKINGTYPE)
@@ -854,12 +865,12 @@ async function checkDateRangeAvailability({
         };
 
         const conflictingBookings = await Booking.find(conflictQuery).select('soLuongPhong');
-        
-        const totalConflictRooms = conflictingBookings.reduce((sum, booking) => 
+
+        const totalConflictRooms = conflictingBookings.reduce((sum, booking) =>
             sum + (booking.soLuongPhong || 1), 0);
 
         const availableRooms = Math.max(0, totalRooms - totalConflictRooms);
-        
+
         return {
             isAvailable: availableRooms >= requiredRooms,
             availableRooms,
@@ -947,9 +958,9 @@ async function findAvailableHotelsForDates({
                 if (actualRooms.length < requiredRooms) continue;
 
                 // Check capacity
-                const avgCapacity = actualRooms.reduce((sum, room) => 
+                const avgCapacity = actualRooms.reduce((sum, room) =>
                     sum + (room.soLuongNguoiToiDa || 2), 0) / actualRooms.length;
-                
+
                 if (Math.floor(avgCapacity * requiredRooms) < requiredGuests) continue;
 
                 // Check availability trong khoảng thời gian
@@ -1027,12 +1038,12 @@ async function checkRoomTypeAvailabilityOptimized({
         }
 
         const conflictingBookings = await Booking.find(conflictQuery).select('soLuongPhong');
-        
-        const totalConflictRooms = conflictingBookings.reduce((sum, booking) => 
+
+        const totalConflictRooms = conflictingBookings.reduce((sum, booking) =>
             sum + (booking.soLuongPhong || 1), 0);
 
         const availableRooms = Math.max(0, totalRooms - totalConflictRooms);
-        
+
         return {
             isAvailable: availableRooms >= requiredRooms,
             availableRooms,
@@ -1050,7 +1061,7 @@ async function checkRoomTypeAvailabilityOptimized({
 // ✅ Tạo search message - CẢI TIẾN TỪ LOGIC CŨ  
 function createSearchMessage({ hotels, keyword, thanhPho, quan, phuong, sortBy, isShowAllRequest, hasDateFilter }) {
     const sortText = sortBy ? ` (${sortBy})` : '';
-    
+
     if (isShowAllRequest) {
         return `Hiển thị tất cả khách sạn${sortText} (${hotels} kết quả)`;
     } else if (keyword && (thanhPho || quan || phuong)) {
@@ -1104,7 +1115,7 @@ async function generateSuggestions({ thanhPho, quan, keyword }) {
                     text: `Thử tìm "${k}"`,
                     params: { keyword: k }
                 }));
-            
+
             suggestions.push(...keywordSuggestions);
         }
 

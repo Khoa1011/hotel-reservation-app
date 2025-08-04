@@ -342,7 +342,7 @@ const RoomTypeManagement = ({ selectedHotelId }) => {
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-medium text-gray-700">Trạng thái phòng</span>
                     <span className="text-sm text-gray-500">
-                      Tỷ lệ lấp đầy: {roomType.thongKePhong.tyLeLapDay}%
+                      Tỷ lệ đặt phòng: {roomType.thongKePhong.tyLeLapDay}%
                     </span>
                   </div>
 

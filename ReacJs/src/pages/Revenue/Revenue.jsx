@@ -238,9 +238,7 @@ const fetchMonthlyRevenue = useCallback(async (year) => {
 
     const tabs = [
         { id: 'overview', label: 'Tổng quan', icon: Target },
-        { id: 'monthly', label: 'Theo tháng', icon: Calendar },
-        { id: 'yearly', label: 'Theo năm', icon: TrendingUp },
-        { id: 'orders', label: 'Đơn hàng', icon: Users }
+
     ];
 
     return (
@@ -424,7 +422,7 @@ const fetchMonthlyRevenue = useCallback(async (year) => {
                                     )}
 
                                     {/* Monthly Tab */}
-                                    {activeTab === 'monthly' && (
+                                    {/* {activeTab === 'monthly' && (
                                         <div className="space-y-6">
                                             <div className="flex justify-between items-center">
                                                 <h3 className="text-lg font-semibold text-gray-800">
@@ -521,10 +519,10 @@ const fetchMonthlyRevenue = useCallback(async (year) => {
                                                 </div>
                                             )}
                                         </div>
-                                    )}
+                                    )} */}
 
                                     {/* Yearly Tab */}
-                                    {activeTab === 'yearly' && (
+                                    {/* {activeTab === 'yearly' && (
                                         <div className="space-y-6">
                                             <h3 className="text-lg font-semibold text-gray-800">Doanh thu theo năm</h3>
                                             
@@ -568,170 +566,8 @@ const fetchMonthlyRevenue = useCallback(async (year) => {
                                                 </div>
                                             )}
                                         </div>
-                                    )}
+                                    )} */}
 
-                                    {/* Orders Tab */}
-                                    {activeTab === 'orders' && (
-                                        <div className="space-y-6">
-                                            <h3 className="text-lg font-semibold text-gray-800">Thống kê đơn hàng</h3>
-                                            
-                                            {orderStats.overallStats?.length > 0 ? (
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                    {/* Status Distribution */}
-                                                    <div className="bg-gray-50 rounded-lg p-6">
-                                                        <h4 className="font-semibold text-gray-800 mb-4">Phân bố theo trạng thái</h4>
-                                                        <div className="space-y-3">
-                                                            {orderStats.overallStats.map((stat) => (
-                                                                <div key={stat._id} className="flex justify-between items-center">
-                                                                    <span className="text-gray-600 capitalize">
-                                                                        {stat._id === 'da_tra_phong' ? 'Hoàn thành' :
-                                                                         stat._id === 'da_huy' ? 'Đã hủy' :
-                                                                         stat._id === 'da_xac_nhan' ? 'Đã xác nhận' :
-                                                                         stat._id === 'dang_cho' ? 'Đang chờ' :
-                                                                         stat._id === 'da_nhan_phong' ? 'Đã nhận phòng' :
-                                                                         stat._id === 'dang_su_dung' ? 'Đang sử dụng' :
-                                                                         stat._id === 'qua_gio' ? 'Quá giờ' :
-                                                                         stat._id === 'khong_nhan_phong' ? 'Không nhận phòng' :
-                                                                         stat._id}
-                                                                    </span>
-                                                                    <div className="flex items-center space-x-2">
-                                                                        <span className="font-medium">{formatNumber(stat.count)}</span>
-                                                                        <span className="text-sm text-gray-500">
-                                                                            ({formatCurrency(stat.totalAmount)})
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Booking Types */}
-                                                    {orderStats.bookingTypeStats?.length > 0 && (
-                                                        <div className="bg-gray-50 rounded-lg p-6">
-                                                            <h4 className="font-semibold text-gray-800 mb-4">Theo loại đặt phòng</h4>
-                                                            <div className="space-y-3">
-                                                                {orderStats.bookingTypeStats.map((type) => (
-                                                                    <div key={type._id} className="border rounded p-3 bg-white">
-                                                                        <div className="flex justify-between items-center mb-2">
-                                                                            <span className="font-medium">
-                                                                                {type._id === 'theo_gio' ? 'Theo giờ' :
-                                                                                 type._id === 'qua_dem' ? 'Qua đêm' :
-                                                                                 type._id === 'dai_ngay' ? 'Dài ngày' : type._id}
-                                                                            </span>
-                                                                            <span className="text-green-600 font-semibold">
-                                                                                {formatCurrency(type.totalRevenue)}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="grid grid-cols-3 gap-2 text-sm text-gray-600">
-                                                                            <div>Tổng: {formatNumber(type.totalBookings)}</div>
-                                                                            <div className="text-green-600">Hoàn thành: {formatNumber(type.completedBookings)}</div>
-                                                                            <div className="text-red-600">Hủy: {formatNumber(type.cancelledBookings)}</div>
-                                                                        </div>
-                                                                        
-                                                                        {/* Progress Bar */}
-                                                                        <div className="mt-2">
-                                                                            <div className="w-full bg-gray-200 rounded-full h-2">
-                                                                                <div className="flex h-2 rounded-full overflow-hidden">
-                                                                                    <div 
-                                                                                        className="bg-green-500" 
-                                                                                        style={{ 
-                                                                                            width: `${type.totalBookings > 0 ? (type.completedBookings / type.totalBookings) * 100 : 0}%` 
-                                                                                        }}
-                                                                                    ></div>
-                                                                                    <div 
-                                                                                        className="bg-red-500" 
-                                                                                        style={{ 
-                                                                                            width: `${type.totalBookings > 0 ? (type.cancelledBookings / type.totalBookings) * 100 : 0}%` 
-                                                                                        }}
-                                                                                    ></div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                <div className="text-center py-12">
-                                                    <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                                                    <h3 className="text-xl font-semibold text-gray-600">Chưa có dữ liệu</h3>
-                                                    <p className="text-gray-500 mt-2">
-                                                        Chưa có thống kê đơn hàng
-                                                    </p>
-                                                </div>
-                                            )}
-
-                                            {/* Cancel Reasons - Separate section */}
-                                            {orderStats.cancelReasons?.length > 0 && (
-                                                <div className="bg-gray-50 rounded-lg p-6">
-                                                    <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
-                                                        <XCircle className="h-5 w-5 mr-2 text-red-500" />
-                                                        Lý do hủy phổ biến
-                                                    </h4>
-                                                    <div className="space-y-2">
-                                                        {orderStats.cancelReasons.map((reason, index) => (
-                                                            <div key={index} className="flex justify-between items-center p-2 bg-white rounded border">
-                                                                <span className="text-gray-600 text-sm flex-1">{reason._id || 'Không có lý do'}</span>
-                                                                <div className="flex items-center space-x-2">
-                                                                    <span className="font-medium text-red-600">{formatNumber(reason.count)}</span>
-                                                                    <span className="text-xs text-gray-500">lần</span>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* Summary Cards */}
-                                            {orderStats.overallStats?.length > 0 && (
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-                                                        <div className="text-2xl font-bold text-green-600">
-                                                            {orderStats.overallStats
-                                                                .filter(s => s._id === 'da_tra_phong')
-                                                                .reduce((sum, s) => sum + s.count, 0)}
-                                                        </div>
-                                                        <div className="text-sm text-green-700">Đơn hoàn thành</div>
-                                                        <div className="text-xs text-green-600 mt-1">
-                                                            {formatCurrency(orderStats.overallStats
-                                                                .filter(s => s._id === 'da_tra_phong')
-                                                                .reduce((sum, s) => sum + s.totalAmount, 0))}
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-                                                        <div className="text-2xl font-bold text-red-600">
-                                                            {orderStats.overallStats
-                                                                .filter(s => s._id === 'da_huy')
-                                                                .reduce((sum, s) => sum + s.count, 0)}
-                                                        </div>
-                                                        <div className="text-sm text-red-700">Đơn đã hủy</div>
-                                                        <div className="text-xs text-red-600 mt-1">
-                                                            Tổn thất: {formatCurrency(orderStats.overallStats
-                                                                .filter(s => s._id === 'da_huy')
-                                                                .reduce((sum, s) => sum + s.totalAmount, 0))}
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-                                                        <div className="text-2xl font-bold text-blue-600">
-                                                            {orderStats.overallStats
-                                                                .filter(s => !['da_tra_phong', 'da_huy'].includes(s._id))
-                                                                .reduce((sum, s) => sum + s.count, 0)}
-                                                        </div>
-                                                        <div className="text-sm text-blue-700">Đơn đang xử lý</div>
-                                                        <div className="text-xs text-blue-600 mt-1">
-                                                            Tiềm năng: {formatCurrency(orderStats.overallStats
-                                                                .filter(s => !['da_tra_phong', 'da_huy'].includes(s._id))
-                                                                .reduce((sum, s) => sum + s.totalAmount, 0))}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
                                 </>
                             )}
                         </div>

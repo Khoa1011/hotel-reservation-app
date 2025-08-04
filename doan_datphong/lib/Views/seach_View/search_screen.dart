@@ -60,29 +60,84 @@ class _SearchViewState extends State<SearchView> {
     // Load more logic if needed
   }
 
+  // void _performSearch({
+  //   String? tenKhachSan,
+  //   String? loaiLoc,
+  //   bool useCurrentFilters = true,
+  //
+  //
+  // }) {
+  //   context.read<HotelSearchBloc>().add(
+  //     SearchHotels(
+  //       tenKhachSan: tenKhachSan,
+  //       loaiLoc: useCurrentFilters ? _currentFilters['sortBy'] : null,
+  //       thanhPho: useCurrentFilters ? _currentFilters['thanhPho'] : null,
+  //       quan: useCurrentFilters ? _currentFilters['quan'] : null,
+  //       minPrice: useCurrentFilters ? _currentFilters['minPrice']?.toDouble() : null,
+  //       maxPrice: useCurrentFilters ? _currentFilters['maxPrice']?.toDouble() : null,
+  //       guests: useCurrentFilters ? _currentFilters['guests'] : null,
+  //       rooms: useCurrentFilters ? _currentFilters['rooms'] : null,
+  //       checkIn: useCurrentFilters ? _currentFilters['checkInParam'] : null,
+  //       checkOut: useCurrentFilters ? _currentFilters['checkOutParam'] : null,
+  //       bookingType: useCurrentFilters ? _currentFilters['bookingType'] : null,
+  //     ),
+  //   );
+  //
+  // }
+
+
   void _performSearch({
     String? tenKhachSan,
     String? loaiLoc,
     bool useCurrentFilters = true,
-
   }) {
-    context.read<HotelSearchBloc>().add(
-      SearchHotels(
-        tenKhachSan: tenKhachSan,
-        loaiLoc: useCurrentFilters ? _currentFilters['sortBy'] : null,
-        thanhPho: useCurrentFilters ? _currentFilters['thanhPho'] : null,
-        quan: useCurrentFilters ? _currentFilters['quan'] : null,
-        minPrice: useCurrentFilters ? _currentFilters['minPrice']?.toDouble() : null,
-        maxPrice: useCurrentFilters ? _currentFilters['maxPrice']?.toDouble() : null,
-        guests: useCurrentFilters ? _currentFilters['guests'] : null,
-        rooms: useCurrentFilters ? _currentFilters['rooms'] : null,
-        checkIn: useCurrentFilters ? _currentFilters['checkInParam'] : null,
-        checkOut: useCurrentFilters ? _currentFilters['checkOutParam'] : null,
-        bookingType: useCurrentFilters ? _currentFilters['bookingType'] : null,
-      ),
+    // ✅ DEBUG: Log current filters trước khi search
+    print('🔍 SearchView - Current Filters: $_currentFilters');
+
+    // ✅ EXTRACT PRICE VALUES - SỬA LOGIC CHÍNH
+    double? minPrice;
+    double? maxPrice;
+
+    if (useCurrentFilters && _currentFilters.containsKey('minPrice') && _currentFilters.containsKey('maxPrice')) {
+      minPrice = _currentFilters['minPrice']?.toDouble();
+      maxPrice = _currentFilters['maxPrice']?.toDouble();
+
+      // ✅ DEBUG: Log giá trị price được extract
+      print('🔍 SearchView - Extracted Prices:');
+      print('   Min Price: $minPrice');
+      print('   Max Price: $maxPrice');
+    }
+
+    // ✅ BUILD SEARCH EVENT với tất cả parameters
+    final searchEvent = SearchHotels(
+      tenKhachSan: tenKhachSan,
+      loaiLoc: useCurrentFilters ? (_currentFilters['sortBy'] ?? loaiLoc) : loaiLoc,
+      thanhPho: useCurrentFilters ? _currentFilters['thanhPho'] : null,
+      quan: useCurrentFilters ? _currentFilters['quan'] : null,
+
+      // ✅ PRICE PARAMETERS - FIXED
+      minPrice: minPrice,
+      maxPrice: maxPrice,
+
+      guests: useCurrentFilters ? _currentFilters['guests'] : null,
+      rooms: useCurrentFilters ? _currentFilters['rooms'] : null,
+      checkIn: useCurrentFilters ? _currentFilters['checkInParam'] : null,
+      checkOut: useCurrentFilters ? _currentFilters['checkOutParam'] : null,
+      bookingType: useCurrentFilters ? _currentFilters['bookingType'] : null,
     );
 
+    // ✅ DEBUG: Log final search event
+    print('🔍 SearchView - Final Search Event:');
+    print('   tenKhachSan: ${searchEvent.tenKhachSan}');
+    print('   minPrice: ${searchEvent.minPrice}');
+    print('   maxPrice: ${searchEvent.maxPrice}');
+    print('   thanhPho: ${searchEvent.thanhPho}');
+    print('   quan: ${searchEvent.quan}');
+
+    // ✅ DISPATCH EVENT
+    context.read<HotelSearchBloc>().add(searchEvent);
   }
+
 
   void _onSearchChanged(String query) {
     if (query.trim().isNotEmpty) {

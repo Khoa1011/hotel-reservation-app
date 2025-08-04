@@ -72,7 +72,7 @@ class _FilterModalState extends State<FilterModal> {
       priceMax = _filters['maxPrice'];
       priceMin = _filters['minPrice'];
       _filters['priceRange'] =
-      {'min':priceMin, 'max':priceMax};
+      {'min': priceMin, 'max': priceMax};
     }
 
 
@@ -103,13 +103,13 @@ class _FilterModalState extends State<FilterModal> {
 
     print(
       "🪷🪷🪷🪷🪷Kiểm tra giá trị đã gán chưa: (${provinceFromSearchScreen}, "
-      "${districtsFromSearchScreen}, ${checkInDate},"
-      "${checkOutDate},"
-      "${_adults},"
-      "${_children},"
-      "${_rooms},"
-      "${priceMin},"
-      "${priceMax})",
+          "${districtsFromSearchScreen}, ${checkInDate},"
+          "${checkOutDate},"
+          "${_adults},"
+          "${_children},"
+          "${_rooms},"
+          "${priceMin},"
+          "${priceMax})",
     );
   }
 
@@ -177,7 +177,10 @@ class _FilterModalState extends State<FilterModal> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.9,
+      height: MediaQuery
+          .of(context)
+          .size
+          .height * 0.9,
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -293,10 +296,10 @@ class _FilterModalState extends State<FilterModal> {
   Widget _buildFilterPreview() {
     final hasFilters =
         _selectedProvince != null ||
-        checkInDate != null ||
-        checkOutDate != null ||
-        _adults + _children > 2 ||
-        _rooms > 1;
+            checkInDate != null ||
+            checkOutDate != null ||
+            _adults + _children > 2 ||
+            _rooms > 1;
 
     if (!hasFilters) {
       return Container(
@@ -375,7 +378,9 @@ class _FilterModalState extends State<FilterModal> {
               icon: Icons.calendar_today,
               label: 'Thời gian',
               value:
-                  '${DateTimeHelper.formatDateToString2(checkInDate ?? DateTime.now())} - ${DateTimeHelper.formatDateToString2(checkOutDate ?? DateTime.now())}',
+              '${DateTimeHelper.formatDateToString2(
+                  checkInDate ?? DateTime.now())} - ${DateTimeHelper
+                  .formatDateToString2(checkOutDate ?? DateTime.now())}',
             ),
 
           // Guests preview
@@ -431,7 +436,8 @@ class _FilterModalState extends State<FilterModal> {
 
   String _buildPriceRangeSummary() {
     final priceRange = _filters['priceRange'] as Map<String, double>;
-    return '${CurrencyHelper.formatVND(priceRange['min']!)} - ${CurrencyHelper.formatVND(priceRange['max']!)}';
+    return '${CurrencyHelper.formatVND(priceRange['min']!)} - ${CurrencyHelper
+        .formatVND(priceRange['max']!)}';
   }
 
   Widget _buildGuestCounter(BuildContext context) {
@@ -448,19 +454,22 @@ class _FilterModalState extends State<FilterModal> {
             _rooms = rooms;
           });
         },
-        title: S.of(context).guestsRooms,
+        title: S
+            .of(context)
+            .guestsRooms,
       ),
     );
   }
 
   Widget _buildPriceRangeSection() {
-
     final priceRange = _filters['priceRange'] as Map<String, double>;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          S.of(context).priceRange,
+          S
+              .of(context)
+              .priceRange,
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 16),
@@ -473,7 +482,7 @@ class _FilterModalState extends State<FilterModal> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                CurrencyHelper.formatVND(priceRange['min']!) ,
+                CurrencyHelper.formatVND(priceRange['min']!),
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
@@ -688,29 +697,29 @@ class _FilterModalState extends State<FilterModal> {
         ),
         errorText: errorText,
         suffixIcon:
-            isLoading
-                ? SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: Padding(
-                    padding: EdgeInsets.all(12),
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                )
-                : null,
+        isLoading
+            ? SizedBox(
+          width: 20,
+          height: 20,
+          child: Padding(
+            padding: EdgeInsets.all(12),
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        )
+            : null,
       ),
       items:
-          enabled && !isLoading
-              ? items.map((item) {
-                return DropdownMenuItem<T>(
-                  value: item,
-                  child: Text(
-                    getLabel(item),
-                    style: TextStyle(fontWeight: FontWeight.normal),
-                  ),
-                );
-              }).toList()
-              : [],
+      enabled && !isLoading
+          ? items.map((item) {
+        return DropdownMenuItem<T>(
+          value: item,
+          child: Text(
+            getLabel(item),
+            style: TextStyle(fontWeight: FontWeight.normal),
+          ),
+        );
+      }).toList()
+          : [],
       onChanged: enabled && !isLoading ? onChanged : null,
     );
   }
@@ -725,7 +734,9 @@ class _FilterModalState extends State<FilterModal> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              S.of(context).checkInDate,
+              S
+                  .of(context)
+                  .checkInDate,
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ],
@@ -745,7 +756,9 @@ class _FilterModalState extends State<FilterModal> {
                 Text(
                   checkInDate != null
                       ? DateTimeHelper.formatDateToString2(checkInDate!)
-                      : S.of(context).selectYourArrivalDate,
+                      : S
+                      .of(context)
+                      .selectYourArrivalDate,
                   style: TextStyle(
                     fontSize: 14,
                     color: checkInDate != null ? Colors.black : Colors.grey,
@@ -768,7 +781,9 @@ class _FilterModalState extends State<FilterModal> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              S.of(context).checkOutDate,
+              S
+                  .of(context)
+                  .checkOutDate,
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ],
@@ -788,7 +803,9 @@ class _FilterModalState extends State<FilterModal> {
                 Text(
                   checkOutDate != null
                       ? DateTimeHelper.formatDateToString2(checkOutDate!)
-                      : S.of(context).selectTravelDate,
+                      : S
+                      .of(context)
+                      .selectTravelDate,
                   style: TextStyle(
                     fontSize: 14,
                     color: checkOutDate != null ? Colors.black : Colors.grey,
@@ -816,7 +833,9 @@ class _FilterModalState extends State<FilterModal> {
               border: Border.all(color: Color(0xFF1565C0).withOpacity(0.3)),
             ),
             child: Text(
-              "${S.of(context).numberOfDays}: ${_buildDayText(context)}",
+              "${S
+                  .of(context)
+                  .numberOfDays}: ${_buildDayText(context)}",
               style: TextStyle(
                 fontSize: 14,
                 color: Color(0xFF1565C0),
@@ -835,9 +854,15 @@ class _FilterModalState extends State<FilterModal> {
       initialDate: checkInDate ?? DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(Duration(days: 365)),
-      helpText: S.of(context).selectYourArrivalDate,
-      cancelText: S.of(context).cancel,
-      confirmText: S.of(context).confirm,
+      helpText: S
+          .of(context)
+          .selectYourArrivalDate,
+      cancelText: S
+          .of(context)
+          .cancel,
+      confirmText: S
+          .of(context)
+          .confirm,
     );
 
     if (picked != null && picked != checkInDate) {
@@ -853,9 +878,9 @@ class _FilterModalState extends State<FilterModal> {
 
   Future<void> _selectCheckOutDate(BuildContext context) async {
     DateTime firstDate =
-        checkInDate != null
-            ? checkInDate!.add(Duration(days: 1))
-            : DateTime.now().add(Duration(days: 1));
+    checkInDate != null
+        ? checkInDate!.add(Duration(days: 1))
+        : DateTime.now().add(Duration(days: 1));
 
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -912,8 +937,12 @@ class _FilterModalState extends State<FilterModal> {
     // Price range
     if (_filters['priceRange'] != null) {
       final priceRange = _filters['priceRange'] as Map<String, double>;
-      params['minPrice'] = priceRange['min']!.toDouble();
-      params['maxPrice'] = priceRange['max']!.toDouble();
+      params['minPrice'] = priceRange['min']!;
+      params['maxPrice'] = priceRange['max']!;
+      // ✅ DEBUG: Log giá trị price để kiểm tra
+      print('🔧 FilterModal - Price Range Applied:');
+      print('   Min Price: ${priceRange['min']}');
+      print('   Max Price: ${priceRange['max']}');
     }
 
     // Guests and rooms
@@ -927,7 +956,8 @@ class _FilterModalState extends State<FilterModal> {
       String formatedCheckInDate = DateTimeHelper.formatDateToString2(
         checkInDate!,
       );
-      String paramCheckInDate = DateTimeHelper.formatDateToString3(checkInDate!);
+      String paramCheckInDate = DateTimeHelper.formatDateToString3(
+          checkInDate!);
 
       params['checkIn'] = formatedCheckInDate;
       params['checkInParam'] = paramCheckInDate;
@@ -936,7 +966,8 @@ class _FilterModalState extends State<FilterModal> {
       String formatedCheckOutDate = DateTimeHelper.formatDateToString2(
         checkOutDate!,
       );
-      String paramCheckOutDate = DateTimeHelper.formatDateToString3(checkOutDate!);
+      String paramCheckOutDate = DateTimeHelper.formatDateToString3(
+          checkOutDate!);
       params['checkOut'] = formatedCheckOutDate;
       params['checkOutParam'] = paramCheckOutDate;
     }
@@ -970,9 +1001,40 @@ class _FilterModalState extends State<FilterModal> {
     }
   }
 
+//
+//   void _applyFilters() {
+//     final apiFilters = _buildSearchParams();
+//     print('🔧 API filters being sent: $apiFilters');
+//     widget.onFiltersApplied(apiFilters);
+//     Navigator.pop(context);
+//   }
+// }
+
   void _applyFilters() {
+    // ✅ CẬP NHẬT: Đảm bảo price range được lưu đúng
+    final currentPriceRange = _filters['priceRange'] as Map<String, double>;
+
+    // ✅ BUILD API FILTERS với price được truyền riêng
     final apiFilters = _buildSearchParams();
-    print('🔧 API filters being sent: $apiFilters');
+
+    // ✅ DOUBLE CHECK: Đảm bảo minPrice/maxPrice được set
+    if (!apiFilters.containsKey('minPrice')) {
+      apiFilters['minPrice'] = currentPriceRange['min'];
+    }
+    if (!apiFilters.containsKey('maxPrice')) {
+      apiFilters['maxPrice'] = currentPriceRange['max'];
+    }
+
+    // ✅ DEBUG: Log final filters being applied
+    print('🔧 FilterModal - Applying Final Filters:');
+    print('   minPrice: ${apiFilters['minPrice']}');
+    print('   maxPrice: ${apiFilters['maxPrice']}');
+    print('   thanhPho: ${apiFilters['thanhPho']}');
+    print('   quan: ${apiFilters['quan']}');
+    print('   guests: ${apiFilters['guests']}');
+    print('   Full filters: $apiFilters');
+
+    // ✅ CALL CALLBACK
     widget.onFiltersApplied(apiFilters);
     Navigator.pop(context);
   }

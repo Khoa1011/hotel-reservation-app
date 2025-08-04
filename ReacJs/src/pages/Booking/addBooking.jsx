@@ -551,19 +551,6 @@ const AddBooking = ({ selectHotelId, onClose }) => {
                           }
                         </span>
                       </div>
-
-                      {/* ✅ Hiển thị chi tiết pricing từ backend */}
-                      {formData.bookingType === 'theo_gio' && detailedPricing?.hourly && (
-                        <div className="text-gray-600 text-xs space-y-1">
-                          <div>Giá gốc: {selectedRoom.price.toLocaleString('vi-VN')}đ/đêm</div>
-                          <div>Giờ đầu: {pricingInfo?.price?.toLocaleString('vi-VN')}đ (25% giá đêm)</div>
-                          <div className="text-blue-600">{detailedPricing.hourly.description}</div>
-                          <div className="text-purple-600">
-                            Range: {selectedRoom.pricing?.priceRanges?.hourly}
-                          </div>
-                        </div>
-                      )}
-
                       {formData.bookingType === 'dai_ngay' && detailedPricing?.longstay && (
                         <div className="text-gray-600 text-xs space-y-1">
                           <div>Giá đêm: {selectedRoom.price.toLocaleString('vi-VN')}đ</div>
@@ -581,12 +568,6 @@ const AddBooking = ({ selectHotelId, onClose }) => {
                         {selectedRoom.description}
                       </div>
 
-                      {/* ✅ Hiển thị note từ backend */}
-                      {pricingInfo?.note && (
-                        <div className="text-purple-600 text-xs italic">
-                          💡 {pricingInfo.note}
-                        </div>
-                      )}
                     </div>
                   );
                 })()}

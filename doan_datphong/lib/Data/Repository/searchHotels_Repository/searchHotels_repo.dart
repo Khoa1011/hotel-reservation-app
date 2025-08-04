@@ -33,6 +33,15 @@ class HotelSearchRepository {
     String? bookingType,  // API: bookingType ('theo_gio', 'qua_dem', 'dai_ngay')
   }) async {
     try {
+
+      print('🔍 Repository - Input Parameters:');
+      print('   tenKhachSan: $tenKhachSan');
+      print('   minPrice: $minPrice');
+      print('   maxPrice: $maxPrice');
+      print('   thanhPho: $thanhPho');
+      print('   quan: $quan');
+      print('   guests: $guests');
+      print('   rooms: $rooms');
       // ✅ BUILD QUERY PARAMETERS - CHỈ SỬA TÊN PARAMETER
       Map<String, String> queryParams = {};
 
@@ -54,12 +63,14 @@ class HotelSearchRepository {
 
       // Giá cả (VND)
       if (minPrice != null && minPrice > 0) {
-        queryParams['minPrice'] = minPrice.toInt().toString();
+        int roundedMinPrice = minPrice.round();
+        queryParams['minPrice'] = roundedMinPrice.toString();
         print('🔍 DEBUG: Adding minPrice = ${minPrice.toInt()}');
       }
 
       if (maxPrice != null && maxPrice > 0) {
-        queryParams['maxPrice'] = maxPrice.toInt().toString();
+        int roundedMaxPrice = maxPrice.round();
+        queryParams['maxPrice'] = roundedMaxPrice.toString();
         print('🔍 DEBUG: Adding maxPrice = ${maxPrice.toInt()}');
       }
 

@@ -108,7 +108,7 @@ class NotificationService {
 
       if (notificationType == 'dat_phong_thanh_cong') {
         print('✅ Showing booking success dialog');
-        _showBookingSuccessDialog(message);
+        // _showBookingSuccessDialog(message);
       } else {
         print('✅ Would show local notification: ${message.notification?.title}');
         // Tạm thời chỉ log

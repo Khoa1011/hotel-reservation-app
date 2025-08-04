@@ -309,7 +309,7 @@ class HotelListWidget extends StatelessWidget {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          hotel.thanhPho,
+                          hotel.diaChi,
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],
@@ -391,19 +391,6 @@ class HotelListWidget extends StatelessWidget {
 
                   const SizedBox(height: 12),
 
-                  // Address (if different from city)
-                  if (hotel.diaChi.isNotEmpty && hotel.diaChi != hotel.thanhPho) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      hotel.diaChi,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[500],
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
 
                   const SizedBox(height: 12),
 

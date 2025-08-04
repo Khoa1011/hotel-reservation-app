@@ -320,7 +320,7 @@ const RoomManagement = ({ selectedHotelId }) => {
                 <BarChart3 className="w-6 h-6 text-purple-600" />
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">Tỷ lệ lấp đầy</p>
+                <p className="text-sm font-medium text-gray-500">Tỷ lệ đặt phòng</p>
                 <p className="text-2xl font-semibold text-purple-600">{statistics.occupancyRate}%</p>
               </div>
             </div>

@@ -957,7 +957,7 @@ const UserManagement = () => {
 
                         {user.ngayCamDatPhong && new Date(user.ngayCamDatPhong) > new Date() && (
                           <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                            Cấm ĐP
+                            Cấm đặt phòng
                           </span>
                         )}
 

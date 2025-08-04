@@ -20,7 +20,7 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
   const [previewNewImages, setPreviewNewImages] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
   const [imagesToDelete, setImagesToDelete] = useState([]);
-  
+
   // ✅ THÊM: Amenities states
   const [availableAmenities, setAvailableAmenities] = useState([]);
   const [roomAmenities, setRoomAmenities] = useState([]); // Current room amenities
@@ -28,7 +28,7 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
   const [amenitiesToDelete, setAmenitiesToDelete] = useState([]); // Amenities to remove
   const [loadingAmenities, setLoadingAmenities] = useState(false);
   const [showAmenitiesTab, setShowAmenitiesTab] = useState(false);
-  
+
   const [originalRoomNumber, setOriginalRoomNumber] = useState('');
 
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
@@ -61,7 +61,7 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
     setLoadingAmenities(true);
     try {
       console.log('🔄 Fetching available amenities...');
-      
+
       const response = await axios.get(
         `${baseUrl}/api/amenities-hotel/hotelowner/amenities`,
         { withCredentials: true }
@@ -72,11 +72,11 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
       if (response.data?.success) {
         const amenities = response.data.data.amenities || [];
         console.log(`✅ Loaded ${amenities.length} available amenities`);
-        
+
         if (amenities.length > 0) {
           console.log('🔍 Sample amenities:', amenities.slice(0, 2));
         }
-        
+
         setAvailableAmenities(amenities);
       } else {
         console.warn('⚠️ API returned success: false', response.data);
@@ -97,10 +97,10 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
   // ✅ SỬA: Fetch room amenities với better debugging
   const fetchRoomAmenities = async (roomId) => {
     if (!roomId) return;
-    
+
     try {
       console.log(`🔄 Fetching amenities for room ${roomId}...`);
-      
+
       const response = await axios.get(
         `${baseUrl}/api/amenities-hotel/hotelowner/room-amenities/${roomId}`,
         { withCredentials: true }
@@ -111,11 +111,11 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
       if (response.data?.success) {
         const amenities = response.data.data.amenities || [];
         console.log(`✅ Loaded ${amenities.length} room amenities`);
-        
+
         if (amenities.length > 0) {
           console.log('🔍 Sample room amenities:', amenities.slice(0, 2));
         }
-        
+
         setRoomAmenities(amenities);
       } else {
         console.warn('⚠️ Room amenities API returned success: false');
@@ -136,33 +136,33 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
   useEffect(() => {
     if (room && showModal) {
       console.log('🏨 Loading room data for edit:', room);
-      
+
       setFormData({
         trangThaiPhong: room.trangThaiPhong || 'trong',
-        soPhong: room.soPhong || '',                   
-        tang: room.tang || 1,                          
-        loaiView: room.loaiView || 'none',             
+        soPhong: room.soPhong || '',
+        tang: room.tang || 1,
+        loaiView: room.loaiView || 'none',
         dienTich: room.dienTich?.toString() || '',
         moTa: room.moTa || '',
         soLuongGiuong: room.soLuongGiuong?.toString() || '',
         soLuongNguoiToiDa: room.soLuongNguoiToiDa?.toString() || '',
         cauHinhGiuong: room.cauHinhGiuong || []
       });
-      
-      setOriginalRoomNumber(room.soPhong || '');       
-      
+
+      setOriginalRoomNumber(room.soPhong || '');
+
       // Load images
       const images = room.hinhAnh || [];
       console.log('🖼️ Loading existing images:', images);
       setExistingImages(images);
-      
+
       // Reset states
       setImagesToDelete([]);
       setNewImageFiles([]);
       setPreviewNewImages([]);
       setAmenitiesToDelete([]);
       setNewAmenities([]);
-      
+
       // Load amenities
       fetchAvailableAmenities();
       fetchRoomAmenities(room._id);
@@ -210,7 +210,7 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
   // Handle new image upload
   const handleNewImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    
+
     if (files.length + existingImages.length - imagesToDelete.length > 10) {
       toast.error('Tổng số hình ảnh không được vượt quá 10');
       return;
@@ -239,11 +239,11 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
 
   // ✅ THÊM: Amenities management functions
   const addNewAmenity = () => {
-    setNewAmenities(prev => [...prev, { 
-      maTienNghi: '', 
-      soLuong: 1, 
-      trangThai: true, 
-      moTa: '' 
+    setNewAmenities(prev => [...prev, {
+      maTienNghi: '',
+      soLuong: 1,
+      trangThai: true,
+      moTa: ''
     }]);
   };
 
@@ -252,7 +252,7 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
   };
 
   const updateNewAmenity = (index, field, value) => {
-    setNewAmenities(prev => prev.map((amenity, i) => 
+    setNewAmenities(prev => prev.map((amenity, i) =>
       i === index ? { ...amenity, [field]: value } : amenity
     ));
   };
@@ -266,7 +266,7 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
   };
 
   const updateExistingAmenity = (detailId, field, value) => {
-    setRoomAmenities(prev => prev.map(amenity => 
+    setRoomAmenities(prev => prev.map(amenity =>
       amenity._id === detailId ? { ...amenity, [field]: value } : amenity
     ));
   };
@@ -289,7 +289,7 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
   const updateBedConfiguration = (index, field, value) => {
     setFormData(prev => ({
       ...prev,
-      cauHinhGiuong: prev.cauHinhGiuong.map((bed, i) => 
+      cauHinhGiuong: prev.cauHinhGiuong.map((bed, i) =>
         i === index ? { ...bed, [field]: value } : bed
       )
     }));
@@ -316,14 +316,14 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate số phòng
     const roomNumberError = validateRoomNumber(formData.soPhong);
     if (roomNumberError) {
       toast.error(roomNumberError);
       return;
     }
-    
+
     const remainingImages = existingImages.length - imagesToDelete.length + newImageFiles.length;
     if (remainingImages === 0) {
       toast.error('Phòng phải có ít nhất 1 hình ảnh');
@@ -335,7 +335,11 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
     try {
       // STEP 1: Update room basic info
       const submitData = new FormData();
-      
+      if (newImageFiles.length > 0) {
+        submitData.append('maLoaiPhong', room.maLoaiPhong._id);
+        console.log('📤 Adding maLoaiPhong for file upload:', room.maLoaiPhong._id);
+      }
+
       Object.keys(formData).forEach(key => {
         if (key === 'cauHinhGiuong') {
           submitData.append(key, JSON.stringify(formData[key]));
@@ -388,7 +392,7 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
       }
 
       // STEP 3: Handle amenity updates
-      const amenitiesToUpdate = roomAmenities.filter(a => 
+      const amenitiesToUpdate = roomAmenities.filter(a =>
         !amenitiesToDelete.includes(a._id)
       );
 
@@ -410,7 +414,7 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
 
       // STEP 4: Add new amenities
       if (newAmenities.length > 0) {
-        const validNewAmenities = newAmenities.filter(a => 
+        const validNewAmenities = newAmenities.filter(a =>
           a.maTienNghi && a.soLuong > 0
         );
 
@@ -429,10 +433,10 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
 
       toast.success(`Cập nhật phòng ${formData.soPhong} thành công!`);
       onSuccess();
-      
+
     } catch (error) {
       console.error('❌ Lỗi khi cập nhật phòng:', error);
-      
+
       if (error.response?.status === 400 && error.response?.data?.message?.includes('đã tồn tại')) {
         toast.error(`Số phòng ${formData.soPhong} đã tồn tại. Vui lòng chọn số phòng khác.`);
       } else {
@@ -463,21 +467,19 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
           <div className="flex border-b border-gray-200 mb-6">
             <button
               onClick={() => setShowAmenitiesTab(false)}
-              className={`px-4 py-2 font-medium text-sm ${
-                !showAmenitiesTab 
-                  ? 'text-blue-600 border-b-2 border-blue-600' 
+              className={`px-4 py-2 font-medium text-sm ${!showAmenitiesTab
+                  ? 'text-blue-600 border-b-2 border-blue-600'
                   : 'text-gray-500 hover:text-gray-700'
-              }`}
+                }`}
             >
               Thông tin phòng
             </button>
             <button
               onClick={() => setShowAmenitiesTab(true)}
-              className={`px-4 py-2 font-medium text-sm ${
-                showAmenitiesTab 
-                  ? 'text-blue-600 border-b-2 border-blue-600' 
+              className={`px-4 py-2 font-medium text-sm ${showAmenitiesTab
+                  ? 'text-blue-600 border-b-2 border-blue-600'
                   : 'text-gray-500 hover:text-gray-700'
-              }`}
+                }`}
             >
               <Settings className="w-4 h-4 inline mr-1" />
               Tiện nghi ({roomAmenities.length})
@@ -580,7 +582,7 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
                       🔄 Tải lại hình ảnh
                     </button>
                   </div>
-                  
+
                   {existingImages.length > 0 ? (
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                       {existingImages.map((image, index) => (
@@ -588,9 +590,8 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
                           <img
                             src={getImageUrl(image.url_anh)}
                             alt={`Room ${formData.soPhong} image ${index + 1}`}
-                            className={`w-full h-32 object-cover rounded-lg border ${
-                              imagesToDelete.includes(image._id) ? 'opacity-50 grayscale' : ''
-                            }`}
+                            className={`w-full h-32 object-cover rounded-lg border ${imagesToDelete.includes(image._id) ? 'opacity-50 grayscale' : ''
+                              }`}
                             onError={(e) => {
                               e.target.src = getImageUrl(image.url_anh, false);
                               e.target.onerror = () => {
@@ -599,15 +600,15 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
                               };
                             }}
                           />
-                          
-                          <div 
+
+                          <div
                             className="w-full h-32 bg-gray-100 border border-gray-200 rounded-lg flex flex-col items-center justify-center text-gray-500"
                             style={{ display: 'none' }}
                           >
                             <ImageIcon className="w-6 h-6 mb-1" />
                             <span className="text-xs">Lỗi tải ảnh</span>
                           </div>
-                          
+
                           <div className="absolute top-2 right-2">
                             {imagesToDelete.includes(image._id) ? (
                               <button
@@ -650,7 +651,7 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
                     onChange={handleNewImageUpload}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
-                  
+
                   {previewNewImages.length > 0 && (
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
                       {previewNewImages.map((preview, index) => (
@@ -780,13 +781,12 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
                   <h3 className="text-lg font-medium text-gray-900 mb-4">
                     Tiện nghi hiện tại ({roomAmenities.length - amenitiesToDelete.length}/{roomAmenities.length})
                   </h3>
-                  
+
                   {roomAmenities.length > 0 ? (
                     <div className="space-y-3">
                       {roomAmenities.map((amenity) => (
-                        <div key={amenity._id} className={`border rounded-lg p-3 ${
-                          amenitiesToDelete.includes(amenity._id) ? 'bg-red-50 border-red-200' : 'border-gray-200'
-                        }`}>
+                        <div key={amenity._id} className={`border rounded-lg p-3 ${amenitiesToDelete.includes(amenity._id) ? 'bg-red-50 border-red-200' : 'border-gray-200'
+                          }`}>
                           <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
                             <div className="md:col-span-2">
                               <div className="font-medium text-gray-900">
@@ -796,7 +796,7 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
                                 {amenity.maTienNghi?.icon} {amenity.maTienNghi?.moTa}
                               </div>
                             </div>
-                            
+
                             <div>
                               <input
                                 type="number"
@@ -807,7 +807,7 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:bg-gray-100"
                               />
                             </div>
-                            
+
                             <div className="flex gap-2">
                               <label className="flex items-center">
                                 <input
@@ -821,16 +821,15 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
                               </label>
                               <button
                                 type="button"
-                                onClick={() => 
-                                  amenitiesToDelete.includes(amenity._id) 
+                                onClick={() =>
+                                  amenitiesToDelete.includes(amenity._id)
                                     ? unmarkAmenityForDeletion(amenity._id)
                                     : markAmenityForDeletion(amenity._id)
                                 }
-                                className={`px-2 py-1 rounded text-sm ${
-                                  amenitiesToDelete.includes(amenity._id)
+                                className={`px-2 py-1 rounded text-sm ${amenitiesToDelete.includes(amenity._id)
                                     ? 'text-green-600 hover:bg-green-50'
                                     : 'text-red-600 hover:bg-red-50'
-                                }`}
+                                  }`}
                               >
                                 {amenitiesToDelete.includes(amenity._id) ? (
                                   <Plus className="w-4 h-4" />
@@ -840,7 +839,7 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
                               </button>
                             </div>
                           </div>
-                          
+
                           {/* Mô tả */}
                           <div className="mt-2">
                             <input
@@ -852,7 +851,7 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
                               placeholder="Mô tả chi tiết"
                             />
                           </div>
-                          
+
                           {amenitiesToDelete.includes(amenity._id) && (
                             <div className="mt-2 text-center">
                               <span className="bg-red-600 text-white px-2 py-1 rounded text-xs">
@@ -876,7 +875,7 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
                   <h3 className="text-lg font-medium text-gray-900 mb-4">
                     Thêm tiện nghi mới ({newAmenities.length})
                   </h3>
-                  
+
                   <div className="space-y-3">
                     {newAmenities.map((amenity, index) => (
                       <div key={index} className="border border-green-200 bg-green-50 rounded-lg p-3">
@@ -889,14 +888,14 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
                             >
                               <option value="">Chọn tiện nghi</option>
                               {availableAmenities
-                                .filter(a => 
+                                .filter(a =>
                                   // Loại bỏ tiện nghi đã có trong phòng
-                                  !roomAmenities.some(existing => 
-                                    existing.maTienNghi?._id === a._id && 
+                                  !roomAmenities.some(existing =>
+                                    existing.maTienNghi?._id === a._id &&
                                     !amenitiesToDelete.includes(existing._id)
                                   ) &&
                                   // Loại bỏ tiện nghi đã chọn trong new amenities
-                                  !newAmenities.some((newA, i) => 
+                                  !newAmenities.some((newA, i) =>
                                     i !== index && newA.maTienNghi === a._id
                                   )
                                 )
@@ -908,7 +907,7 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
                               }
                             </select>
                           </div>
-                          
+
                           <div>
                             <input
                               type="number"
@@ -919,7 +918,7 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
                               placeholder="Số lượng"
                             />
                           </div>
-                          
+
                           <div className="flex gap-2">
                             <label className="flex items-center">
                               <input
@@ -939,7 +938,7 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
                             </button>
                           </div>
                         </div>
-                        
+
                         {/* Mô tả */}
                         <div className="mt-2">
                           <input
@@ -952,7 +951,7 @@ const EditRoomModal = ({ showModal, onClose, onSuccess, roomTypes, room }) => {
                         </div>
                       </div>
                     ))}
-                    
+
                     <button
                       type="button"
                       onClick={addNewAmenity}

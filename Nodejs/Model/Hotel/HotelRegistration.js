@@ -27,7 +27,7 @@ const HotelRegistrationSchema = new mongoose.Schema({
     tenDuong: String,
     phuong: String,
     quan: { type: String, required: true },
-    tinhThanh: { type: String, required: true },
+    tinhThanh: { type: String },
     quocGia: { type: String, default: "Việt Nam" }
   },
 
@@ -35,7 +35,7 @@ const HotelRegistrationSchema = new mongoose.Schema({
     cccdMatTruoc: String,
     cccdMatSau: String,
     giayPhepKinhDoanh: String,
-    anhMatTienKhachSan: [String],
+    anhMatTienKhachSan: String,
 
   },
 

@@ -30,9 +30,10 @@ class GetListOfRoomSuccess extends GetListOfRoomState {
 
 class GetListOfRoomFailure extends GetListOfRoomState {
   final String error;
+  final String? suggestion;
 
-  GetListOfRoomFailure(this.error);
+  GetListOfRoomFailure(this.error, {this.suggestion});
 
   @override
-  List<Object?> get props => [error];
+  List<Object?> get props => [error, suggestion];
 }

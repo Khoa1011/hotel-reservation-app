@@ -1,4 +1,6 @@
 // ✅ Fixed GetListOfRoomBloc
+import 'dart:convert';
+
 import 'package:doan_datphong/Blocs/getListOfRoom_Blocs/getListOfRoom_event.dart';
 import 'package:doan_datphong/Blocs/getListOfRoom_Blocs/getListOfRoom_state.dart';
 import 'package:doan_datphong/Data/Repository/getListOfRoomTypes_Repository/getListOfRoom_repo.dart';
@@ -13,7 +15,6 @@ class GetListOfRoomBloc extends Bloc<GetListOfRoomEvent, GetListOfRoomState> {
     on<FetchSimpleRoomList>(_onFetchSimpleRoomList);
   }
 
-  // ✅ Fixed: Xử lý tìm kiếm loại phòng với thông tin đầy đủ
   void _onFetchRoomList(
       FetchRoomList event,
       Emitter<GetListOfRoomState> emit,
@@ -34,7 +35,7 @@ class GetListOfRoomBloc extends Bloc<GetListOfRoomEvent, GetListOfRoomState> {
         rooms: event.lichPhongTrong.soLuongPhong,
       );
 
-      // ✅ Fixed: Kiểm tra result structure từ API
+      // Kiểm tra result structure từ API
       if (result['success'] == true) {
         emit(GetListOfRoomSuccess(
           roomTypes: result['roomTypes'] ?? [],
@@ -48,7 +49,40 @@ class GetListOfRoomBloc extends Bloc<GetListOfRoomEvent, GetListOfRoomState> {
         ));
       }
     } catch (err) {
-      emit(GetListOfRoomFailure(err.toString()));
+      String errorTitle = "Lỗi không xác định";
+      String? suggestion;
+
+      try {
+        String errorString = err.toString();
+
+        // Remove "Exception: " prefix
+        if (errorString.startsWith('Exception: ')) {
+          errorString = errorString.substring(11);
+        }
+
+        // Parse JSON error
+        final errorData = jsonDecode(errorString);
+        errorTitle = errorData['msgBody'] ?? errorData['message'] ?? errorTitle;
+        suggestion = errorData['suggestion'];
+
+      } catch (parseError) {
+        // If JSON parsing fails, try regex
+        String errorString = err.toString();
+        RegExp msgBodyRegex = RegExp(r'"msgBody":"([^"]*)"');
+        RegExp suggestionRegex = RegExp(r'"suggestion":"([^"]*)"');
+
+        var msgBodyMatch = msgBodyRegex.firstMatch(errorString);
+        var suggestionMatch = suggestionRegex.firstMatch(errorString);
+
+        if (msgBodyMatch != null) {
+          errorTitle = msgBodyMatch.group(1) ?? errorTitle;
+        }
+        if (suggestionMatch != null) {
+          suggestion = suggestionMatch.group(1);
+        }
+      }
+
+      emit(GetListOfRoomFailure(errorTitle, suggestion: suggestion));
     }
   }
 

@@ -74,11 +74,7 @@ class GetListOfRoomTypeRepository {
         };
       } else {
         final errorData = jsonDecode(response.body);
-        throw Exception(
-            errorData['msgBody'] ??
-                errorData['message'] ??
-                "Lỗi server: ${response.statusCode}"
-        );
+        throw Exception(jsonEncode(errorData));
       }
     } on http.ClientException catch (e) {
       throw Exception("Lỗi kết nối mạng: ${e.message}");

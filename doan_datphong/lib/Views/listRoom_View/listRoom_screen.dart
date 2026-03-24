@@ -168,7 +168,7 @@ class _ListRoomState extends State<ListRoomScreen> {
                     ),
                   );
                 } else if (state is GetListOfRoomFailure) {
-                  return _buildErrorState(state.error);
+                  return _buildErrorState(state.error, suggestion: state.suggestion);
                 }
                 return _buildEmptyState();
               },
@@ -273,51 +273,50 @@ class _ListRoomState extends State<ListRoomScreen> {
     );
   }
 
-  Widget _buildErrorState(String error) {
+  Widget _buildErrorState(String error, {String? suggestion}) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 80,
-            color: Colors.red.shade300,
-          ),
+          Icon(Icons.error_outline, size: 80, color: Colors.red.shade300),
           const SizedBox(height: 16),
+
+          // Show msgBody as title
           Text(
-            S.of(context).errorUnknown,
+            error,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Colors.red.shade600,
             ),
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              error,
-              textAlign: TextAlign.center,
+
+          // Show suggestion if available
+          if (suggestion != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              suggestion,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.red.shade500,
+                color: Colors.blue.shade600,
               ),
+              textAlign: TextAlign.center,
             ),
-          ),
+          ],
+
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: _fetchRoomList,
             icon: const Icon(Icons.refresh),
             label: Text(S.of(context).tryAgain),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade400,
-              foregroundColor: Colors.white,
-            ),
           ),
         ],
       ),
     );
   }
+
+
   String _buildSummaryTextTotalGuese(BuildContext context) {
     // Lấy ngôn ngữ hiện tại
     final locale = Localizations.localeOf(context);
